@@ -27,6 +27,7 @@ import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
 import FanMailApp, { FanLetter, generateRandomFanLetter } from "./components/FanMailApp";
+import { safeFetch } from "./components/apiHelper";
 import { 
   Sparkles, Battery, Wifi, Signal, Grid, RefreshCw, 
   Settings as SettingsIcon, Calendar, MessageSquare, 
@@ -67,7 +68,7 @@ export default function App() {
     }
     setLoadingModels(true);
     try {
-      const res = await fetch("/api/gemini/models", {
+      const res = await safeFetch("/api/gemini/models", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -221,7 +222,7 @@ ${dialogueTurns}
 旧的大纲记录（若有）：
 ${contact.summary || "无"}`;
 
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -810,6 +811,25 @@ ${contact.summary || "无"}`;
       "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-blue-950/30"
     } text-slate-100 flex items-center justify-center`}>
       
+      {/* Cinematic Ambient Ambient Glow Orbs */}
+      <div className={`absolute top-[10%] left-[5%] w-[350px] h-[350px] rounded-full mix-blend-screen filter blur-[120px] opacity-[0.22] animate-pulse duration-[6000ms] pointer-events-none transition-all duration-1000 ${
+        ipadWallpaper === "neon" ? "bg-purple-600" :
+        ipadWallpaper === "peach" ? "bg-rose-500" :
+        ipadWallpaper === "cosmic" ? "bg-indigo-600" :
+        ipadWallpaper === "aurora" ? "bg-teal-500" :
+        ipadWallpaper === "cherry" ? "bg-pink-500" : "bg-amber-500"
+      }`} />
+      <div className={`absolute bottom-[10%] right-[5%] w-[450px] h-[450px] rounded-full mix-blend-screen filter blur-[140px] opacity-[0.18] animate-pulse duration-[8000ms] pointer-events-none transition-all duration-1000 ${
+        ipadWallpaper === "neon" ? "bg-indigo-600" :
+        ipadWallpaper === "peach" ? "bg-amber-500" :
+        ipadWallpaper === "cosmic" ? "bg-violet-600" :
+        ipadWallpaper === "aurora" ? "bg-emerald-600" :
+        ipadWallpaper === "cherry" ? "bg-rose-500" : "bg-cyan-600"
+      }`} />
+
+      {/* Gentle overlay grids */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none opacity-40" />
+
       {/* Soft background aesthetics */}
       <div className="absolute inset-0 bg-radial-gradient from-purple-500/5 via-indigo-500/0 to-transparent pointer-events-none" />
 

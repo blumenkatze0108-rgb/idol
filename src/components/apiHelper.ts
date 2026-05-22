@@ -235,3 +235,43 @@ export async function smartCallGemini(params: {
     simulated: true
   };
 }
+
+export async function safeFetch(input: any, init?: any): Promise<Response> {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.href : "";
+  
+  if (url === "/api/gemini/generate" || url.endsWith("/api/gemini/generate")) {
+    try {
+      const body = init && init.body ? JSON.parse(init.body as string) : {};
+      const result = await smartCallGemini(body);
+      return new Response(JSON.stringify(result), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (e) {
+      console.error("safeFetch custom generation error:", e);
+    }
+  }
+  
+  if (url === "/api/gemini/models" || url.endsWith("/api/gemini/models")) {
+    try {
+      return new Response(JSON.stringify({
+        models: [
+          { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (推荐)" },
+          { id: "gemini-2.1-flash", name: "Gemini 2.1 Flash (速度快)" },
+          { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (逻辑强)" }
+        ]
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" }
+      });
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  const originalFetch = window.fetch || globalThis.fetch;
+  if (!originalFetch) {
+    throw new Error("No global fetch found in this environment.");
+  }
+  return originalFetch.call(window, input, init);
+}

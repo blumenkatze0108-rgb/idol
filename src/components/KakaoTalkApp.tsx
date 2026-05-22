@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChatContact, ChatMessage, IdolPersona, SimulatedTeammate } from "../types";
 import { MessageSquare, Send, Zap, User, AlertCircle, Smile } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 interface KakaoTalkProp {
   persona: IdolPersona;
@@ -233,7 +234,7 @@ export default function KakaoTalkApp({
 
       // Call API
       try {
-        const response = await fetch("/api/gemini/generate", {
+        const response = await safeFetch("/api/gemini/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { IdolPersona, SimulatedTeammate } from "../types";
 import { Send, Zap, Play, Flame, Film, UserMinus, Plus } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 interface TikTokProp {
   persona: IdolPersona;
@@ -120,7 +121,7 @@ export default function TikTokApp({
       Collaboration: "${partnerName}"
       Keep the description within 1-2 lines, in Chinese, with cute young-style hashtags (e.g. #Kpop #TikTokChallenge #IdolPad).`;
 
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

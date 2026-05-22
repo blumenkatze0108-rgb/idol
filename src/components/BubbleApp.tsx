@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { BubbleMessage, IdolPersona, SimulatedTeammate } from "../types";
 import { MessageSquare, Heart, Volume2, Sparkles, Send } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 interface BubbleProp {
   persona: IdolPersona;
@@ -78,7 +79,7 @@ export default function BubbleApp({
         systemPrompt = `You are simulated Kpop forum netizens and a funny teammate named "${randMate.name}". MBTI "${randMate.mbti}", role "${randMate.role}". Make ${randMate.name} reply to the idol's Bubble to tease or support them, and fans going crazy!`;
       }
 
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

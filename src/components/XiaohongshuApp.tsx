@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { IdolPersona } from "../types";
 import { Send, Zap, Eye, Image as ImageIcon, Sparkles, Heart } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 interface XiaohongshuProp {
   persona: IdolPersona;
@@ -95,7 +96,7 @@ export default function XiaohongshuApp({
       Idol Stage Name: "${persona.stageName}"
       Ensure there are many tags like #爱豆私服 #江南美容室 #MyOOTD at the end of the content. Keep it to 3 short bullet point statements.`;
 
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

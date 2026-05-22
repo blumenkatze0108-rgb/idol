@@ -2,6 +2,7 @@ import { useState } from "react";
 import { IdolSchedule, IdolPersona, WeversePost } from "../types";
 import { SH_LIST } from "../mockData";
 import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 interface SchedulesProps {
   persona: IdolPersona;
@@ -208,7 +209,7 @@ export default function SchedulesApp({
     let parsedResult = null;
 
     try {
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { IdolPersona, SimulatedTeammate } from "../types";
 import { Mail, MailOpen, Inbox, Heart, Sparkles, Trash2, BookOpen, Clock, AlertCircle } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 // Letter type definition
 export interface FanLetter {
@@ -291,7 +292,7 @@ export default function FanMailApp({
   "theme": "pink" 或 "purple" 或 "emerald" 或 "blue" 或 "amber"
 }`;
 
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { WeversePost, WeverseComment, IdolPersona } from "../types";
 import { Heart, MessageCircle, Send, Sparkles, Tv, ShieldAlert } from "lucide-react";
+import { safeFetch } from "./apiHelper";
 
 interface WeverseAppProps {
   persona: IdolPersona;
@@ -56,7 +57,7 @@ Do not write any markdown tags or other intro/outro.`;
     let haterText = "怎么天天有空发Weverse，到底有没有好好练习唱歌啊？发音一塌糊涂。";
 
     try {
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -196,7 +197,7 @@ Do not write any markdown tags or other intro/outro.`;
     let commentTxt = "直播里的智允宝宝太可爱了，素颜状态也超级好，清冷感美女实锤！";
 
     try {
-      const response = await fetch("/api/gemini/generate", {
+      const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
