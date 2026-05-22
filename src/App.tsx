@@ -27,14 +27,95 @@ import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
 import FanMailApp, { FanLetter, generateRandomFanLetter } from "./components/FanMailApp";
-import { safeFetch } from "./components/apiHelper";
+import { safeFetch, triggerToast } from "./components/apiHelper";
+import { motion, AnimatePresence } from "motion/react";
+
 import { 
   Sparkles, Battery, Wifi, Signal, Grid, RefreshCw, 
   Settings as SettingsIcon, Calendar, MessageSquare, 
   User, Activity, Flame, ShieldAlert, Coins, 
   Download, Upload, Heart, Info, MonitorCheck, Award,
-  Film, Image, Mail
+  Film, Image, Mail, CheckCircle2, AlertCircle
 } from "lucide-react";
+
+const themeStyles: Record<string, {
+  sideBg: string;
+  sideCardBg_1: string;
+  sideCardBg_2: string;
+  activeAppContainerBg: string;
+  textAccent: string;
+  borderAccent: string;
+  accentBtn: string;
+  badgeAccent: string;
+  brandColors: string;
+}> = {
+  neon: {
+    sideBg: "bg-purple-950/85 backdrop-blur-md border-purple-500/10",
+    sideCardBg_1: "bg-[#18112b]/90 border border-purple-500/25 text-purple-200",
+    sideCardBg_2: "bg-[#140b24]/90 border border-purple-500/20 shadow-[0_4px_20px_rgba(147,51,234,0.15)]",
+    activeAppContainerBg: "bg-gradient-to-br from-[#11081c]/80 via-[#07040a]/90 to-slate-900/40",
+    textAccent: "text-purple-300",
+    borderAccent: "border-purple-500/20",
+    accentBtn: "bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white border border-purple-500/25",
+    badgeAccent: "bg-purple-500/15 text-purple-400 border border-purple-500/20",
+    brandColors: "from-[#22103a] through-[#110822] to-slate-950"
+  },
+  peach: {
+    sideBg: "bg-amber-950/85 backdrop-blur-md border-amber-500/10",
+    sideCardBg_1: "bg-amber-950/70 border border-amber-500/20 text-amber-200",
+    sideCardBg_2: "bg-[#291717]/80 border border-amber-500/20 shadow-[0_4px_20px_rgba(245,158,11,0.15)]",
+    activeAppContainerBg: "bg-gradient-to-br from-[#1c0e10]/80 via-[#0f0709]/90 to-amber-950/30",
+    textAccent: "text-amber-300",
+    borderAccent: "border-amber-500/20",
+    accentBtn: "bg-amber-600/30 hover:bg-amber-600 text-amber-200 hover:text-white border border-amber-500/25",
+    badgeAccent: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+    brandColors: "from-[#351a1d] through-[#1a0c0e] to-stone-950"
+  },
+  cosmic: {
+    sideBg: "bg-indigo-950/85 backdrop-blur-md border-indigo-500/10",
+    sideCardBg_1: "bg-indigo-950/70 border border-indigo-500/20 text-indigo-200",
+    sideCardBg_2: "bg-[#0d122b]/80 border border-indigo-500/20 shadow-[0_4px_20px_rgba(99,102,241,0.15)]",
+    activeAppContainerBg: "bg-gradient-to-br from-[#090b1e]/80 via-[#04050c]/90 to-indigo-950/30",
+    textAccent: "text-indigo-300",
+    borderAccent: "border-indigo-500/20",
+    accentBtn: "bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 hover:text-white border border-indigo-500/25",
+    badgeAccent: "bg-indigo-500/15 text-indigo-400 border border-indigo-500/20",
+    brandColors: "from-[#101438] through-[#06081c] to-slate-950"
+  },
+  aurora: {
+    sideBg: "bg-teal-950/85 backdrop-blur-md border-teal-500/10",
+    sideCardBg_1: "bg-teal-950/70 border border-teal-500/20 text-teal-200",
+    sideCardBg_2: "bg-[#102422]/80 border border-teal-500/20 shadow-[0_4px_20px_rgba(20,184,166,0.15)]",
+    activeAppContainerBg: "bg-gradient-to-br from-[#051715]/80 via-[#020908]/90 to-teal-950/30",
+    textAccent: "text-teal-300",
+    borderAccent: "border-teal-500/20",
+    accentBtn: "bg-teal-600/30 hover:bg-teal-600 text-teal-200 hover:text-white border border-teal-500/25",
+    badgeAccent: "bg-teal-500/15 text-teal-400 border border-teal-500/20",
+    brandColors: "from-[#0a2723] through-[#041110] to-zinc-950"
+  },
+  cherry: {
+    sideBg: "bg-pink-950/85 backdrop-blur-md border-pink-500/10",
+    sideCardBg_1: "bg-pink-950/70 border border-pink-500/21 text-[#fdc3db]",
+    sideCardBg_2: "bg-[#2d111d]/80 border border-pink-500/20 shadow-[0_4px_20px_rgba(236,72,153,0.15)]",
+    activeAppContainerBg: "bg-gradient-to-br from-[#1e0713]/80 via-[#090206]/90 to-rose-950/30",
+    textAccent: "text-pink-300",
+    borderAccent: "border-pink-500/20",
+    accentBtn: "bg-pink-600/30 hover:bg-pink-600 text-pink-200 hover:text-white border border-pink-500/25",
+    badgeAccent: "bg-pink-500/15 text-pink-400 border border-pink-500/20",
+    brandColors: "from-[#350d21] through-[#15040d] to-stone-950"
+  },
+  starlight: {
+    sideBg: "bg-amber-950/85 backdrop-blur-md border-amber-500/10",
+    sideCardBg_1: "bg-amber-950/70 border border-amber-500/20 text-[#ffe5bc]",
+    sideCardBg_2: "bg-[#291e10]/80 border border-amber-500/20 shadow-[0_4px_20px_rgba(245,158,11,0.15)]",
+    activeAppContainerBg: "bg-gradient-to-br from-[#1a1106]/85 via-[#0c0803]/90 to-amber-950/30",
+    textAccent: "text-amber-350",
+    borderAccent: "border-amber-500/20",
+    accentBtn: "bg-amber-600/30 hover:bg-amber-600 text-amber-200 hover:text-white border border-amber-500/25",
+    badgeAccent: "bg-amber-500/15 text-amber-400 border border-amber-500/20",
+    brandColors: "from-[#2f1b0a] through-[#140b03] to-slate-950"
+  }
+};
 
 export default function App() {
   const [hasStarted, setHasStarted] = useState<boolean>(false);
@@ -44,6 +125,67 @@ export default function App() {
   // App navigation state
   const [activeApp, setActiveApp] = useState<string>("schedule"); // "kakaotalk" | "weverse" | "bubble" | "analytics" | "schedule" | "settings"
   const [ipadWallpaper, setIpadWallpaper] = useState<string>("cosmic"); // "neon" | "peach" | "cosmic" | "aurora"
+  
+  // Custom Toast State
+  interface ToastItem {
+    id: string;
+    title: string;
+    message: string;
+    type: "info" | "success" | "warning" | "error";
+  }
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const prevStatsRef = useRef({ energy: DEFAULT_PERSONA.energy, stress: DEFAULT_PERSONA.stress });
+
+  // Custom toast listener
+  useEffect(() => {
+    const handleToastEvent = (e: any) => {
+      const { title, message, type } = e.detail;
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((prev) => [...prev, { id, title, message, type }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 4000);
+    };
+
+    window.addEventListener("app-toast" as any, handleToastEvent);
+    return () => {
+      window.removeEventListener("app-toast" as any, handleToastEvent);
+    };
+  }, []);
+
+  // Monitor stamina (energy) drops and pressure (stress) increases
+  useEffect(() => {
+    if (!hasStarted) {
+      prevStatsRef.current = { energy: persona.energy, stress: persona.stress };
+      return;
+    }
+    const prev = prevStatsRef.current;
+    const currentEnergy = persona.energy;
+    const currentStress = persona.stress;
+
+    if (currentEnergy < prev.energy) {
+      const diff = prev.energy - currentEnergy;
+      if (currentEnergy <= 25) {
+        triggerToast("🔋 体力告急！", `体力下挫 ${diff}%（当前仅剩 ${currentEnergy}%），面临红线疲劳风险，请速速休息！`, "error");
+      } else {
+        triggerToast("⚡ 体力消耗", `执行行程，体力消耗 ${diff}%（剩余 ${currentEnergy}%）`, "warning");
+      }
+    }
+
+    if (currentStress > prev.stress) {
+      const diff = currentStress - prev.stress;
+      if (currentStress >= 80) {
+        triggerToast("⚠️ 压力过载！", `压力上升了 ${diff}%，当前高达 ${currentStress}%！容易触发非理性行为，请立刻解压！`, "error");
+      } else {
+        triggerToast("📈 压力飙升", `心理压力增加 ${diff}%（当前 ${currentStress}%）`, "info");
+      }
+    }
+
+    prevStatsRef.current = { energy: currentEnergy, stress: currentStress };
+  }, [persona.energy, persona.stress, hasStarted]);
+
+  const activeTheme = themeStyles[ipadWallpaper] || themeStyles["cosmic"];
+
   
   // Dynamic system simulation logs
   const [systemLogs, setSystemLogs] = useState<string[]>([
@@ -799,6 +941,7 @@ ${contact.summary || "无"}`;
     setEventOutcomeText(outcome);
     triggerAutoSave(p, teammates);
     handleAddSystemLog(`事件："${activeEvent?.title}" 已做出决策理。影响值：人气(${popEff}) / 压力(${stressEff})`);
+    triggerToast("✨ 决断完成", `成功应对事件: "${activeEvent?.title ?? "突发状况"}"`, "success");
   };
 
   return (
@@ -810,6 +953,43 @@ ${contact.summary || "无"}`;
       ipadWallpaper === "cherry" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-950/40 via-stone-950 to-purple-950/30" :
       "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-blue-950/30"
     } text-slate-100 flex items-center justify-center`}>
+      
+      {/* Global Toast System Floating Container */}
+      <div id="global-toast-portal" className="fixed top-6 right-6 z-[99999] flex flex-col gap-3 w-full max-w-sm pointer-events-none select-none">
+        <AnimatePresence>
+          {toasts.map((toast) => (
+            <motion.div
+              key={toast.id}
+              initial={{ opacity: 0, y: -20, scale: 0.9, x: 20 }}
+              animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.9, x: 30, transition: { duration: 0.2 } }}
+              className={`pointer-events-auto w-full p-4.5 rounded-2xl border backdrop-blur-md shadow-[0_10px_30px_-5px_rgba(0,0,0,0.5)] flex items-start gap-3 transition-colors duration-300 ${
+                toast.type === "success" ? "bg-emerald-950/85 border-emerald-500/30 text-emerald-100 shadow-emerald-950/25" :
+                toast.type === "error" ? "bg-rose-950/85 border-rose-500/30 text-rose-100 shadow-rose-950/25" :
+                toast.type === "warning" ? "bg-amber-950/85 border-amber-500/30 text-amber-100 shadow-amber-950/25" :
+                "bg-slate-900/95 border-indigo-500/30 text-indigo-100 shadow-indigo-950/25"
+              }`}
+            >
+              {toast.type === "success" && <CheckCircle2 className="w-5.5 h-5.5 text-emerald-400 shrink-0 mt-0.5 animate-bounce" />}
+              {toast.type === "error" && <ShieldAlert className="w-5.5 h-5.5 text-rose-400 shrink-0 mt-0.5 animate-pulse" />}
+              {toast.type === "warning" && <AlertCircle className="w-5.5 h-5.5 text-amber-400 shrink-0 mt-0.5 animate-pulse" />}
+              {toast.type === "info" && <Sparkles className="w-5.5 h-5.5 text-indigo-400 shrink-0 mt-0.5 animate-spin duration-3000" />}
+
+              <div className="flex-1 min-w-0 text-left">
+                <h4 className="font-bold text-sm leading-tight mb-1">{toast.title}</h4>
+                <p className="text-xs text-slate-350 leading-normal">{toast.message}</p>
+              </div>
+
+              <button
+                onClick={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))}
+                className="text-slate-450 hover:text-white transition-colors cursor-pointer text-xs font-bold leading-none p-1 shrink-0"
+              >
+                ✕
+              </button>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+      </div>
       
       {/* Cinematic Ambient Ambient Glow Orbs */}
       <div className={`absolute top-[10%] left-[5%] w-[350px] h-[350px] rounded-full mix-blend-screen filter blur-[120px] opacity-[0.22] animate-pulse duration-[6000ms] pointer-events-none transition-all duration-1000 ${
@@ -965,8 +1145,8 @@ ${contact.summary || "无"}`;
                     </div>
                   </div>
 
-                  <div className="bg-slate-900/80 p-2.5 rounded-xl border border-white/5">
-                    <span className="text-purple-300 block font-bold text-[11px] mb-1">Idol Overview</span>
+                  <div className={`p-2.5 rounded-xl border border-white/5 transition-all duration-500 ${activeTheme.sideCardBg_1}`}>
+                    <span className={`block font-bold text-[11px] mb-1 transition-all ${activeTheme.textAccent}`}>Idol Overview</span>
                     <p className="text-[10px] leading-relaxed text-slate-400">
                       舞台名: <strong className="text-white">{persona.stageName}</strong><br />
                       公司: {persona.company.split(" ")[0]} ({persona.companySplit})<br />
@@ -977,7 +1157,7 @@ ${contact.summary || "无"}`;
                   <div className="space-y-1.5 pt-1 border-t border-white/5">
                     <button
                       onClick={() => { setConfirmAction("new_game"); setIsControlCenterOpen(false); }}
-                      className="w-full py-1.5 px-2 bg-purple-600/30 hover:bg-purple-600 text-purple-200 hover:text-white rounded text-center transition-all cursor-pointer font-bold flex items-center justify-center gap-1.5"
+                      className={`w-full py-1.5 px-2 ${activeTheme.accentBtn} rounded text-center transition-all cursor-pointer font-bold flex items-center justify-center gap-1.5`}
                     >
                       <RefreshCw className="w-3.5 h-3.5" /> 🔁 开启新神颜档 (New Game)
                     </button>
@@ -1005,18 +1185,18 @@ ${contact.summary || "无"}`;
             <div id="ipad-main-screen" className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
               
               {/* STATUS BAR DRAWER METERS (Requirement 11, 12, 13) */}
-              <div id="quick-side-meters" className="w-full md:w-[220px] bg-slate-950/85 border-b md:border-b-0 md:border-r border-white/5 p-4 flex flex-col justify-between shrink-0 select-none overflow-y-auto">
+              <div id="quick-side-meters" className={`w-full md:w-[220px] ${activeTheme.sideBg} border-b md:border-b-0 md:border-r border-white/5 p-4 flex flex-col justify-between shrink-0 select-none overflow-y-auto transition-all duration-500`}>
                 <div className="space-y-4 flex-1">
                   
                   {/* Persona Bio Badge */}
-                  <div className="p-3 bg-gradient-to-br from-indigo-950/40 via-slate-900 to-black border border-white/5 rounded-2xl relative shadow-md">
+                  <div className={`p-3 ${activeTheme.sideCardBg_2} rounded-2xl relative shadow-md transition-all duration-500`}>
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-xs font-bold shrink-0 border border-purple-500/35 shadow animate-pulse">
                         {persona.stageName.substring(0, 2)}
                       </div>
                       <div className="min-w-0">
                         <span className="text-xs font-bold text-slate-100 truncate block">{persona.stageName}</span>
-                        <span className="text-[8px] font-mono text-slate-450 block uppercase text-purple-300">★ {persona.mbti}</span>
+                        <span className={`text-[8px] font-mono text-slate-450 block uppercase ${activeTheme.textAccent}`}>★ {persona.mbti}</span>
                       </div>
                     </div>
                     
@@ -1026,10 +1206,10 @@ ${contact.summary || "无"}`;
                   </div>
 
                   {/* Detailed Profile Specifications */}
-                  <div className="p-2.5 bg-slate-950/70 border border-white/5 rounded-xl space-y-1 text-[10px] text-slate-350">
+                  <div className={`p-2.5 ${activeTheme.sideCardBg_2} rounded-xl space-y-1 text-[10px] text-slate-350 transition-all duration-500`}>
                     <div className="flex justify-between border-b border-white/5 pb-1 mb-1">
                       <span className="text-[8px] text-slate-400 uppercase font-mono font-bold">🔍 详实身份档案</span>
-                      <span className="text-[8px] bg-indigo-950/50 px-1 py-0.2 rounded text-indigo-300 font-mono font-bold block">{persona.bloodType || "O型"}</span>
+                      <span className={`text-[8px] px-1 py-0.2 rounded font-mono font-bold block ${activeTheme.badgeAccent}`}>{persona.bloodType || "O型"}</span>
                     </div>
                     <div className="space-y-1 leading-tight">
                       <div>
@@ -1042,7 +1222,7 @@ ${contact.summary || "无"}`;
                       </div>
                     </div>
                     {persona.isMixed && (
-                      <div className="pt-1 border-t border-white/5 flex justify-between text-[8px] text-purple-300">
+                      <div className={`pt-1 border-t border-white/5 flex justify-between text-[8px] ${activeTheme.textAccent}`}>
                         <span>🧬 混血世家:</span>
                         <strong>{persona.mixedCountries || "中韩混血"}</strong>
                       </div>
@@ -1115,7 +1295,7 @@ ${contact.summary || "无"}`;
                   </div>
 
                   {/* Teammates or Sibling Relationship Favorability status (Requirement 13) */}
-                  <div className="p-2.5 bg-slate-900 border border-white/5 rounded-xl">
+                  <div className={`p-2.5 ${activeTheme.sideCardBg_1} rounded-xl transition-all duration-500`}>
                     <span className="text-[9px] block text-slate-400 uppercase font-mono mb-1">团队主管与成员关系度</span>
                     <div className="space-y-1 text-[10px] text-slate-300">
                       <div className="flex justify-between">
@@ -1139,7 +1319,7 @@ ${contact.summary || "无"}`;
               </div>
 
               {/* DYNAMIC APP GRID ROUTING AREA */}
-              <div className="flex-1 flex flex-col justify-between min-w-0 bg-[#0e111a]/45 relative">
+              <div className={`flex-1 flex flex-col justify-between min-w-0 ${activeTheme.activeAppContainerBg} relative transition-all duration-500`}>
                 
                 {/* Dynamic App content display canvases */}
                 <div className="flex-1 p-4 md:p-6 overflow-hidden">

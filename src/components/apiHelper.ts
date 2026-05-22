@@ -275,3 +275,11 @@ export async function safeFetch(input: any, init?: any): Promise<Response> {
   }
   return originalFetch.call(window, input, init);
 }
+
+export function triggerToast(title: string, message: string, type: "info" | "success" | "warning" | "error" = "info") {
+  if (typeof window !== "undefined") {
+    const event = new CustomEvent("app-toast", { detail: { title, message, type } });
+    window.dispatchEvent(event);
+  }
+}
+
