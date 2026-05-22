@@ -1,0 +1,1002 @@
+import { useState, useEffect } from "react";
+import { IdolPersona, SimulatedTeammate } from "../types";
+import { generateRandomTeammates, generateCoreStaff } from "../mockData";
+import { Sparkles, ArrowRight, User, Star, Briefcase, Smile, ShieldAlert, Eye, Heart } from "lucide-react";
+
+interface SetupProps {
+  onComplete: (persona: IdolPersona, teammates: SimulatedTeammate[]) => void;
+}
+
+// Utility to calculate constellation/zodiac based on date
+function calculateZodiac(dateStr: string): string {
+  if (!dateStr) return "魔羯座";
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return "魔羯座";
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (isNaN(month) || isNaN(day)) return "魔羯座";
+
+  const zodiacs = ["摩羯座", "水瓶座", "双鱼座", "白羊座", "金牛座", "双子座", "巨蟹座", "狮子座", "处女座", "天秤座", "天蝎座", "射手座", "摩羯座"];
+  const bounds = [20, 19, 21, 20, 21, 22, 23, 23, 23, 23, 22, 22];
+  return day < bounds[month - 1] ? zodiacs[month - 1] : zodiacs[month];
+}
+
+export default function IdolProfileSetup({ onComplete }: SetupProps) {
+  const [step, setStep] = useState(1);
+  const [name, setName] = useState("金智敏");
+  const [stageName, setStageName] = useState("JIMIN");
+  const [gender, setGender] = useState<"female" | "male">("female");
+  const [style, setStyle] = useState<"solo" | "group">("group");
+  const [groupName, setGroupName] = useState("ECLIPSE");
+  const [roleInGroup, setRoleInGroup] = useState("队长 & 主唱 & 门面担当");
+  const [hairStyle, setHairStyle] = useState("层次狼尾鲻鱼头 (Wolf Cut)");
+  const [hairColor, setHairColor] = useState("午夜深海蓝黑");
+  const [mbti, setMbti] = useState("ENFJ");
+  const [conceptTheme, setConceptTheme] = useState("Chic Hip-hop Crush (街头酷炫飒爽风)");
+  const [company, setCompany] = useState("Aether Label (三大厂牌旗下 - 待遇高，抽成9:1)");
+  const [vibeText, setVibeText] = useState(
+    "自带清冷慵懒的面部视觉，跳舞时节奏把控极其犀利，眼神极具野心与侵略感。"
+  );
+
+  // New character stats to resolve Criterion 5
+  const [startType, setStartType] = useState<"trainee" | "idol">("trainee");
+  const [hasLover, setHasLover] = useState<boolean>(false);
+  const [loverName, setLoverName] = useState<string>("同僚大势男团Center/韩胜宇");
+  const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
+  const [birthday, setBirthday] = useState("2006-11-23");
+  const [zodiac, setZodiac] = useState("射手座");
+  const [bloodType, setBloodType] = useState("O型");
+  const [specificNationality, setSpecificNationality] = useState("韩国首尔特别市江南区");
+  const [isMixed, setIsMixed] = useState(false);
+  const [mixedCountries, setMixedCountries] = useState("中/韩 (Sino-Korean)");
+
+  // Eye shape, pupil color, nose shape
+  const [eyeShape, setEyeShape] = useState("瑞凤眼 (清冷俊雅)");
+  const [eyeColor, setEyeColor] = useState("琥珀浅晶茶棕");
+  const [noseShape, setNoseShape] = useState("直挺悬胆鼻 (经典立体)");
+
+  // Live Body physical parameters configuration (Criterion 5 custom values)
+  const [height, setHeight] = useState(167);
+  const [weight, setWeight] = useState(46.5);
+
+  // New customizable skills states (Vocal, Dance, Rap, Variety)
+  const [vocalSkill, setVocalSkill] = useState(30);
+  const [danceSkill, setDanceSkill] = useState(30);
+  const [rapSkill, setRapSkill] = useState(20);
+  const [varietySkill, setVarietySkill] = useState(20);
+
+  // Synchronize initial skill attributes with startType
+  useEffect(() => {
+    if (startType === "trainee") {
+      setVocalSkill(30);
+      setDanceSkill(30);
+      setRapSkill(20);
+      setVarietySkill(20);
+    } else {
+      setVocalSkill(70);
+      setDanceSkill(75);
+      setRapSkill(50);
+      setVarietySkill(55);
+    }
+  }, [startType]);
+
+  // Synchronize height and weight with gender swaps
+  useEffect(() => {
+    setHeight(gender === "female" ? 167 : 181);
+    setWeight(gender === "female" ? 46.5 : 62.0);
+  }, [gender]);
+
+  // Automatically calculate Zodiac when birthday modifications happen
+  useEffect(() => {
+    setZodiac(calculateZodiac(birthday));
+  }, [birthday]);
+
+  // Adjust default specific nationality based on general nationality
+  useEffect(() => {
+    if (nationality === "korean") {
+      setSpecificNationality("韩国首尔特别市江南区");
+    } else if (nationality === "chinese_green") {
+      setSpecificNationality("中国四川省成都市");
+    } else if (nationality === "japanese_green") {
+      setSpecificNationality("日本东京都涉谷区");
+    } else if (nationality === "thai_green") {
+      setSpecificNationality("泰国曼谷皇家红灯特区");
+    } else {
+      setSpecificNationality("加拿大温哥华列治文市");
+    }
+  }, [nationality]);
+
+  const nationalityLabels = {
+    korean: "🇰🇷 韩国本土国籍 (Native Korean)",
+    chinese_green: "🇨🇳 华裔外籍绿卡 (Chinese Green Card - 易受网暴排挤)",
+    japanese_green: "🇯🇵 日裔外籍绿卡 (Japanese Green Card - 历史或发言容易无限放大)",
+    thai_green: "🇹🇭 泰裔外籍绿卡 (Thai Green Card - 商业价值极高但分词少)",
+    western_green: "🇺🇸 欧美/澳洲绿卡 (Western/Aussie Green Card - 舞蹈好文化存在壁垒)"
+  };
+
+  const eyeShapeOptions = [
+    "瑞凤眼 (极其清美、高贵冷淡)",
+    "桃花眼 (含情脉脉、男女莫辨)",
+    "杏眼 (温润明亮、极致清爽感)",
+    "狐狸眼 (眼尾挑起、极具妖性侵略度)",
+    "下垂狗狗眼 (极致无辜、人畜无害)"
+  ];
+
+  const eyeColorOptions = [
+    "曜石浓墨黑 (深沉吸粉)",
+    "琥珀浅晶茶棕 (水润灵气)",
+    "迷雾深海极光蓝 (深邃贵气 - 混血儿完美契合)",
+    "波罗的海祖母绿 (神秘野性 - 极罕见瞳色)",
+    "迷失红茶红棕 (神秘混血暖色)"
+  ];
+
+  const noseShapeOptions = [
+    "直挺悬胆鼻 (传统精雕神颜模板)",
+    "圆润小翘鼻 (可爱自然亲切感)",
+    "驼峰艺术鼻 (高级厌世电影视觉)",
+    "欧式高陡立体盒鼻 (混血硬骨相级)"
+  ];
+
+  const bloodTypeOptions = ["A型", "B型", "AB型", "O型", "稀有Rh阴性 (熊猫血)"];
+
+  const rolesOptionsByGender = {
+    female: [
+      "队长 & 主舞 & 门面担当",
+      "主唱 & 高音担当",
+      "全能ACE & 舞台核心爆点",
+      "忙内 (Maknae) & 领舞 & 团宠",
+      "主Rapper & 酷女孩 (Girl Crush) 担当",
+    ],
+    male: [
+      "队长 & 主唱 & 创作制作人担当",
+      "领舞 & 副主唱 & 核心颜值担当",
+      "主Rapper & 酷盖ACE担当",
+      "忙内 (Maknae) & 主舞 & 热力团宠",
+      "门面 Center & 综艺才气爆笑担当",
+    ],
+  };
+
+  const hairStyleOptions = [
+    "层次狼尾鲻鱼头 (Wolf Cut)",
+    "慵懒长卷发配一刀切刘海",
+    "清爽高马尾配碎发",
+    "齐肩微翘高级感短直发",
+    "日系纯真少年感微碎卷发",
+    "复古中分长发配冷酷油头"
+  ];
+
+  const hairColorOptions = [
+    "午夜深海蓝黑",
+    "玫瑰雾粉配银丝挂耳染",
+    "极光冷白金发",
+    "甜酷焦糖栗子深棕",
+    "炽热熔岩野草莓红",
+    "清冷银灰独角兽梦幻色"
+  ];
+
+  const conceptualThemes = [
+    "Chic Hip-hop Crush (街头酷炫飒爽风)",
+    "High Teen (美式复古傲娇学院风)",
+    "Elegant Gothic (暗黑悲伤天鹅哥特风)",
+    "Aesthetic Bright Cute (氧气果汁元气风)",
+    "Traditional Neo-Oriental (经典国潮新中式)",
+    "Cyber Glitch (赛博朋克科幻科技感)"
+  ];
+
+  const companyLabels = [
+    "Aether Label (三大厂牌旗下 - 待遇高，抽成9:1)",
+    "YG-Style Studio (重金打造的街头厂牌 - 创作自由，抽成8:2)",
+    "Lighthouse Indie (自由随性的独立企划社 - 分成优厚7:3)",
+    "Planet-9 Network (擅长粉丝打卷的小社 - 抽成严苛，债务结算高)"
+  ];
+
+  const maxPool = startType === "trainee" ? 120 : 285;
+  const currentTotal = vocalSkill + danceSkill + rapSkill + varietySkill;
+  const remainingPoints = maxPool - currentTotal;
+
+  const adjustSkill = (skill: string, amount: number) => {
+    if (amount > 0 && remainingPoints <= 0) return; // no points left
+    const minVal = startType === "trainee" ? 10 : 30;
+    const maxVal = startType === "trainee" ? 60 : 99;
+    
+    if (skill === "vocal") {
+      setVocalSkill(prev => Math.max(minVal, Math.min(maxVal, prev + amount)));
+    } else if (skill === "dance") {
+      setDanceSkill(prev => Math.max(minVal, Math.min(maxVal, prev + amount)));
+    } else if (skill === "rap") {
+      setRapSkill(prev => Math.max(minVal, Math.min(maxVal, prev + amount)));
+    } else if (skill === "variety") {
+      setVarietySkill(prev => Math.max(minVal, Math.min(maxVal, prev + amount)));
+    }
+  };
+
+  const getRecommendedRole = () => {
+    const skills = [
+      { label: "主唱 & 高音担当", value: vocalSkill },
+      { label: "全能ACE & 舞台核心爆点", value: danceSkill },
+      { label: "主Rapper & 酷女孩 (Girl Crush) 担当", value: rapSkill },
+      { label: "忙内 (Maknae) & 领舞 & 团宠", value: varietySkill }
+    ];
+    // For male, map accordingly:
+    const maleSkills = [
+      { label: "队长 & 主唱 & 创作制作人担当", value: vocalSkill },
+      { label: "忙内 (Maknae) & 主舞 & 热力团宠", value: danceSkill },
+      { label: "主Rapper & 酷盖ACE担当", value: rapSkill },
+      { label: "门面 Center & 综艺才气爆笑担当", value: varietySkill }
+    ];
+    const targetArr = gender === "female" ? skills : maleSkills;
+    // Sort descending by score
+    const sorted = [...targetArr].sort((a, b) => b.value - a.value);
+    return sorted[0].label;
+  };
+
+  const generateVibeText = () => {
+    const isGirl = gender === "female";
+    let text = "";
+    if (conceptTheme.includes("High Teen")) {
+      text = isGirl 
+        ? "自带清冷而娇贵的傲慢千金脸，跳舞时动作爆发力极强，是当之无愧的舞台绝对核心。"
+        : "少年感扑面而来，具有极高的运动型美男骨相，笑容爽朗治愈，极具大众男友吸引力。";
+    } else if (conceptTheme.includes("Gothic")) {
+      text = isGirl
+        ? "眼底闪烁着厌世冰冷，宛如黑夜里的清冷黑天鹅，直拍打歌极度高贵神秘。"
+        : "散发着吸血鬼公爵般的暗黑高贵。眼线勾魂，清冷不可方物，神级控场。";
+    } else if (conceptTheme.includes("Crush") || conceptTheme.includes("Cyber")) {
+      text = "眼神犀利凶狠，骨相开阔立体，无论是重金属唱腔还是Rap弹射都得心应手，天生帅气领袖。";
+    } else {
+      text = "充满高亲和力和元气果汁感。微笑时眼神明亮有感染力，最擅长在签售会上给大面积暖心饭撒。";
+    }
+    setVibeText(text);
+  };
+
+  const handleNext = () => {
+    if (step === 2) {
+      generateVibeText();
+    }
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
+      // Create dynamically generated teammates & default profile entries
+      let generatedTeammates = style === "group" ? generateRandomTeammates(gender, 4) : [];
+      
+      const isTrainee = startType === "trainee";
+
+      // Align individual teammate favorability scores to the starting stats
+      generatedTeammates = generatedTeammates.map(t => ({
+        ...t,
+        favorability: isTrainee ? 10 : 42
+      }));
+      
+      const startPopularity = isTrainee ? 0 : (style === "solo" ? 50 : 65);
+      const startReputation = isTrainee ? 40 : 70;
+      const startFans = isTrainee ? 50 : (style === "solo" ? 750000 : 1800000);
+      const startAlbumSales = isTrainee ? 0 : (style === "solo" ? 35000 : 190000);
+      const startMoney = isTrainee ? 10 : 1200; // trainees start nearly empty
+      const debt = isTrainee ? 15000 : 1200; // ₩1.5 Billion KRW debt for trainees
+
+      const personMBTI = mbti.toUpperCase() || "ENFJ";
+      const actualSplit = company.includes("7:3") ? "7:3" : (company.includes("8:2") ? "8:2" : "9:1");
+
+      const startingPersona: IdolPersona = {
+        name,
+        stageName: stageName.toUpperCase() || name,
+        gender,
+        style,
+        groupName: style === "group" ? groupName : "独立Solo客制人设",
+        roleInGroup: style === "group" ? roleInGroup : "独立全能唱作歌手",
+        hairStyle,
+        hairColor,
+        mbti: personMBTI,
+        conceptTheme,
+        company,
+        vibeText,
+        
+        startType,
+        nationality,
+        
+        // Detailed choices - Criterion 5
+        birthday,
+        zodiac,
+        bloodType,
+        specificNationality,
+        isMixed,
+        mixedCountries: isMixed ? mixedCountries : "",
+        eyeShape,
+        eyeColor,
+        noseShape,
+
+        // High requirements, customizable Kpop model standard
+        height: height,
+        weight: weight,
+        skinCondition: "perfect",
+        vocalSkill: vocalSkill,
+        danceSkill: danceSkill,
+        rapSkill: rapSkill,
+        varietySkill: varietySkill,
+        stress: isTrainee ? 15 : 40,
+        
+        traineeDebt: debt,
+        companySplit: actualSplit,
+        
+        // Starts with specialized K-Pop industry favorability configs
+        managerFavorability: isTrainee ? 12 : 35, 
+        teammatesFavorability: isTrainee ? 10 : 42, 
+        ceoFavorability: isTrainee ? 8 : 30, 
+        pdFavorability: isTrainee ? 15 : 45, 
+        
+        popularity: startPopularity,
+        reputation: startReputation,
+        energy: 100,
+        fansCount: startFans,
+        albumSales: startAlbumSales,
+        money: startMoney,
+        dayNumber: 1,
+
+        hasLover: isTrainee ? false : hasLover,
+        loverName: isTrainee ? "" : (hasLover ? loverName : ""),
+        relationshipStatus: isTrainee ? "single" : (hasLover ? "dating" : "single"),
+        scandalPrejudice: isTrainee ? 5 : (hasLover ? 35 : 8),
+
+        fansDistribution: isTrainee ? {
+          otFans: 70,
+          soloFans: 15,
+          cpFans: 5,
+          antiFans: 10
+        } : {
+          otFans: 45,
+          soloFans: 30,
+          cpFans: 15,
+          antiFans: 10
+        }
+      };
+
+      onComplete(startingPersona, generatedTeammates);
+    }
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
+  return (
+    <div id="idol-profile-setup" className="fixed inset-0 z-50 bg-[#06080e] flex items-center justify-center p-2 md:p-6 overflow-y-auto font-sans">
+      <div className="absolute inset-0 bg-radial-gradient from-indigo-950/20 via-transparent to-transparent pointer-events-none" />
+      
+      {/* Modern High-End Glass Container */}
+      <div className="w-full max-w-5xl bg-[#0d121c]/90 text-white rounded-[32px] overflow-hidden shadow-2xl border border-white/10 flex flex-col md:flex-row relative backdrop-blur-xl">
+        
+        {/* Left Interactive Cosmic Rails */}
+        <div className="md:w-[350px] bg-gradient-to-b from-[#111726] via-[#090d16] to-[#04060b] p-6 md:p-10 flex flex-col justify-between border-r border-white/5 shrink-0 relative overflow-hidden">
+          <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-full text-[10px] text-indigo-300 font-mono mb-6">
+              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+              IDOL PAD PRO V2.5
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-pink-300 bg-clip-text text-transparent leading-none">
+              IdolPad™ OS
+            </h1>
+            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
+              业界首个高保真深度爱豆企划模拟系统。
+              创建最真实的爱豆履历，从江南皮肤科敷麻加练到体验血雨腥风的绿卡身份危机与零结算财务折磨！
+            </p>
+          </div>
+
+          <div className="my-8 md:my-0 space-y-6 relative z-10">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex items-center gap-4 transition-all">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${step === s ? 'bg-gradient-to-br from-purple-600 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/30' : 'bg-white/5 text-slate-400 border-white/10'}`}>
+                  {s}
+                </div>
+                <div className="flex-1">
+                  <p className={`text-[11px] uppercase font-mono tracking-wider ${step === s ? "text-purple-400 font-bold" : "text-slate-500"}`}>
+                    STAGE_0{s}
+                  </p>
+                  <p className={`text-xs ${step === s ? 'text-white font-semibold' : 'text-slate-400'}`}>
+                    {s === 1 ? "基本个人档案与出生命格" : s === 2 ? "面部精雕与回归画卷" : "选聘娱乐社与最终确人"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-[10px] text-slate-650 font-mono border-t border-white/5 pt-4 mt-8 md:mt-0">
+            © K-POP REALTIME STRATEGY OS SIMULATOR
+          </div>
+        </div>
+
+        {/* Right Detail parameters */}
+        <div className="flex-1 p-6 md:p-10 flex flex-col justify-between min-h-[560px] bg-slate-900/20">
+          <div>
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                    <User className="text-purple-400 w-6 h-6" /> 1. 建立爱豆骨相基本履历与出生命格
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    系统为您提供高自由度的自定义基础！拒绝死板选项，制定真实的生日、血型和高自由度本姓名片。
+                  </p>
+                </div>
+
+                {/* Name, StageName inputs and Genders */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">练习生本名 (Korean Name)</label>
+                    <input 
+                      type="text" 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-purple-500 transition-all font-semibold font-sans text-white focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">舞台艺名 (Stage Name)</label>
+                    <input 
+                      type="text" 
+                      value={stageName} 
+                      onChange={(e) => setStageName(e.target.value)}
+                      className="w-full bg-slate-950/60 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-purple-500 transition-all uppercase font-bold tracking-wider font-sans text-white focus:ring-1 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-2 uppercase font-mono">本位性别 (Gender Identity)</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button 
+                        type="button" onClick={() => setGender("female")}
+                        className={`py-2 text-xs rounded-xl border font-bold transition-all ${gender === "female" ? "bg-purple-600/20 border-purple-500 text-purple-200" : "bg-slate-950/40 border-white/5 text-slate-400 hover:bg-slate-950/80"}`}
+                      >
+                        🚺 女爱豆
+                      </button>
+                      <button 
+                        type="button" onClick={() => setGender("male")}
+                        className={`py-2 text-xs rounded-xl border font-bold transition-all ${gender === "male" ? "bg-indigo-600/20 border-indigo-500 text-indigo-400" : "bg-slate-950/40 border-white/5 text-slate-400 hover:bg-slate-950/80"}`}
+                      >
+                        🚹 男爱豆
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Birthday Cosmos, Auto Zodiac & Blood types */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">生辰寿诞 (Birth Date)</label>
+                    <input 
+                      type="date" 
+                      value={birthday} 
+                      onChange={(e) => setBirthday(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 transition-all text-white font-mono"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">系统测算星盘 (Zodiac Star)</label>
+                    <div className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs font-bold text-yellow-300 font-mono flex items-center gap-1.5 shadow-inner">
+                      🌌 自动解析占星: <span className="text-white text-sm underline">{zodiac}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">生化血型特征 (Blood Type)</label>
+                    <select 
+                      value={bloodType}
+                      onChange={(e) => setBloodType(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 font-medium text-slate-200"
+                    >
+                      {bloodTypeOptions.map((opt) => (
+                        <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Customizable Physical Metrics (Criterion 5) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/30 p-3.5 rounded-2xl border border-white/5">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1 font-mono uppercase">📏 定制身高 (Custom Height)</label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        min="140"
+                        max="210"
+                        id="setup-height-input"
+                        value={height} 
+                        onChange={(e) => setHeight(parseInt(e.target.value) || 165)}
+                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-purple-500 font-bold"
+                      />
+                      <span className="text-xs text-slate-400">cm</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1 font-mono uppercase">⚖️ 定制初始体重 (Custom Initial Weight)</label>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="number" 
+                        step="0.1"
+                        min="30"
+                        max="120"
+                        id="setup-weight-input"
+                        value={weight} 
+                        onChange={(e) => setWeight(parseFloat(e.target.value) || 45)}
+                        className="w-full bg-slate-950 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-purple-500 font-bold"
+                      />
+                      <span className="text-xs text-slate-400">kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Career Starting mode and Layout mode */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-1.5 text-xs col-span-1">
+                    <span className="block font-semibold text-slate-400 uppercase font-mono">演艺生涯起点选择 (Career Entrance)</span>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <button 
+                        type="button" onClick={() => setStartType("trainee")}
+                        className={`p-3 rounded-xl border text-left transition-all ${startType === "trainee" ? "bg-purple-950/30 border-purple-500 text-white shadow" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                      >
+                        <p className="font-bold text-xs">👶 练习生模式</p>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">0粉丝起步，背负 ₩1.5亿 (一亿五千万) 的练习生债务，前几年拼命争取一位！</p>
+                      </button>
+                      <button 
+                        type="button" onClick={() => setStartType("idol")}
+                        className={`p-3 rounded-xl border text-left transition-all ${startType === "idol" ? "bg-pink-950/30 border-pink-500 text-white shadow" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                      >
+                        <p className="font-bold text-xs">💎 成型明星模式</p>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">自带初始上万粉丝，债务基本还清，属性顶尖，享受奢华时尚通告。</p>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5 text-xs col-span-1">
+                    <span className="block font-semibold text-slate-400 uppercase font-mono">偶像出道构架方式 (Promotion Structure)</span>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <button 
+                        type="button" onClick={() => setStyle("solo")}
+                        className={`p-3 rounded-xl border text-left transition-all ${style === "solo" ? "bg-indigo-950/30 border-indigo-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                      >
+                        <p className="font-bold text-xs">🎙️ 独立Solo歌手</p>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">独享全部舞台及分词高规格待遇，但宣发预算较小抗网暴难度高。</p>
+                      </button>
+                      <button 
+                        type="button" onClick={() => setStyle("group")}
+                        className={`p-3 rounded-xl border text-left transition-all ${style === "group" ? "bg-emerald-950/30 border-emerald-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                      >
+                        <p className="font-bold text-xs">👯‍♂️ 5人高精度组合</p>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">自动随机生成4位各有高光反差的宿怨队友，暗潮涌动争抢核心Center！</p>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {startType === "idol" && (
+                  <div className="p-3.5 rounded-2xl bg-pink-950/20 border border-pink-500/25 space-y-2 mt-2 animate-in fade-in slide-in-from-top-1.5 col-span-1 sm:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-pink-400">💞 地下恋爱秘密选择 (Secret Relationship Setup)</span>
+                      <span className="bg-pink-500/20 text-pink-300 font-mono text-[8px] px-1.5 py-0.5 rounded border border-pink-500/20">偶像隐藏玩法</span>
+                    </div>
+                    <p className="text-[10px] text-slate-300 leading-normal">
+                      作为成型偶像，你是否在出道之初就已经瞒着公司、粉丝和站姐偷偷谈恋爱？
+                      如果选择<strong>“拥有地下恋人”</strong>，你必须时刻隐藏约会痕迹，严厉防备D社跟拍与爆料。恋情一旦被捅破，必须考验队友和社长的信任，决定你会不会被迫公开分手或狼狈退团！
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 mt-1.5">
+                      <button 
+                        type="button"
+                        onClick={() => setHasLover(false)}
+                        className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${!hasLover ? "bg-[#1f1922] border-pink-500 text-pink-400 shadow-md" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                      >
+                        🙅‍♀️ 专注于事业 (单身守戒派)
+                      </button>
+                      <button 
+                        type="button"
+                        className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${hasLover ? "bg-pink-950/40 border-pink-500 text-pink-300 shadow-lg" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                        onClick={() => setHasLover(true)}
+                      >
+                        💖 偷偷恋爱中 (携带秘密情人)
+                      </button>
+                    </div>
+
+                    {hasLover && (
+                      <div className="space-y-1 mt-2 bg-slate-950/50 p-2.5 rounded-lg border border-pink-500/10">
+                        <label className="text-[10px] text-pink-300 font-bold block">选择您的地下交往对象：</label>
+                        <select 
+                          value={loverName} 
+                          onChange={(e) => setLoverName(e.target.value)}
+                          className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
+                        >
+                          <option value="顶流行星男团 Center - 姜在赫">🌟 竞品顶流程星男团 Center - 姜在赫 (大势顶流)</option>
+                          <option value="同厂牌高音SOLO天后 - 申美延">👑 同厂牌高音Solo天后 - 申美延 (实力派同门)</option>
+                          <option value="忠武路大牌青年男演员 - 崔胜贤">🎬 忠武路大牌青年人气男演员 - 崔胜贤 (影坛新星)</option>
+                          <option value="队内御用顶级先锋编舞总监 - JAY">💃 队内御用顶级先锋编舞总监 - JAY (舞室情缘)</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {style === "group" && (
+                  <div className="animate-in fade-in slide-in-from-top-1.5">
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">组合团体企划代号 (Group Project Code)</label>
+                    <input 
+                      type="text" 
+                      value={groupName} 
+                      onChange={(e) => setGroupName(e.target.value)}
+                      placeholder="e.g., ECLIPSE, NEWWAVE"
+                      className="w-full bg-slate-955/70 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-purple-500 font-bold uppercase tracking-widest text-white font-mono"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-5">
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-2.5">
+                    <Star className="text-yellow-400 w-6 h-6" /> 2. 绿卡国境困局、混血设计与面部美学精雕
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-1">
+                    自定义具体国籍与眼型、瞳色、鼻部曲线。这些参数会重构您在公共社交平媒中的争议关注与好感度。
+                  </p>
+                </div>
+
+                {/* 国籍 details with specific Green Card Dilemma simulation preview */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-2xl border border-white/5">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-350 mb-1 uppercase font-mono">国籍标签定位 (Nationality Standard)</label>
+                      <select 
+                        value={nationality}
+                        onChange={(e) => setNationality(e.target.value as any)}
+                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 text-slate-100 font-medium"
+                      >
+                        {Object.entries(nationalityLabels).map(([key, value]) => (
+                          <option className="bg-[#0b0e17] text-white" key={key} value={key}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-350 mb-1 uppercase font-mono">详细地缘国籍 (Specific Origin)</label>
+                      <input 
+                        type="text"
+                        value={specificNationality}
+                        onChange={(e) => setSpecificNationality(e.target.value)}
+                        placeholder="e.g. 中国辽宁省沈阳市"
+                        className="w-full bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 text-white font-medium"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Biracial Mixed configuration - Criterion 5 */}
+                  <div className="space-y-3.5 border-l border-white/5 pl-0 md:pl-4">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-350 mb-1.5 uppercase font-mono">跨国混血谱系 (Biracial/Mixed Heritage)</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button" onClick={() => setIsMixed(false)}
+                          className={`py-1.5 text-xs rounded-lg border font-bold transition-all ${!isMixed ? "bg-indigo-900/10 border-indigo-500 text-indigo-300" : "bg-slate-905 border-white/5 text-slate-500"}`}
+                        >
+                          ❌ 纯血血统
+                        </button>
+                        <button
+                          type="button" onClick={() => setIsMixed(true)}
+                          className={`py-1.5 text-xs rounded-lg border font-bold transition-all ${isMixed ? "bg-purple-900/10 border-purple-500 text-purple-300" : "bg-slate-905 border-white/5 text-slate-500"}`}
+                        >
+                          ✨ 多国混血
+                        </button>
+                      </div>
+                    </div>
+
+                    {isMixed && (
+                      <div className="animate-in fade-in slide-in-from-top-1">
+                        <label className="block text-[10px] font-semibold text-slate-350 mb-1 font-mono">具体混血亲代国家 (Mixed Countries)</label>
+                        <input 
+                          type="text"
+                          value={mixedCountries}
+                          onChange={(e) => setMixedCountries(e.target.value)}
+                          placeholder="e.g. 中韩/德韩混血 (German-Korean)"
+                          className="w-full bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 text-yellow-300 font-bold"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {nationality !== "korean" && (
+                  <div className="flex items-start gap-2 bg-red-950/20 border border-red-500/20 p-2.5 rounded-xl text-[10px] text-red-200 leading-relaxed animate-pulse">
+                    <ShieldAlert className="w-4 h-4 shrink-0 text-red-400 mt-0.5" />
+                    <span>
+                      ⚠️ <strong>绿卡风暴警报 (The Foreign Member Dilemma)</strong>: 
+                      外籍绿卡选手在南韩往往被有意克扣年末高赞镜头，签售会极易突发语言理解障碍挑唆，更有网暴黑粉长期拿放大镜挑刺“鞠躬角度不够90度”或“无爱国精神”等严酷审判，高好感度攻略难度倍增！
+                    </span>
+                  </div>
+                )}
+
+                {/* Highly requested refined facial options - Criterion 5 */}
+                <div className="bg-[#111622]/40 border border-white/5 p-4 rounded-2xl">
+                  <span className="block text-[11px] font-bold text-indigo-300 font-mono uppercase tracking-wide mb-3">
+                    📐 细节面相精雕面板 (Fine-Grained Facial Sculpting)
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">眼形细节精选 (Eye Shape)</label>
+                      <select 
+                        value={eyeShape}
+                        onChange={(e) => setEyeShape(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {eyeShapeOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">定制瞳色 (Eye Color / Pupils)</label>
+                      <select 
+                        value={eyeColor}
+                        onChange={(e) => setEyeColor(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {eyeColorOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">鼻部雕刻 (Nose Line Curve)</label>
+                      <select 
+                        value={noseShape}
+                        onChange={(e) => setNoseShape(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {noseShapeOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Traditional custom hairstyle details */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3.5">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">头发梳理样式</label>
+                    <select 
+                      value={hairStyle}
+                      onChange={(e) => setHairStyle(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    >
+                      {hairStyleOptions.map((opt) => (
+                        <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">定制发色</label>
+                    <select 
+                      value={hairColor}
+                      onChange={(e) => setHairColor(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 text-slate-200"
+                    >
+                      {hairColorOptions.map((opt) => (
+                        <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-400 mb-1">MBTI 生涯心性</label>
+                    <input 
+                      type="text" 
+                      value={mbti} 
+                      onChange={(e) => setMbti(e.target.value)}
+                      placeholder="e.g. ENFP, ENFJ"
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 text-center text-white font-mono uppercase font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Briefcase className="text-pink-400 w-5 h-5 animate-pulse" /> 3. 实力初审与娱乐经纪社签约
+                  </h2>
+                  <p className="text-[11px] text-slate-400">
+                    审阅并分配您的初始实力资质，系统将根据最终属性推荐你在团队中的担当名牌，您亦可依心意自主选择！
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-350 mb-1 uppercase font-mono">签约经纪公司 (Select Your Agency Label)</label>
+                      <select 
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 text-slate-100 font-medium font-sans"
+                      >
+                        {companyLabels.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Skill-point choice section */}
+                    <div className="bg-[#111622]/60 p-3 rounded-xl border border-white/5 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-indigo-300 font-mono uppercase tracking-wide flex items-center gap-1">
+                          ⚡ 实力属性加点 (Allocate talent points) 
+                        </span>
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${remainingPoints >= 0 ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30 animate-pulse' : 'bg-red-600/20 text-red-300 border border-red-500/30'}`}>
+                          余 {remainingPoints} 点
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5 flex flex-col justify-between">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400 text-[10px]">主唱实力 🎙️</span>
+                            <span className="font-mono font-bold text-purple-400">{vocalSkill}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <button type="button" onClick={() => adjustSkill("vocal", -5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">-</button>
+                            <span className="text-[9px] text-slate-500">5</span>
+                            <button type="button" onClick={() => adjustSkill("vocal", 5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">+</button>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5 flex flex-col justify-between">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400 text-[10px]">舞蹈实力 💃</span>
+                            <span className="font-mono font-bold text-emerald-400">{danceSkill}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <button type="button" onClick={() => adjustSkill("dance", -5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">-</button>
+                            <span className="text-[9px] text-slate-500">5</span>
+                            <button type="button" onClick={() => adjustSkill("dance", 5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">+</button>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5 flex flex-col justify-between">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400 text-[10px]">说唱实力 🎤</span>
+                            <span className="font-mono font-bold text-yellow-500">{rapSkill}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <button type="button" onClick={() => adjustSkill("rap", -5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">-</button>
+                            <span className="text-[9px] text-slate-500">5</span>
+                            <button type="button" onClick={() => adjustSkill("rap", 5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">+</button>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-950/40 p-2 rounded-lg border border-white/5 flex flex-col justify-between">
+                          <div className="flex items-center justify-between text-[11px]">
+                            <span className="text-slate-400 text-[10px]">综艺才气 🎭</span>
+                            <span className="font-mono font-bold text-pink-400">{varietySkill}</span>
+                          </div>
+                          <div className="flex items-center justify-between mt-1">
+                            <button type="button" onClick={() => adjustSkill("variety", -5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">-</button>
+                            <span className="text-[9px] text-slate-500">5</span>
+                            <button type="button" onClick={() => adjustSkill("variety", 5)} className="w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-xs text-slate-300 transition shrink-0">+</button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Recommend box */}
+                      <div className="bg-purple-950/30 p-2 border border-purple-500/20 rounded-lg flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-[9px] text-purple-300 font-semibold leading-none mb-1">🏅 依据数值推荐本位担当：</p>
+                          <p className="text-xs text-white font-bold">{getRecommendedRole()}</p>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setRoleInGroup(getRecommendedRole())}
+                          className="text-[10px] px-2.5 py-1 bg-purple-600/30 hover:bg-purple-600/60 active:scale-95 text-purple-100 border border-purple-400/30 rounded-lg font-bold transition font-sans"
+                        >
+                          应用推荐
+                        </button>
+                      </div>
+                    </div>
+
+                    {style === "group" && (
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-350 mb-1 uppercase font-mono">自主确定或更改队伍中的定位担当 (Group Position)</label>
+                        <div className="grid grid-cols-1 gap-1 max-h-[100px] overflow-y-auto pr-1">
+                          {rolesOptionsByGender[gender].map((role) => (
+                            <button
+                              key={role}
+                              type="button"
+                              onClick={() => setRoleInGroup(role)}
+                              className={`text-left px-3 py-1.5 text-xs rounded-xl border flex items-center justify-between transition-all ${roleInGroup === role ? "border-purple-500 bg-purple-500/10 text-white font-bold" : "border-white/5 bg-slate-950/40 text-slate-400 hover:bg-slate-950/80"}`}
+                            >
+                              <span>{role}</span>
+                              {roleInGroup === role ? (
+                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                              ) : role === getRecommendedRole() ? (
+                                <span className="text-[8px] text-purple-400 font-bold uppercase tracking-wider bg-purple-950/50 px-1 border border-purple-500/20 rounded">推荐</span>
+                              ) : null}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-[11px] font-semibold text-slate-350 mb-1">主打自叙氛围细节 (Character Bio vibe)</label>
+                      <textarea 
+                        rows={1}
+                        value={vibeText}
+                        onChange={(e) => setVibeText(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1 text-xs text-white focus:outline-none focus:border-purple-500 leading-normal"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="bg-[#121828]/55 border border-white/10 rounded-2xl p-4 flex flex-col justify-between shadow-lg">
+                    <div>
+                      <span className="text-xs font-bold text-yellow-400 font-mono uppercase tracking-widest flex items-center gap-1.5">
+                        <Sparkles className="w-4 h-4 text-yellow-300" />
+                        爱豆卡片预览 (Idol Summary)
+                      </span>
+                      
+                      <div className="mt-4 space-y-2 text-xs text-slate-200 font-sans leading-relaxed">
+                        <p>👤 <strong>姓名</strong>: {name} ({stageName}) — <span className="text-sky-300 font-bold uppercase">{gender === "female" ? "女爱豆" : "男爱豆"}</span></p>
+                        <p>⚖️ <strong>身姿骨相</strong>: 身高 {height} cm / 初始体重 {weight} kg</p>
+                        <p>🎂 <strong>生日星象</strong>: {birthday} / {zodiac} ({bloodType})</p>
+                        <p>🗺️ <strong>地缘与背景</strong>: {isMixed ? `【混血】${mixedCountries}` : "纯血本土"} | {specificNationality}</p>
+                        <p>👁️ <strong>外貌雕琢</strong>: {eyeShape} | 瞳色:{eyeColor} | 鼻型:{noseShape}</p>
+                        <p>💇 <strong>发型发色</strong>: {hairStyle} | {hairColor}</p>
+                        <p>🎭 <strong>主概念回归</strong>: {conceptTheme}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-purple-950/20 border border-purple-500/15 text-[10px] text-purple-300 p-2.5 rounded-xl leading-normal mt-3 flex items-start gap-1.5">
+                      <Smile className="w-4 h-4 shrink-0 text-purple-400 mt-0.5" />
+                      <span>
+                        团队好感度初始锁定为 <strong>从零开始的超度内讧地狱 5%-20%</strong>。由于好感数值极低，队友日常会冷淡不理人、经纪人冷血训话。准备去用行动捂热他们、或者把作风恶劣的内讧大喇叭说闲话孤立出局吧！
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-8 shrink-0">
+            {step > 1 ? (
+              <button
+                type="button"
+                onClick={handleBack}
+                className="px-5 py-2.5 text-xs text-slate-400 hover:text-white transition-all font-bold"
+              >
+                返回上一步
+              </button>
+            ) : (
+              <div />
+            )}
+
+            <button
+              type="button"
+              id="setup-complete-btn"
+              onClick={handleNext}
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-xs font-bold text-white rounded-xl shadow-lg shadow-purple-600/10 flex items-center gap-2 transition-all cursor-pointer active:scale-95"
+            >
+              {step === 3 ? "立即签署合同并进入练习室" : "继续，雕刻爱豆名帖"}
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}

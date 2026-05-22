@@ -1,0 +1,6 @@
+{
+  "name": "IdolPad",
+  "description": "A highly immersive, iPad-like lifestyle and interaction simulator designed specifically from a K-Pop Idol's perspective. Features KakaoTalk, Weverse, Bubble, TikTok, Xiaohongshu, custom schedules, detailed persona configuration, random industry events, and real-time fan sentiment analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
