@@ -273,7 +273,7 @@ export async function safeFetch(input: any, init?: any): Promise<Response> {
   if (!originalFetch) {
     throw new Error("No global fetch found in this environment.");
   }
-  return originalFetch.call(window, input, init);
+  return originalFetch(input, init);
 }
 
 export function triggerToast(title: string, message: string, type: "info" | "success" | "warning" | "error" = "info") {
