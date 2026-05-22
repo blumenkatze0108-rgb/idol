@@ -61,6 +61,11 @@ export interface IdolPersona {
   loverName?: string;
   relationshipStatus?: "single" | "dating" | "revealed" | "broken_up";
   scandalPrejudice?: number; // 0-100 (risk of popping up scandal)
+  loverGender?: "female" | "male";
+  loverAge?: "same_age" | "older" | "younger";
+  loverIdentity?: "non_celeb" | "celebrity";
+  loverMood?: number; // 0-100: Relationship stability/mood.
+  
   
   // Fans Distribution (Slowly changing, OT vs Solo vs CP vs Anti)
   fansDistribution?: {
@@ -209,4 +214,5 @@ export interface BackupData {
   customApiKey: string;
   customModel: string;
   customApiEndpoint: string;
+  fanLetters?: any[]; // Keep any or FanLetter here safely
 }

@@ -41,7 +41,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   // New character stats to resolve Criterion 5
   const [startType, setStartType] = useState<"trainee" | "idol">("trainee");
   const [hasLover, setHasLover] = useState<boolean>(false);
-  const [loverName, setLoverName] = useState<string>("同僚大势男团Center/韩胜宇");
+  const [loverName, setLoverName] = useState<string>("林舒阳");
+  const [loverGender, setLoverGender] = useState<"female" | "male">("male");
+  const [loverAge, setLoverAge] = useState<"same_age" | "older" | "younger">("same_age");
+  const [loverIdentity, setLoverIdentity] = useState<"non_celeb" | "celebrity">("non_celeb");
   const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
   const [birthday, setBirthday] = useState("2006-11-23");
   const [zodiac, setZodiac] = useState("射手座");
@@ -85,6 +88,18 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     setHeight(gender === "female" ? 167 : 181);
     setWeight(gender === "female" ? 46.5 : 62.0);
   }, [gender]);
+
+  // Adjust default lover details based on gender/identity swaps for convenience
+  useEffect(() => {
+    const oppGender = gender === "female" ? "male" : "female";
+    setLoverGender(oppGender);
+    
+    if (loverIdentity === "non_celeb") {
+      setLoverName(oppGender === "male" ? "林舒阳" : "韩智媛");
+    } else {
+      setLoverName(oppGender === "male" ? "姜在赫" : "申美延");
+    }
+  }, [gender, loverIdentity]);
 
   // Automatically calculate Zodiac when birthday modifications happen
   useEffect(() => {
@@ -336,6 +351,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
         loverName: isTrainee ? "" : (hasLover ? loverName : ""),
         relationshipStatus: isTrainee ? "single" : (hasLover ? "dating" : "single"),
         scandalPrejudice: isTrainee ? 5 : (hasLover ? 35 : 8),
+        loverGender: isTrainee ? undefined : (hasLover ? loverGender : undefined),
+        loverAge: isTrainee ? undefined : (hasLover ? loverAge : undefined),
+        loverIdentity: isTrainee ? undefined : (hasLover ? loverIdentity : undefined),
+        loverMood: isTrainee ? undefined : (hasLover ? 85 : undefined),
 
         fansDistribution: isTrainee ? {
           otFans: 70,
@@ -457,25 +476,6 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                       </button>
                     </div>
                   </div>
-                </div>
-
-                {/* Birthday Cosmos, Auto Zodiac & Blood types */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">生辰寿诞 (Birth Date)</label>
-                    <input 
-                      type="date" 
-                      value={birthday} 
-                      onChange={(e) => setBirthday(e.target.value)}
-                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-purple-500 transition-all text-white font-mono"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">系统测算星盘 (Zodiac Star)</label>
-                    <div className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-3 py-2 text-xs font-bold text-yellow-300 font-mono flex items-center gap-1.5 shadow-inner">
-                      🌌 自动解析占星: <span className="text-white text-sm underline">{zodiac}</span>
-                    </div>
-                  </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">生化血型特征 (Blood Type)</label>
                     <select 
@@ -491,7 +491,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                 </div>
 
                 {/* Customizable Physical Metrics (Criterion 5) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/30 p-3.5 rounded-2xl border border-white/5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/30 p-3.5 rounded-2xl border border-white/5 bg-slate-900/40">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-400 mb-1 font-mono uppercase">📏 定制身高 (Custom Height)</label>
                     <div className="flex items-center gap-2">
@@ -562,56 +562,127 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                         className={`p-3 rounded-xl border text-left transition-all ${style === "group" ? "bg-emerald-950/30 border-emerald-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
                       >
                         <p className="font-bold text-xs">👯‍♂️ 5人高精度组合</p>
-                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">自动随机生成4位各有高光反差的宿怨队友，暗潮涌动争抢核心Center！</p>
+                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">自动随机生成4位各有高光反差 of 宿怨队友，暗潮涌动争抢核心Center！</p>
                       </button>
                     </div>
                   </div>
                 </div>
 
-                {startType === "idol" && (
-                  <div className="p-3.5 rounded-2xl bg-pink-950/20 border border-pink-500/25 space-y-2 mt-2 animate-in fade-in slide-in-from-top-1.5 col-span-1 sm:col-span-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-pink-400">💞 地下恋爱秘密选择 (Secret Relationship Setup)</span>
-                      <span className="bg-pink-500/20 text-pink-300 font-mono text-[8px] px-1.5 py-0.5 rounded border border-pink-500/20">偶像隐藏玩法</span>
-                    </div>
-                    <p className="text-[10px] text-slate-300 leading-normal">
-                      作为成型偶像，你是否在出道之初就已经瞒着公司、粉丝和站姐偷偷谈恋爱？
-                      如果选择<strong>“拥有地下恋人”</strong>，你必须时刻隐藏约会痕迹，严厉防备D社跟拍与爆料。恋情一旦被捅破，必须考验队友和社长的信任，决定你会不会被迫公开分手或狼狈退团！
-                    </p>
-                    <div className="grid grid-cols-2 gap-3 mt-1.5">
-                      <button 
-                        type="button"
-                        onClick={() => setHasLover(false)}
-                        className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${!hasLover ? "bg-[#1f1922] border-pink-500 text-pink-400 shadow-md" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
-                      >
-                        🙅‍♀️ 专注于事业 (单身守戒派)
-                      </button>
-                      <button 
-                        type="button"
-                        className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${hasLover ? "bg-pink-950/40 border-pink-500 text-pink-300 shadow-lg" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
-                        onClick={() => setHasLover(true)}
-                      >
-                        💖 偷偷恋爱中 (携带秘密情人)
-                      </button>
-                    </div>
-
-                    {hasLover && (
-                      <div className="space-y-1 mt-2 bg-slate-950/50 p-2.5 rounded-lg border border-pink-500/10">
-                        <label className="text-[10px] text-pink-300 font-bold block">选择您的地下交往对象：</label>
-                        <select 
-                          value={loverName} 
-                          onChange={(e) => setLoverName(e.target.value)}
-                          className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
-                        >
-                          <option value="顶流行星男团 Center - 姜在赫">🌟 竞品顶流程星男团 Center - 姜在赫 (大势顶流)</option>
-                          <option value="同厂牌高音SOLO天后 - 申美延">👑 同厂牌高音Solo天后 - 申美延 (实力派同门)</option>
-                          <option value="忠武路大牌青年男演员 - 崔胜贤">🎬 忠武路大牌青年人气男演员 - 崔胜贤 (影坛新星)</option>
-                          <option value="队内御用顶级先锋编舞总监 - JAY">💃 队内御用顶级先锋编舞总监 - JAY (舞室情缘)</option>
-                        </select>
-                      </div>
-                    )}
+                {/* Secret relationship available to both trainees and idols */}
+                <div className="p-3.5 rounded-2xl bg-pink-950/20 border border-pink-500/25 space-y-2.5 mt-2 animate-in fade-in slide-in-from-top-1.5 col-span-1 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-pink-400">💞 地下恋爱秘密选择 (Secret Relationship Setup)</span>
+                    <span className="bg-pink-500/20 text-pink-300 font-mono text-[8px] px-1.5 py-0.5 rounded border border-pink-500/20">隐藏恋爱挂件</span>
                   </div>
-                )}
+                  <p className="text-[10px] text-slate-300 leading-normal">
+                    不管是练习生还是出道偶像，你是否正瞒着公司、粉丝和队友在地下偷偷谈恋爱？
+                    如果你选择携同地下恋人，你将解锁专属的「秘密恋人Kakaotalk聊天通道」，需要时刻维持对方的心情与安全防线。恋人由于压力、对粉丝的愧疚有可能向你提出分手！
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mt-1.5">
+                    <button 
+                      type="button"
+                      onClick={() => setHasLover(false)}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${!hasLover ? "bg-[#1f1922] border-pink-500 text-pink-400 shadow-md" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                    >
+                      🙅‍♀️ 专注于事业 (单身守戒派)
+                    </button>
+                    <button 
+                      type="button"
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all ${hasLover ? "bg-pink-950/40 border-pink-500 text-pink-300 shadow-lg" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                      onClick={() => setHasLover(true)}
+                    >
+                      💖 偷偷恋爱中 (携带秘密情人)
+                    </button>
+                  </div>
+
+                  {hasLover && (
+                    <div className="space-y-3 mt-2 bg-slate-950/50 p-3.5 rounded-xl border border-pink-500/15 animate-in fade-in duration-200">
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Identity Selection */}
+                        <div>
+                          <label className="text-[10px] text-pink-400 font-bold block mb-1">🎭 恋人身份</label>
+                          <select 
+                            value={loverIdentity}
+                            onChange={(e) => setLoverIdentity(e.target.value as any)}
+                            className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
+                          >
+                            <option value="non_celeb">👤 圈外普通素人 (常人)</option>
+                            <option value="celebrity">🌟 圈内业界明星 (明星/爱豆)</option>
+                          </select>
+                        </div>
+
+                        {/* Gender Selection */}
+                        <div>
+                          <label className="text-[10px] text-pink-400 font-bold block mb-1">🚻 恋人性别</label>
+                          <select 
+                            value={loverGender}
+                            onChange={(e) => setLoverGender(e.target.value as any)}
+                            className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
+                          >
+                            <option value="female">♀️ 女性 (Female)</option>
+                            <option value="male">♂️ 男性 (Male)</option>
+                          </select>
+                        </div>
+
+                        {/* Age Selection */}
+                        <div>
+                          <label className="text-[10px] text-pink-400 font-bold block mb-1">⏳ 恋人年龄</label>
+                          <select 
+                            value={loverAge}
+                            onChange={(e) => setLoverAge(e.target.value as any)}
+                            className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
+                          >
+                            <option value="same_age">同龄 (Classmate / Same Age)</option>
+                            <option value="older">年上 (Older / Noona / Oppa)</option>
+                            <option value="younger">年下 (Younger / Dongsaeng)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Name input */}
+                      <div className="pt-1.5">
+                        <label className="text-[10px] text-pink-300 font-bold block mb-1">✍️ 自定义恋人姓名 / 艺名：</label>
+                        <div className="flex gap-2">
+                          <input 
+                            type="text"
+                            value={loverName}
+                            onChange={(e) => setLoverName(e.target.value)}
+                            placeholder="请输入你的专属小太阳姓名..."
+                            className="flex-1 bg-slate-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-yellow-300 focus:outline-none focus:border-pink-500 font-extrabold tracking-wide"
+                          />
+                          {loverIdentity === "celebrity" && (
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) setLoverName(e.target.value);
+                              }}
+                              className="bg-slate-800 border border-white/10 rounded-lg px-2 text-[10px] text-slate-300"
+                            >
+                              <option value="">🔮 快捷导入明星</option>
+                              <option value="顶流行星男团 Center - 姜在赫">姜在赫 (大势顶流团)</option>
+                              <option value="同厂牌高音SOLO天后 - 申美延">申美延 (巨肺SOLO同门)</option>
+                              <option value="忠武路大牌青年人气男演员 - 崔胜贤">崔胜贤 (影坛巨头新人)</option>
+                              <option value="队内御用顶级先锋编舞总监 - JAY">JAY (舞室王牌)</option>
+                            </select>
+                          )}
+                          {loverIdentity === "non_celeb" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const names = loverGender === "female" ? ["韩熙珍", "金荷娜", "朴敏智", "李瑞雅"] : ["宋承泽", "林禹汐", "崔俊熙", "姜在旭"];
+                                const rand = names[Math.floor(Math.random() * names.length)];
+                                setLoverName(rand);
+                              }}
+                              className="px-2 bg-slate-800 text-slate-300 border border-white/10 rounded-lg text-[10px] hover:bg-slate-700"
+                            >
+                              🎲 随机名
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
 
                 {style === "group" && (
                   <div className="animate-in fade-in slide-in-from-top-1.5">

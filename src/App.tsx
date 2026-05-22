@@ -26,12 +26,13 @@ import SchedulesApp from "./components/SchedulesApp";
 import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
+import FanMailApp, { FanLetter, generateRandomFanLetter } from "./components/FanMailApp";
 import { 
   Sparkles, Battery, Wifi, Signal, Grid, RefreshCw, 
   Settings as SettingsIcon, Calendar, MessageSquare, 
   User, Activity, Flame, ShieldAlert, Coins, 
   Download, Upload, Heart, Info, MonitorCheck, Award,
-  Film, Image
+  Film, Image, Mail
 } from "lucide-react";
 
 export default function App() {
@@ -124,6 +125,10 @@ export default function App() {
     outcomeText: string;
     details: string;
   } | null>(null);
+
+  // Fan Letters & Popup states
+  const [fanLetters, setFanLetters] = useState<FanLetter[]>([]);
+  const [arrivedMailPopup, setArrivedMailPopup] = useState<FanLetter | null>(null);
 
   const [seoulTime, setSeoulTime] = useState<string>("12:00PM");
   const [isControlCenterOpen, setIsControlCenterOpen] = useState<boolean>(false);
@@ -338,6 +343,11 @@ ${contact.summary || "无"}`;
           if (parsed.customApiKey) setCustomApiKey(parsed.customApiKey);
           if (parsed.customModel) setCustomModel(parsed.customModel);
           if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint);
+          if (parsed.fanLetters) {
+            setFanLetters(parsed.fanLetters);
+          } else {
+            setFanLetters([generateRandomFanLetter(parsed.persona, parsed.persona.dayNumber)]);
+          }
           setHasStarted(true);
         }
       } catch (err) {
@@ -461,6 +471,34 @@ ${contact.summary || "无"}`;
       });
     });
 
+    // Include underground/secret romance lover contact if configured (Requirement 13)
+    if (p.hasLover && p.loverName) {
+      const genderSign = p.loverGender === "female" ? "🚺" : "🚹";
+      const isCeleb = p.loverIdentity === "celebrity";
+      const ageLabel = p.loverAge === "same_age" ? "同龄" : p.loverAge === "older" ? "年上" : "年下";
+      const identityLabel = isCeleb ? "星侣" : "素人";
+      
+      let loverMsg = "宝贝，想你了... 今天集训累不累？";
+      const currentMood = p.loverMood ?? 80;
+      if (currentMood < 40) {
+        loverMsg = "其实我总在想，我们这样瞒着所有人真的对吗？对你的粉丝好不公平，我心里很愧疚... 我们是不是该分手？😔";
+      } else if (currentMood < 70) {
+        loverMsg = "呼，最近打歌行程太密了，我超级担心被狗仔跟拍。为了你的声誉，我们要不试着理智地克制联系一两周？";
+      }
+
+      contactList.push({
+        id: "lover",
+        name: `💖 ${p.loverName} (${identityLabel}恋人)`,
+        avatar: "", // Removed per user request, fallback to sweet heart character
+        role: "celeb",
+        mbti: isCeleb ? "ENFJ/大势" : "ISFJ/温柔",
+        lastMessage: loverMsg,
+        unread: true,
+        time: "刚刚",
+        favorability: currentMood
+      });
+    }
+
     // Populate active sasaeng stalkers dynamically from history
     Object.keys(currHist || {}).forEach((key) => {
       if (key.startsWith("sasaeng_")) {
@@ -540,7 +578,8 @@ ${contact.summary || "无"}`;
     currHist = chatHistories,
     currWeverse = weversePosts,
     currBubble = bubbleMessages,
-    currSch = schedules
+    currSch = schedules,
+    currFanLetters = fanLetters
   ) => {
     const data: BackupData = {
       persona: currPersona,
@@ -553,7 +592,8 @@ ${contact.summary || "无"}`;
       xiaohongshuPosts: [],
       customApiKey,
       customModel,
-      customApiEndpoint
+      customApiEndpoint,
+      fanLetters: currFanLetters
     };
     localStorage.setItem("idolpad_os_backup_v2.5", JSON.stringify(data));
   };
@@ -562,6 +602,13 @@ ${contact.summary || "无"}`;
   const handleSetupComplete = (newPersona: IdolPersona, generatedTeammates: SimulatedTeammate[]) => {
     setPersona(newPersona);
     setTeammates(generatedTeammates);
+    
+    // Pre-populate unread letters
+    const initialLetters = [
+      generateRandomFanLetter(newPersona, 1),
+      generateRandomFanLetter(newPersona, 1)
+    ];
+    setFanLetters(initialLetters);
     
     // Auto populate custom chat histories
     const contactList = generateSubContacts(newPersona, generatedTeammates);
@@ -591,7 +638,8 @@ ${contact.summary || "无"}`;
       xiaohongshuPosts: [],
       customApiKey,
       customModel,
-      customApiEndpoint
+      customApiEndpoint,
+      fanLetters: initialLetters
     };
     localStorage.setItem("idolpad_os_backup_v2.5", JSON.stringify(archive));
   };
@@ -753,10 +801,13 @@ ${contact.summary || "无"}`;
   };
 
   return (
-    <div className={`min-h-screen relative p-1 md:p-6 select-none overflow-x-hidden ${
-      ipadWallpaper === "neon" ? "bg-[#090a10]" :
-      ipadWallpaper === "peach" ? "bg-[#181216]" :
-      ipadWallpaper === "cosmic" ? "bg-[#080a15]" : "bg-[#040e10]"
+    <div className={`min-h-screen relative p-1 md:p-6 select-none overflow-x-hidden transition-all duration-500 ${
+      ipadWallpaper === "neon" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/40 via-slate-950 to-indigo-950/40" :
+      ipadWallpaper === "peach" ? "bg-stone-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/30 via-stone-950 to-amber-950/30" :
+      ipadWallpaper === "cosmic" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/50 via-slate-950 to-slate-900" :
+      ipadWallpaper === "aurora" ? "bg-[#040e10] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-teal-950/40 via-zinc-950 to-emerald-950/30" :
+      ipadWallpaper === "cherry" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-950/40 via-stone-950 to-purple-950/30" :
+      "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-blue-950/30"
     } text-slate-100 flex items-center justify-center`}>
       
       {/* Soft background aesthetics */}
@@ -768,7 +819,14 @@ ${contact.summary || "无"}`;
         <div id="ipad-shell-wrapper" className="w-full max-w-7xl relative mx-auto p-2 md:p-4 rounded-[40px] bg-[#1c1d25] border-t border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_2px_rgba(255,255,255,0.06)] flex flex-col overflow-hidden">
           
           {/* Main iPad Inner Screen Aspect ratio */}
-          <div className="flex-1 w-full bg-slate-900 rounded-[28px] overflow-hidden flex flex-col relative border border-slate-950">
+          <div className={`flex-1 w-full rounded-[28px] overflow-hidden flex flex-col relative border border-slate-950 transition-all duration-500 ${
+            ipadWallpaper === "neon" ? "bg-gradient-to-b from-[#110c1c] to-[#090a10]" :
+            ipadWallpaper === "peach" ? "bg-gradient-to-b from-[#1e1318] to-[#120f12]" :
+            ipadWallpaper === "cosmic" ? "bg-gradient-to-b from-[#0e0e1c] to-[#060810]" :
+            ipadWallpaper === "aurora" ? "bg-gradient-to-b from-[#081214] to-[#04080a]" :
+            ipadWallpaper === "cherry" ? "bg-gradient-to-b from-[#221018] to-[#0f0a0d]" :
+            "bg-gradient-to-b from-[#111624] to-[#0b0c10]"
+          }`}>
             
             {/* iPad Pro Header Status Bar */}
             <div id="ipad-header-status" className="h-9 px-4 md:px-6 bg-slate-950/50 backdrop-blur-md flex items-center justify-between text-xs text-slate-300 font-medium select-none border-b border-white/5 relative z-40">
@@ -803,6 +861,50 @@ ${contact.summary || "无"}`;
                   <span className="font-mono text-[10px]">{persona.energy}%</span>
                 </div>
 
+                {/* Quick Interactive Wallpaper Palette Dock */}
+                <div className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-2 py-0.5 rounded-lg border border-white/5 transition-all text-[10px]">
+                  <button 
+                    onClick={() => {
+                      const walls = ["neon", "peach", "cosmic", "aurora", "cherry", "starlight"];
+                      const idx = walls.indexOf(ipadWallpaper);
+                      const nextWall = walls[(idx + 1) % walls.length];
+                      setIpadWallpaper(nextWall);
+                      handleAddSystemLog(`🔮 快捷切换壁纸：已轮换至「${
+                        nextWall === "neon" ? "霓虹" : 
+                        nextWall === "peach" ? "蜜桃" : 
+                        nextWall === "cosmic" ? "星寰" : 
+                        nextWall === "aurora" ? "极光" :
+                        nextWall === "cherry" ? "樱粉" : "星汉"
+                      }」`);
+                    }}
+                    className="hover:bg-white/10 p-0.5 rounded text-pink-400 active:scale-90 transition-all flex items-center gap-1 font-bold cursor-pointer"
+                    title="点击快捷轮换专属壁纸"
+                  >
+                    <Image className="w-2.5 h-2.5 text-pink-400 animate-pulse" />
+                    <span className="text-[9px] font-bold text-slate-350 hidden md:inline">壁纸</span>
+                  </button>
+                  <div className="flex gap-1">
+                    {[
+                      { id: "neon", color: "bg-purple-500", name: "霓虹" },
+                      { id: "peach", color: "bg-orange-400", name: "蜜桃" },
+                      { id: "cosmic", color: "bg-indigo-650", name: "星寰" },
+                      { id: "aurora", color: "bg-teal-500", name: "极光" },
+                      { id: "cherry", color: "bg-pink-400", name: "樱粉" },
+                      { id: "starlight", color: "bg-amber-300", name: "星汉" }
+                    ].map((w) => (
+                      <button
+                        key={w.id}
+                        onClick={() => {
+                          setIpadWallpaper(w.id);
+                          handleAddSystemLog(`🔮 壁纸选择：已切换至「${w.name}」专属桌面`);
+                        }}
+                        className={`w-2 h-2 rounded-full transition-all hover:scale-130 cursor-pointer ${w.color} ${ipadWallpaper === w.id ? "ring-1.5 ring-white scale-125 shadow-md" : "opacity-60"}`}
+                        title={`切换为: ${w.name}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
                 <button 
                   onClick={() => setIsControlCenterOpen(!isControlCenterOpen)}
                   className="p-1 hover:bg-white/10 rounded transition-all cursor-pointer text-slate-300 active:scale-95"
@@ -823,14 +925,21 @@ ${contact.summary || "无"}`;
                 <div className="space-y-3.5 text-xs text-slate-350">
                   <div>
                     <span className="text-slate-400 block mb-1">更换iPad专属壁纸:</span>
-                    <div className="grid grid-cols-4 gap-1.5">
-                      {["neon", "peach", "cosmic", "aurora"].map((wall) => (
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {[
+                        { id: "neon", name: "霓虹" },
+                        { id: "peach", name: "蜜桃" },
+                        { id: "cosmic", name: "星寰" },
+                        { id: "aurora", name: "极光" },
+                        { id: "cherry", name: "樱粉" },
+                        { id: "starlight", name: "星汉" }
+                      ].map((wall) => (
                         <button
-                          key={wall}
-                          onClick={() => { setIpadWallpaper(wall); setIsControlCenterOpen(false); }}
-                          className={`py-1 rounded text-[9px] text-center capitalize border ${ipadWallpaper === wall ? "border-purple-500 bg-purple-500/20 text-purple-300 font-bold" : "border-white/5 bg-slate-900/60"}`}
+                          key={wall.id}
+                          onClick={() => { setIpadWallpaper(wall.id); setIsControlCenterOpen(false); }}
+                          className={`py-1 rounded text-[8px] text-center capitalize border ${ipadWallpaper === wall.id ? "border-purple-500 bg-purple-500/20 text-purple-300 font-bold" : "border-white/5 bg-slate-900/60"}`}
                         >
-                          {wall === "neon" ? "霓虹" : wall === "peach" ? "水蜜" : wall === "cosmic" ? "星寰" : "极光"}
+                          {wall.name}
                         </button>
                       ))}
                     </div>
@@ -1082,64 +1191,99 @@ ${contact.summary || "无"}`;
                           }
                         }
                         
-                        // B. Check for secret dating leak scandal risk (ONLY if they didn't trigger trainee debut evaluation, or they are already an idol)
-                        if (!evaluationTriggered && newPersona.hasLover && newPersona.relationshipStatus !== "revealed") {
-                          const scandalRolled = Math.random() < 0.16; // 16% daily probability of leakage
-                          if (scandalRolled) {
-                            const ceoPassed = newPersona.ceoFavorability >= 45;
-                            const managerPassed = newPersona.managerFavorability >= 45;
-                            const teammatesPassed = newPersona.style === "solo" ? true : newPersona.teammatesFavorability >= 45;
-                            const shielded = ceoPassed || managerPassed || teammatesPassed;
-                            
-                            let outcomeText = "";
-                            let details = "";
-                            
-                            if (ceoPassed) {
-                              newPersona.traineeDebt += 1500; // Build up debt
-                              outcomeText = `【🚨 绯闻漏风：李秉旭社长秘密下场掩盖成功！】`;
-                              details = `你平素勤恳的表现与高达 ${newPersona.ceoFavorability} 的高管认可度发挥了关键作用！社长得到D社长焦照密函后大发雷霆，但也明白你现阶段是Aether Label的绝对摇钱树。代表直接动用 ₩1,500w 黄金公关基金，赶在新闻排版前私了并买断了全部母带！虽然逃过一劫，但代表冷笑着给你记了账：新增 ₩1,500w 危机公关公摊债务！下次注意点！`;
+                        // B. Check for secret dating leak scandal risk or breakup crisis (ONLY if they didn't trigger trainee debut evaluation, or they are already an idol)
+                        if (!evaluationTriggered && newPersona.hasLover) {
+                          const currentMood = newPersona.loverMood ?? 80;
+                          
+                          // B1. Breakup threat check due to low lover mood/guilt (Requirement 13)
+                          if (currentMood < 45 && newPersona.relationshipStatus === "dating") {
+                            const breakupCrisisRolled = Math.random() < 0.35; // 35% chance on day transition
+                            if (breakupCrisisRolled) {
+                              newPersona.relationshipStatus = "broken_up";
+                              newPersona.stress = Math.min(100, newPersona.stress + 20);
                               
-                              // Slight fan shift
-                              updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 3);
-                            } else if (managerPassed) {
-                              outcomeText = `【🚨 绯闻漏风：闵室长启动‘肉身公关’完美化解！】`;
-                              details = `你的闵经纪人（好感度 ${newPersona.managerFavorability}）在业界人脉极广，在深夜截获了风声。她直接将该合照解释为‘深夜造型测试及公司工作便当品鉴会’。她带队连夜狂刷超话，把热度转移为其他八卦。虽然你被记过了一次并没收手机两天，但名誉保住了！没有增加半毛钱负债，爱死她了！`;
-                              
-                              updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 1);
-                            } else if (teammatesPassed && newPersona.style === "group") {
-                              outcomeText = `【🚨 绯闻漏风：团魂爆发！队友们发布‘全员宿舍炸鸡围坐图’挡枪！】`;
-                              details = `患难见真情！你的队友们（集体好感度 ${newPersona.teammatesFavorability}）没有选择对你冷嘲热讽落井下石，而是立刻在官网上发布了整整一组嘻嘻哈哈的晚间炸鸡自拍合照，配文‘当晚和亲爱的大家、编舞欧巴以及好朋友一起在排练喔！’ 成功让舆论相信这只是寻常的工作小聚！粉丝们松了一大口气，甚至磕起了你们的‘友情大团圆’！`;
-                              
-                              updatedFansDist.otFans = Math.min(100, updatedFansDist.otFans + 5);
-                              updatedFansDist.cpFans = Math.min(100, updatedFansDist.cpFans + 3);
-                            } else {
-                              // FAILED!! PUBLIC FALLOUT DISASTER!
-                              newPersona.relationshipStatus = "revealed"; // SET STATUS!
-                              newPersona.reputation = Math.max(10, newPersona.reputation - 30);
-                              newPersona.popularity = Math.min(100, newPersona.popularity + 15); // Black publicity makes you famous
-                              newPersona.stress = Math.min(100, newPersona.stress + 45); // VERY STRESSFUL
-                              
-                              // Catastrophic fan layout shifting
-                              updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 25);
-                              updatedFansDist.soloFans = Math.max(0, updatedFansDist.soloFans - 12);
-                              updatedFansDist.otFans = Math.max(0, updatedFansDist.otFans - 13);
-                              
-                              outcomeText = `【🚨 致命泄露：D社重磅绯闻全国曝光！舆论全面失控！】`;
-                              details = `灾难发生了！你在公司上上下下塑料情谊，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力，队友更是对此视若无睹冷眼旁观。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`;
+                              setScandalModal({
+                                detected: true,
+                                ceoPassed: false,
+                                managerPassed: false,
+                                teammatesPassed: false,
+                                shielded: false,
+                                outcomeText: `【💔 情感极地：地下伙伴 (${newPersona.loverName}) 单方面宣告暂时离场！】`,
+                                details: `与你携手在温润暗夜里的 ${newPersona.loverName} (当前安民心情 ${currentMood}) 心头压覆的愧疚罪意已彻底决口。Ta认为不能再贪恋这种带着密集窃贼般罪感的相伴：‘每次听到你唯粉砸巨资买周边只为看你全神宣称为她们守身、高呼你是世界上唯一无暇的纯爱时，我的胸口都在滴血。对不起... 我们先退出来吧。放过你，也放过对粉丝的良心欺骗，请让我静静。’\n\n【惩罚】地下恋情状态变为【已分手】！压力值大幅激增 20 点！赶紧通过 KakaoTalk 与Ta谈心或者写三页自省长信挽回吧。当心情重新重筑升至 50 ％ 左右，即可主页或聊天里捧着黄玫瑰登门复合！`
+                              });
+                              handleAddSystemLog(`📫 【💔 情感破防】秘密地下恋人 ${newPersona.loverName} 无法忍受愧对粉丝的道德谴责，单方面与您宣告【已分手】！请火速在 Kakao 软件内予以安抚开导！`);
                             }
-                            
-                            newPersona.fansDistribution = updatedFansDist;
-                            
-                            setScandalModal({
-                              detected: true,
-                              ceoPassed,
-                              managerPassed,
-                              teammatesPassed,
-                              shielded,
-                              outcomeText,
-                              details
-                            });
                           }
+                          
+                          // B2. Scandal risk depending on loverMood (Requirement 13)
+                          if (newPersona.relationshipStatus === "dating") {
+                            // High mood is careful (8%), low mood is disorganized (32%), normal is 16%.
+                            const scandalChance = currentMood >= 85 ? 0.08 : currentMood < 55 ? 0.32 : 0.16;
+                            const scandalRolled = Math.random() < scandalChance;
+                            
+                            if (scandalRolled) {
+                              const ceoPassed = newPersona.ceoFavorability >= 45;
+                              const managerPassed = newPersona.managerFavorability >= 45;
+                              const teammatesPassed = newPersona.style === "solo" ? true : newPersona.teammatesFavorability >= 45;
+                              const shielded = ceoPassed || managerPassed || teammatesPassed;
+                              
+                              let outcomeText = "";
+                              let details = "";
+                              
+                              if (ceoPassed) {
+                                newPersona.traineeDebt += 1500; // Build up debt
+                                outcomeText = `【🚨 绯闻漏风：李秉旭社长秘密下场掩盖成功！】`;
+                                details = `你平素勤恳的表现与高达 ${newPersona.ceoFavorability} 的高管认可度发挥了关键作用！社长得到D社长焦照密函后大发雷霆，但也明白你现阶段是Aether Label的绝对摇钱树。代表直接动用 ₩1,500w 黄金公关基金，赶在新闻排版前私了并买断了全部母带！虽然逃过一劫，但代表冷笑着给你记了账：新增 ₩1,500w 危机公关公摊债务！下次注意点！`;
+                                updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 3);
+                              } else if (managerPassed) {
+                                outcomeText = `【🚨 绯闻漏风：闵室长启动‘肉身公关’完美化解！】`;
+                                details = `你的闵经纪人（好感度 ${newPersona.managerFavorability}）在业界人脉极广，在深夜截获了风声。她直接将该合照解释为‘深夜造型测试及公司工作便当品鉴会’。她带队连夜狂刷超话，把热度转移为其他八卦。虽然你被记过了一次并没收手机两天，但名誉保住了！没有增加半毛钱负债，爱死她了！`;
+                                updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 1);
+                              } else if (teammatesPassed && newPersona.style === "group") {
+                                outcomeText = `【🚨 绯闻漏风：团魂爆发！队友们发布‘全员宿舍炸鸡围坐图’挡枪！】`;
+                                details = `患难见真情！你的队友们（集体好感度 ${newPersona.teammatesFavorability}）没有选择对你冷嘲热讽落井下石，而是立刻在官网上发布了整整一组嘻嘻哈哈 of 的晚间炸鸡自拍合照，配文‘当晚和亲爱的大家、编舞欧巴以及好朋友一起在排练喔！’ 成功让舆论相信这只是寻常的工作小聚！粉丝们松了一大口气，甚至磕起了你们的‘友情大团圆’！`;
+                                updatedFansDist.otFans = Math.min(100, updatedFansDist.otFans + 5);
+                                updatedFansDist.cpFans = Math.min(100, updatedFansDist.cpFans + 3);
+                              } else {
+                                // FAILED!! PUBLIC FALLOUT DISASTER!
+                                newPersona.relationshipStatus = "revealed"; // SET STATUS!
+                                newPersona.reputation = Math.max(10, newPersona.reputation - 30);
+                                newPersona.popularity = Math.min(100, newPersona.popularity + 15); // Black publicity makes you famous
+                                newPersona.stress = Math.min(100, newPersona.stress + 45); // VERY STRESSFUL
+                                
+                                updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 25);
+                                updatedFansDist.soloFans = Math.max(0, updatedFansDist.soloFans - 12);
+                                updatedFansDist.otFans = Math.max(0, updatedFansDist.otFans - 13);
+                                
+                                outcomeText = `【🚨 致命泄露：D社重磅绯闻全国曝光！舆论全面失控！】`;
+                                details = `灾难发生了！你在公司上上下下塑料情谊，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力，队友更是对此视若无睹冷眼旁观。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`;
+                              }
+                              
+                              newPersona.fansDistribution = updatedFansDist;
+                              
+                              setScandalModal({
+                                detected: true,
+                                ceoPassed,
+                                managerPassed,
+                                teammatesPassed,
+                                shielded,
+                                outcomeText,
+                                details
+                              });
+                            }
+                          }
+                        }
+
+                        // D. Random check for Fan Mail arrival on morning setup (e.g. 40% daily chance)
+                        if (Math.random() < 0.40) {
+                          const freshMail = generateRandomFanLetter(newPersona, newPersona.dayNumber);
+                          setArrivedMailPopup(freshMail);
+                          setFanLetters(prev => {
+                            const nextLetters = [freshMail, ...prev];
+                            triggerAutoSave(newPersona, teammates, chatHistories, newWeversePosts, bubbleMessages, newSchedules, nextLetters);
+                            return nextLetters;
+                          });
+                          handleAddSystemLog(`📫 【信物送件】有热心粉丝的手写实体信已寄达厂牌前台小货架！快去小卡盒里查看！`);
                         }
 
                         setPersona(newPersona);
@@ -1226,6 +1370,27 @@ ${contact.summary || "无"}`;
                     />
                   )}
 
+                  {activeApp === "fanmail" && (
+                    <FanMailApp
+                      persona={persona}
+                      teammates={teammates}
+                      fanLetters={fanLetters}
+                      onUpdateLetters={(letters) => {
+                        setFanLetters(letters);
+                        triggerAutoSave(persona, teammates, chatHistories, weversePosts, bubbleMessages, schedules, letters);
+                      }}
+                      onUpdateStats={(pop, rep, nrg, stress) => {
+                        const up = { ...persona, popularity: pop, reputation: rep, energy: nrg, stress };
+                        setPersona(up);
+                        triggerAutoSave(up);
+                      }}
+                      onAddLog={handleAddSystemLog}
+                      customApiKey={customApiKey}
+                      customModel={customModel}
+                      customApiEndpoint={customApiEndpoint}
+                    />
+                  )}
+
                   {activeApp === "kakaotalk" && (
                     <KakaoTalkApp
                       persona={persona}
@@ -1241,6 +1406,20 @@ ${contact.summary || "无"}`;
                         triggerAutoSave(persona, teammates, hist);
                       }}
                       onAddLog={handleAddSystemLog}
+                      onUpdatePersona={(updatedPersona) => {
+                        setPersona(updatedPersona);
+                        const updatedContacts = chatContacts.map(c => {
+                          if (c.id === "lover") {
+                            return {
+                              ...c,
+                              favorability: updatedPersona.loverMood ?? 80
+                            };
+                          }
+                          return c;
+                        });
+                        setChatContacts(updatedContacts);
+                        triggerAutoSave(updatedPersona, teammates, chatHistories, weversePosts, bubbleMessages, schedules, fanLetters);
+                      }}
                     />
                   )}
 
@@ -1625,6 +1804,18 @@ ${contact.summary || "无"}`;
                   <Image className="w-5 h-5" />
                 </button>
 
+                {/* 5d. Fan Mail (手写来信) */}
+                <button
+                  onClick={() => { setActiveApp("fanmail"); setIsControlCenterOpen(false); }}
+                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "fanmail" ? "bg-pink-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  title="粉丝实体来信物"
+                >
+                  <Mail className="w-5 h-5" />
+                  {fanLetters.some((l) => !l.isRead) && (
+                    <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#f44e73] animate-pulse border border-[#0e111a]" />
+                  )}
+                </button>
+
                 {/* Divider */}
                 <div className="w-[1px] h-6 bg-white/10 shrink-0 self-center" />
 
@@ -1926,6 +2117,69 @@ ${contact.summary || "无"}`;
             >
               🤝 确认，坚毅前进！
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Arrived New Fan Mail Envelope Pop-Up */}
+      {arrivedMailPopup && (
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 animate-in fade-in">
+          <div className="w-full max-w-md bg-gradient-to-br from-slate-900 to-slate-950 border border-pink-500/35 rounded-3xl p-6 text-center text-white relative shadow-2xl animate-in zoom-in-95 duration-200">
+            
+            {/* Stamp Detail */}
+            <div className="mx-auto w-12 h-12 rounded-full bg-pink-500/10 flex items-center justify-center border border-pink-500/25 mb-4 animate-bounce">
+              <Mail className="w-6 h-6 text-pink-400" />
+            </div>
+
+            <span className="bg-pink-950/40 border border-pink-500/30 text-pink-300 font-bold text-[9px] px-3 py-1 rounded-full tracking-wider font-mono">
+              📬 宿外小货架：有新的粉丝实体来信！
+            </span>
+            
+            <div className="py-4 space-y-2">
+              <h2 className="text-base font-black text-rose-300 tracking-tight">
+                【{arrivedMailPopup.sender}】寄送的手手信已寄达！
+              </h2>
+              <div className="p-3 bg-slate-950/50 border border-white/5 rounded-2xl text-[10px] text-slate-400 font-mono text-left space-y-1">
+                <div className="flex justify-between">
+                  <span>寄信粉丝:</span>
+                  <span className="text-white font-bold">{arrivedMailPopup.fanTypeName}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>标题预览:</span>
+                  <span className="text-white truncate max-w-[200px]" title={arrivedMailPopup.title}>{arrivedMailPopup.title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>寄送天数:</span>
+                  <span className="text-rose-400 font-bold">今天 (Day {arrivedMailPopup.receivedDay})</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 leading-normal px-2">
+                现在拆信阅读可直接获得<strong>精神治愈体力加注</strong>！或者您也可以选择先整理收纳进书桌盒子中，晚些时候随时翻开！
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3.5 mt-2">
+              <button
+                onClick={() => {
+                  setArrivedMailPopup(null);
+                  setActiveApp("fanmail");
+                  handleAddSystemLog(`📬 决定立即拆封阅读粉丝【${arrivedMailPopup.sender}】的手手信。`);
+                }}
+                className="py-2.5 bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer active:scale-95"
+              >
+                💌 立即拆封阅读
+              </button>
+              <button
+                onClick={() => {
+                  setArrivedMailPopup(null);
+                  handleAddSystemLog(`📁 粉丝手写信已稳妥整理归档至【小卡盒】待读列表，您可以稍后查看。`);
+                }}
+                className="py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all cursor-pointer active:scale-95 border border-white/5"
+              >
+                📥 收纳进小卡盒
+              </button>
+            </div>
+
           </div>
         </div>
       )}
