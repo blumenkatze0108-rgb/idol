@@ -123,6 +123,51 @@ export default function App() {
   const [persona, setPersona] = useState<IdolPersona>(DEFAULT_PERSONA);
   const [teammates, setTeammates] = useState<SimulatedTeammate[]>([]);
   
+  // Anti-Reseller Domain authorization check
+  const [isDomainAuthorized, setIsDomainAuthorized] = useState<boolean>(true);
+  
+  // Post Setup Disclaimer & Forced 5s Timer
+  const [showPostSetupDisclaimer, setShowPostSetupDisclaimer] = useState<boolean>(false);
+  const [disclaimerCountdown, setDisclaimerCountdown] = useState<number>(5);
+
+  useEffect(() => {
+    let timer: any;
+    if (showPostSetupDisclaimer && disclaimerCountdown > 0) {
+      timer = setInterval(() => {
+        setDisclaimerCountdown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearInterval(timer);
+    };
+  }, [showPostSetupDisclaimer, disclaimerCountdown]);
+
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    // Whitelisted patterns to support localhost, development preview, GitHub Pages, and Cloudflare Pages
+    const allowedPatterns = [
+      "localhost",
+      "127.0.0.1",
+      "::1",
+      "pages.dev",
+      "workers.dev",
+      "run.app",
+      "google.com",
+      "googleusercontent.com",
+      "web.app",
+      "firebaseapp.com",
+      "github.io",
+      "blumenkatze"
+    ];
+    
+    // If hostname is empty, it might be running inside a unique environment without hostname or local bundle; allow it
+    const isAllowed = !hostname || allowedPatterns.some(
+      (pattern) => hostname === pattern || hostname.endsWith("." + pattern) || hostname.includes(pattern)
+    );
+    
+    setIsDomainAuthorized(isAllowed);
+  }, []);
+  
   // App navigation state
   const [activeApp, setActiveApp] = useState<string>("schedule"); // "kakaotalk" | "weverse" | "bubble" | "analytics" | "schedule" | "settings"
   const [ipadWallpaper, setIpadWallpaper] = useState<string>("cosmic"); // "neon" | "peach" | "cosmic" | "aurora"
@@ -767,6 +812,9 @@ ${contact.summary || "无"}`;
     });
 
     setChatHistories(initialHist);
+    // Explicitly show mandatory 5-seconds anti-resell disclaimer
+    setShowPostSetupDisclaimer(true);
+    setDisclaimerCountdown(5);
     setHasStarted(true);
     handleAddSystemLog(`创建了档案 "${newPersona.name}" (${newPersona.stageName})`);
     
@@ -954,6 +1002,98 @@ ${contact.summary || "无"}`;
       ipadWallpaper === "cherry" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-pink-950/40 via-stone-950 to-purple-950/30" :
       "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-blue-950/30"
     } text-slate-100 flex items-center justify-center`}>
+
+      {/* SECURITY LOCK: Reseller Prevention / Unauthorized Domain Lock */}
+      {!isDomainAuthorized && (
+        <div id="unauthorized-resell-gate" className="fixed inset-0 z-[100000] bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-text">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(239,68,68,0.12),transparent_75%)] pointer-events-none" />
+          <div className="bg-slate-900/90 border border-red-500/25 rounded-3xl p-6 md:p-8 max-w-md shadow-[0_20px_50px_rgba(239,68,68,0.15)] relative overflow-hidden z-10 backdrop-blur-md">
+            <div className="w-16 h-16 bg-red-500/10 border border-red-500/30 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <ShieldAlert className="w-8 h-8 text-red-500 animate-pulse" />
+            </div>
+            
+            <h1 className="text-xl font-bold text-red-405 tracking-tight mb-2">
+              ⚠️ 检测到非授权/打包二传倒卖版本
+            </h1>
+            <p className="text-[10px] text-slate-500 font-mono mb-4">
+              AUTHORIZED DOMAIN VERIFICATION FAILED
+            </p>
+            
+            <div className="bg-slate-950/80 text-left p-4.5 rounded-2xl border border-white/5 space-y-3 mb-6 text-xs text-slate-300 leading-relaxed font-sans">
+              <p>
+                当前网页加载运行的域名为 <code className="text-red-350 font-mono font-bold bg-red-950/40 px-1.5 py-0.5 rounded border border-red-500/10">{window.location.hostname || "local-file-package"}</code>，不在官方授权域名列表中。
+              </p>
+              <p className="text-[13px] text-amber-400 font-extrabold border-l-2 border-amber-500 pl-2.5">
+                如果你是花钱买的那你就被骗了，建议退款，本项目开源免费纯原创。
+              </p>
+              <p className="text-xs text-slate-400 pt-1.5 border-t border-white/5">
+                原作者：Blumenkatze
+              </p>
+            </div>
+            
+            <div className="space-y-3 font-sans">
+              <button 
+                onClick={() => {
+                  window.location.href = "mailto:blumenkatze0108@gmail.com?subject=IdolPad 非法渠道倒卖维权举报&body=当前非法倒卖运行域名: " + window.location.hostname;
+                }}
+                className="w-full py-3 bg-slate-850 hover:bg-slate-800 text-slate-300 text-xs font-bold rounded-xl border border-white/5 transition-all text-center cursor-pointer"
+              >
+                举报/反馈倒卖者并保留记录 📧
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* POST-SETUP MANDATORY DISCLAIMER MODAL WITH TIMER */}
+      {showPostSetupDisclaimer && (
+        <div id="post-setup-disclaimer-modal" className="fixed inset-0 z-[99999] bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(244,63,94,0.12),transparent_70%)] pointer-events-none" />
+          <div className="bg-slate-900/95 border border-rose-500/30 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-[0_25px_60px_-15px_rgba(244,63,94,0.2)] relative overflow-hidden z-[100000] backdrop-blur-md">
+            <div className="absolute top-[-10%] right-[-10%] w-[120px] h-[120px] rounded-full bg-rose-500/10 blur-2xl pointer-events-none" />
+            
+            <div className="w-14 h-14 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center justify-center mx-auto mb-5">
+              <ShieldAlert className="w-7 h-7 text-rose-400 animate-pulse" />
+            </div>
+
+            <h2 className="text-lg md:text-xl font-bold text-center text-transparent bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text tracking-tight mb-4">
+              ⚔️ 免费正版验证与防骗提示
+            </h2>
+
+            <div className="bg-slate-950/80 p-5 rounded-2xl border border-white/5 space-y-4 text-slate-200 leading-relaxed text-sm">
+              <p className="text-amber-405 font-extrabold text-base border-l-4 border-amber-500 pl-3 leading-normal py-0.5">
+                如果你是花钱买的那你就被骗了，建议退款，本项目开源免费纯原创。
+              </p>
+              <div className="flex items-center justify-between pt-3 border-t border-white/5 text-xs text-slate-400 font-mono">
+                <span>PROJECT TYPE: FREE & OPEN SOURCE</span>
+                <span className="text-rose-350 font-bold bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                  原作者：Blumenkatze
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <button
+                disabled={disclaimerCountdown > 0}
+                onClick={() => setShowPostSetupDisclaimer(false)}
+                className={`w-full py-3.5 rounded-xl font-bold text-xs transition-all tracking-wide select-none transform hover:scale-[1.01] active:scale-[0.99] cursor-pointer ${
+                  disclaimerCountdown > 0
+                    ? "bg-slate-800 text-slate-500 border border-slate-700/50 cursor-not-allowed"
+                    : "bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-500/20"
+                }`}
+              >
+                {disclaimerCountdown > 0 ? (
+                  <span className="flex items-center justify-center gap-1.5 font-sans">
+                    请仔细阅读并知悉 (正在阅读 {disclaimerCountdown} 秒后解锁...)
+                  </span>
+                ) : (
+                  "我已阅读并知晓，确认进入游戏 ⚔️"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       
       {/* Immersive Cover Page / User Guide on Load */}
       {showCover && (
@@ -1171,6 +1311,29 @@ ${contact.summary || "无"}`;
                 </div>
               </div>
 
+              {/* Box 6: 独家原创保护 & 正版声明 */}
+              <div id="original-protection-box" className="bg-red-950/20 border border-red-500/15 rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute right-[-14px] top-[-14px] translate-x-1 translate-y-1 rotate-12 text-red-500/5 font-mono text-[80px] font-black pointer-events-none select-none">
+                  ©
+                </div>
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-red-400 to-amber-400 bg-clip-text flex items-center gap-2 mb-3">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-red-500/15 text-red-300 rounded border border-red-500/20">06</span>
+                  🔒 独家原创保护与免费声明 (Anti-Theft Disclaimer)
+                </h2>
+                <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2.5">
+                  <p className="text-amber-300 font-bold text-[13px] leading-relaxed">
+                    如果你是花钱买的那你就被骗了，建议退款，本项目开源免费纯原创。
+                  </p>
+                  <p className="text-slate-400 font-sans text-xs">
+                    本应用由原作者开发，项目旨在同好交流，任何付费变相倒卖均属侵权欺诈行为。请支持退款维权！
+                  </p>
+                  <p className="text-[11px] text-purple-300 font-bold flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0" />
+                    原作者：Blumenkatze
+                  </p>
+                </div>
+              </div>
+
             </div>
 
             {/* Sticky Action Footer */}
@@ -1266,6 +1429,10 @@ ${contact.summary || "无"}`;
               <div className="flex items-center gap-2">
                 <span className="font-semibold">{seoulTime}</span>
                 <span className="text-[10px] text-slate-400 font-mono">Seoul KST</span>
+                {/* Visual Watermark / Original Author Attribution Badge */}
+                <div className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/25 rounded text-[8px] font-bold text-rose-300 font-sans tracking-wide select-none" title="Original Creator: BlumenKatze & Free Playable">
+                  <span>© 原创正版: BlumenKatze</span>
+                </div>
                 {/* Weather in Seoul Indicator */}
                 <div 
                   className="inline-flex items-center gap-1 bg-purple-500/10 border border-purple-500/25 px-2 py-0.5 rounded-full text-[10px] text-purple-305 hover:bg-purple-500/20 active:scale-95 transition-all cursor-pointer"

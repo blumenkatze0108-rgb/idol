@@ -69,3 +69,30 @@
               radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.1), transparent 60%),
               #12131a;
 }
+
+/* typing indicators for KakaoTalk */
+@keyframes typing {
+  0%, 100% {
+    transform: translateY(0px);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+.animate-typing-dot-1 {
+  animation: typing 1.2s infinite ease-in-out;
+  animation-delay: 0s;
+}
+
+.animate-typing-dot-2 {
+  animation: typing 1.2s infinite ease-in-out;
+  animation-delay: 0.25s;
+}
+
+.animate-typing-dot-3 {
+  animation: typing 1.2s infinite ease-in-out;
+  animation-delay: 0.5s;
+}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { IdolPersona, SimulatedTeammate } from "../types";
 import { TrendingUp, User, ShieldAlert, Heart, Calendar, Activity, Zap, Coins, Sliders, Play } from "lucide-react";
+import { RadialBarChart, RadialBar, Tooltip, ResponsiveContainer } from "recharts";
 
 interface FandomAnalyticsProps {
   persona: IdolPersona;
@@ -11,6 +12,22 @@ interface FandomAnalyticsProps {
   onUpdatePersona: (p: IdolPersona) => void;
   onAddLog: (log: string) => void;
 }
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-[#111827] border border-slate-700 p-2.5 rounded-xl shadow-lg text-xs text-white">
+        <p className="font-bold text-white flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.fill }} />
+          {data.name}
+        </p>
+        <p className="text-slate-400 mt-1 font-mono">占比: <span className="text-emerald-400 font-bold">{data.value}%</span></p>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function FandomAnalyticsApp({
   persona,
@@ -36,6 +53,14 @@ export default function FandomAnalyticsApp({
   const delusional = 5;
   const sasaengStalker = 3;
   const evilStan = 8;
+
+  // Chart Data for Recharts Radial Bar Chart
+  const chartData = [
+    { name: "OT Fans (双向团粉)", value: otFandom, fill: "#a855f7" },
+    { name: "Solo Fans (唯粉/毒唯)", value: soloStan + evilStan, fill: "#3b82f6" },
+    { name: "CP Shippers (CP粉)", value: cpShipper, fill: "#ec4899" },
+    { name: "Anti Fans (黑粉/私生)", value: antiFans + sasaengStalker, fill: "#ef4444" }
+  ];
 
   // Dermatology purchases (Requirement 11, 12)
   const buyTherapy = (type: "ldm" | "injection" | "thermage" | "depuff") => {
@@ -178,63 +203,106 @@ export default function FandomAnalyticsApp({
               <TrendingUp className="w-7 h-7 text-emerald-400" />
             </div>
 
-            {/* Requirement 7: Fan Mindsets & categories */}
-            <div className="space-y-2 bg-slate-900/60 rounded-2xl p-4 border border-white/5">
-              <span className="text-xs font-bold text-purple-300 block mb-2">👥 粉丝大局观及成分列表 (Fandom Structure Breakdown)</span>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span>👑 团粉死忠 (OT-fans)</span>
-                    <span className="font-mono text-purple-400 font-bold">{otFandom}%</span>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              {/* Left Column: Breakdown List */}
+              <div className="lg:col-span-3 space-y-2 bg-slate-900/60 rounded-2xl p-4 border border-white/5">
+                <span className="text-xs font-bold text-purple-300 block mb-2">👥 粉丝大局观及成分列表 (Fandom Structure Breakdown)</span>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
+                    <div className="flex justify-between text-[11px] text-slate-300">
+                      <span>👑 团粉死忠 (OT-fans)</span>
+                      <span className="font-mono text-purple-400 font-bold">{otFandom}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div className="bg-purple-500 h-full" style={{ width: `${otFandom}%` }} />
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">最核心、最稳固的团队力量，只买正规专辑、疯狂做数据打歌。</p>
                   </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                    <div className="bg-purple-500 h-full" style={{ width: `${otFandom}%` }} />
+
+                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
+                    <div className="flex justify-between text-[11px] text-slate-300">
+                      <span>🧪 梦男梦女 (Delusionals)</span>
+                      <span className="font-mono text-pink-400 font-bold">{delusional}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div className="bg-pink-500 h-full" style={{ width: `${delusional}%` }} />
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">氪金泡泡极品！幻想与你在首尔恋爱，极度嫉妒你与任何异性入镜。</p>
                   </div>
-                  <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">最核心、最稳固的团队力量，只买正规专辑、疯狂做数据打歌。</p>
+
+                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
+                    <div className="flex justify-between text-[11px] text-slate-300">
+                      <span>🍭 邪典CP粉 (Shippers)</span>
+                      <span className="font-mono text-blue-400 font-bold">{cpShipper}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div className="bg-blue-500 h-full" style={{ width: `${cpShipper}%` }} />
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">死命在你与队友、或者其他异性爱豆之间磕小糖。营销炒作顶梁柱。</p>
+                  </div>
+
+                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
+                    <div className="flex justify-between text-[11px] text-slate-300">
+                      <span>💀 团队毒唯 (Malicious Akgaes)</span>
+                      <span className="font-mono text-red-400 font-bold">{evilStan}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div className="bg-red-500 h-full" style={{ width: `${evilStan}%` }} />
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">讨厌你以外的所有团员。经常在网上撕逼或者辱骂队友抢资源。</p>
+                  </div>
+
+                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5 col-span-2">
+                    <div className="flex justify-between text-[11px] text-slate-300">
+                      <span>🕵️‍♂️ 私生粉 (Sasaengs) & 黑粉恶意爆黑图 (Antis)</span>
+                      <span className="font-mono text-red-500 font-bold">{sasaengStalker + antiFans}%</span>
+                    </div>
+                    <p className="text-[9px] text-red-400 mt-1 leading-relaxed">
+                      私生粉会跟机、跟踪你回首尔公寓大门口，在待机室外偷听。黑粉甚至会制作恶意 P 丑图、散布黑料，极大地考验您的抗压指标。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Recharts Radial Bar Chart */}
+              <div className="lg:col-span-2 bg-slate-900/60 rounded-2xl p-4 border border-white/5 flex flex-col justify-between">
+                <div>
+                  <span className="text-xs font-bold text-indigo-300 block mb-1">📊 粉丝形态比例环形图 (Radial Distribution)</span>
+                  <p className="text-[9px] text-slate-400">环形图展示 OT死忠粉 vs 唯粉/毒唯 vs 恶毒黑粉/私生 占比</p>
                 </div>
 
-                <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span>🧪 梦男梦女 (Delusionals)</span>
-                    <span className="font-mono text-pink-400 font-bold">{delusional}%</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                    <div className="bg-pink-500 h-full" style={{ width: `${delusional}%` }} />
-                  </div>
-                  <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">氪金泡泡极品！幻想与你在首尔恋爱，极度嫉妒你与任何异性入镜。</p>
+                <div id="radial-chart-container" className="h-[150px] w-[150px] mx-auto flex items-center justify-center relative my-2">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <RadialBarChart
+                      cx="50%"
+                      cy="50%"
+                      innerRadius="25%"
+                      outerRadius="100%"
+                      barSize={8}
+                      data={chartData}
+                      margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
+                    >
+                      <RadialBar
+                        minAngle={15}
+                        background={{ fill: "rgba(255, 255, 255, 0.04)" }}
+                        clockWise={true}
+                        dataKey="value"
+                      />
+                      <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }} />
+                    </RadialBarChart>
+                  </ResponsiveContainer>
                 </div>
 
-                <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span>🍭 邪典CP粉 (Shippers)</span>
-                    <span className="font-mono text-blue-400 font-bold">{cpShipper}%</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                    <div className="bg-blue-500 h-full" style={{ width: `${cpShipper}%` }} />
-                  </div>
-                  <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">死命在你与队友、或者其他异性爱豆之间磕小糖。营销炒作顶梁柱。</p>
-                </div>
-
-                <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span>💀 团队毒唯 (Malicious Akgaes)</span>
-                    <span className="font-mono text-red-400 font-bold">{evilStan}%</span>
-                  </div>
-                  <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                    <div className="bg-red-500 h-full" style={{ width: `${evilStan}%` }} />
-                  </div>
-                  <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">讨厌你以外的所有团员。经常在网上互撕，骂队友抢你的资源或MV分秒。</p>
-                </div>
-
-                <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5 col-span-2">
-                  <div className="flex justify-between text-[11px] text-slate-300">
-                    <span>🕵️‍♂️ 私生粉 (Sasaengs) & 黑粉恶意爆黑图 (Antis)</span>
-                    <span className="font-mono text-red-500 font-bold">{sasaengStalker + antiFans}%</span>
-                  </div>
-                  <p className="text-[9px] text-red-400 mt-1 leading-relaxed">
-                    私生粉会跟机、跟踪你回首尔公寓大门口，在待机室外偷听。黑粉甚至会制作恶意 P 丑图、散布黑料，极大地考验您的抗磨和心理承受指标。
-                  </p>
+                {/* Compact Legend Grid */}
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1.5 pt-2 border-t border-slate-800">
+                  {chartData.map((d) => (
+                    <div key={d.name} className="flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: d.fill }} />
+                      <span className="text-[9px] text-slate-300 truncate" title={d.name}>{d.name}</span>
+                      <span className="text-[9px] text-slate-400 font-bold font-mono ml-auto">{d.value}%</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

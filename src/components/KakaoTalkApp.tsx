@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChatContact, ChatMessage, IdolPersona, SimulatedTeammate } from "../types";
 import { MessageSquare, Send, Zap, User, AlertCircle, Smile } from "lucide-react";
 import { safeFetch } from "./apiHelper";
@@ -32,6 +32,8 @@ export default function KakaoTalkApp({
   const [inputText, setInputText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loverError, setLoverError] = useState<string | null>(null);
+
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const selectedContact = chatContacts.find((c) => c.id === selectedContactId) || chatContacts[0];
 
@@ -148,6 +150,15 @@ export default function KakaoTalkApp({
   };
 
   const currentMessages = chatHistories[selectedContact.id] || [];
+  const selectedContactHasQueued = currentMessages.some((m) => m.sender === "idol" && m.queueOnly);
+
+  useEffect(() => {
+    // Scroll to bottom when messages list, active generating state, or selected contact changes
+    const timer = setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [currentMessages, isGenerating, selectedContactId]);
 
   // Count how many files have pending queued messages
   const getQueuedCount = () => {
@@ -544,10 +555,10 @@ export default function KakaoTalkApp({
                   )}
                   <div className="max-w-[70%]">
                     {!isIdol && <p className="text-[9px] text-slate-600 mb-0.5">{selectedContact.name}</p>}
-                    <div className={`p-2.5 rounded-2xl text-[11px] leading-relaxed shadow-sm ${isIdol ? "bg-[#fef01b] text-slate-900 rounded-tr-none" : "bg-white text-slate-800 rounded-tl-none"} ${msg.queueOnly ? "border-2 border-yellow-500 border-dashed animate-pulse" : ""}`}>
+                    <div className={`p-2.5 rounded-2xl text-[11px] leading-relaxed shadow-sm ${isIdol ? "bg-[#fef01b] text-slate-900 rounded-tr-none" : "bg-white text-slate-800 rounded-tl-none"} ${msg.queueOnly ? "border border-yellow-600/30 border-dashed" : ""}`}>
                       {msg.text}
                       {msg.queueOnly && (
-                        <span className="block text-[8px] text-yellow-800 text-right mt-1 font-semibold font-mono font-bold animate-ping">
+                        <span className="block text-[8px] text-slate-500 text-right mt-1 font-mono">
                           [ 等待一键收取回复中 ]
                         </span>
                       )}
@@ -558,6 +569,32 @@ export default function KakaoTalkApp({
               );
             })
           )}
+
+          {/* Typing Indicator Animated Bubble */}
+          {isGenerating && selectedContactHasQueued && (
+            <div className="flex items-start gap-2 animate-fadeIn pb-3">
+              {selectedContact.avatar ? (
+                <img src={selectedContact.avatar} alt="avatar" className="w-7 h-7 rounded-full object-cover border border-white/50 shrink-0" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-yellow-500 text-slate-900 font-extrabold text-[10px] flex items-center justify-center border border-yellow-300 shrink-0">
+                  {selectedContact.name.substring(0, 1)}
+                </div>
+              )}
+              <div className="max-w-[70%]">
+                <p className="text-[9px] text-slate-600 mb-0.5">{selectedContact.name}</p>
+                <div className="bg-white text-slate-800 p-3 px-4 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1.5 h-8 w-16 justify-center">
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full animate-typing-dot-1"></span>
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full animate-typing-dot-2"></span>
+                  <span className="w-2 h-2 bg-yellow-500 rounded-full animate-typing-dot-3"></span>
+                </div>
+                <span className="block text-[8px] text-amber-800 font-medium mt-1 pl-1 animate-pulse font-mono">
+                  正在输入中...
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div ref={chatEndRef} />
         </div>
 
         {/* Chat input footer */}
