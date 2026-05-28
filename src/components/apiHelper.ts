@@ -254,18 +254,96 @@ export async function safeFetch(input: any, init?: any): Promise<Response> {
   
   if (url === "/api/gemini/models" || url.endsWith("/api/gemini/models")) {
     try {
-      return new Response(JSON.stringify({
-        models: [
-          { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (推荐)" },
-          { id: "gemini-2.1-flash", name: "Gemini 2.1 Flash (速度快)" },
-          { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (逻辑强)" }
-        ]
-      }), {
+      const body = init && init.body ? JSON.parse(init.body as string) : {};
+      const { customApiKey, customApiEndpoint } = body;
+      const activeKey = customApiKey;
+
+      const defaultModels = [
+        { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash (推荐)" },
+        { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro (强力)" },
+        { id: "gemini-1.5-flash", name: "Gemini 1.5 Flash" },
+        { id: "gemini-1.5-pro", name: "Gemini 1.5 Pro" },
+        { id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash Experimental" },
+      ];
+
+      if (!activeKey || activeKey.trim() === "") {
+        return new Response(JSON.stringify({ models: defaultModels }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" }
+        });
+      }
+
+      const useOpenAi = !!customApiEndpoint && !customApiEndpoint.includes("googleapis.com");
+      let fetchedModels: any[] = [];
+
+      if (useOpenAi) {
+        try {
+          let cleanEndpoint = customApiEndpoint.trim();
+          cleanEndpoint = cleanEndpoint.replace(/\/$/, "");
+          cleanEndpoint = cleanEndpoint.replace(/\/chat\/completions$/, "");
+          
+          let modelsUrl = cleanEndpoint;
+          if (!modelsUrl.endsWith("/models")) {
+            modelsUrl = `${modelsUrl}/models`;
+          }
+
+          const fetchRes = await fetch(modelsUrl, {
+            headers: {
+              "Authorization": `Bearer ${activeKey}`,
+              "Content-Type": "application/json"
+            }
+          });
+          if (fetchRes.ok) {
+            const json = await fetchRes.json();
+            if (json && Array.isArray(json.data)) {
+              fetchedModels = json.data.map((m: any) => ({
+                id: m.id,
+                name: m.id
+              }));
+            }
+          }
+        } catch (e) {
+          console.warn("Direct browser OpenAI models fetch failed", e);
+        }
+      } else {
+        try {
+          let baseUrl = "https://generativelanguage.googleapis.com";
+          if (customApiEndpoint) {
+            baseUrl = customApiEndpoint.replace(/\/$/, "");
+          }
+          const modelsUrl = `${baseUrl}/v1beta/models?key=${activeKey}`;
+          const fetchRes = await fetch(modelsUrl);
+          if (fetchRes.ok) {
+            const json = await fetchRes.json();
+            if (json && Array.isArray(json.models)) {
+              fetchedModels = json.models.map((m: any) => {
+                const id = m.name?.startsWith("models/") ? m.name.substring(7) : (m.name || m.id || "");
+                return {
+                  id: id,
+                  name: m.displayName || id
+                };
+              });
+            }
+          }
+        } catch (e) {
+          console.warn("Direct browser Gemini models fetch failed", e);
+        }
+      }
+
+      const uniqueIds = new Set(fetchedModels.map(m => m.id));
+      const merged = [...fetchedModels];
+      for (const def of defaultModels) {
+        if (!uniqueIds.has(def.id)) {
+          merged.push(def);
+        }
+      }
+
+      return new Response(JSON.stringify({ models: merged }), {
         status: 200,
         headers: { "Content-Type": "application/json" }
       });
     } catch (e) {
-      // Ignore
+      console.error("Client side model pull fallback error", e);
     }
   }
 
