@@ -361,3 +361,53 @@ export function triggerToast(title: string, message: string, type: "info" | "suc
   }
 }
 
+export interface SeoulWeather {
+  type: "sunny" | "dry" | "rainy" | "hot" | "cold";
+  name: string;
+  impactText: string;
+  icon: string;
+  skinDetail: string;
+}
+
+export function getSeoulWeather(dayNumber: number): SeoulWeather {
+  const weatherCycles: SeoulWeather[] = [
+    { 
+      type: "sunny", 
+      name: "晴朗温和", 
+      impactText: "首尔天气晴朗温和 ☀️。温和适宜，皮肤维稳概率大增！", 
+      icon: "☀️",
+      skinDetail: "温和宜人，无额外皮损负担"
+    },
+    { 
+      type: "dry", 
+      name: "换季沙尘/干燥大风", 
+      impactText: "首尔正遭遇强风与异常干燥 🌬️。高几率脱皮缺水（压力下极易爆发粗糙）！", 
+      icon: "🌬️",
+      skinDetail: "极度干燥沙尘，易敏度增加"
+    },
+    { 
+      type: "rainy", 
+      name: "梅雨连绵/闷热潮湿", 
+      impactText: "首尔正值梅雨季，闷热潮湿 🌧️。角质水合度异常，爆发闭口粉刺几率倍增！", 
+      icon: "🌧️",
+      skinDetail: "高湿闷热，油脂堵塞风险加高"
+    },
+    { 
+      type: "hot", 
+      name: "酷暑烈日/极强紫外线", 
+      impactText: "首尔今日红外强光普照 🥵。紫外线暴晒，皮肤更易泛黄晦暗、色素沉淀！", 
+      icon: "🥵",
+      skinDetail: "烈日暴晒，极易暗沉泛黄"
+    },
+    { 
+      type: "cold", 
+      name: "寒潮来袭/气温干裂", 
+      impactText: "首尔遭遇极寒警报 ❄️。低温冷风刺骨，严重剥夺面部水分导致发红刺痛！", 
+      icon: "❄️",
+      skinDetail: "寒风刺骨，冷热交替屏障受损"
+    }
+  ];
+  return weatherCycles[(dayNumber - 1) % weatherCycles.length];
+}
+
+

@@ -42,6 +42,28 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
 .ipad-screen-gradient {
   background: radial-gradient(circle at top right, rgba(124, 58, 237, 0.15), transparent 60%),
               radial-gradient(circle at bottom left, rgba(236, 72, 153, 0.1), transparent 60%),

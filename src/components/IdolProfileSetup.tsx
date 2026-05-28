@@ -378,55 +378,56 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   };
 
   return (
-    <div id="idol-profile-setup" className="fixed inset-0 z-50 bg-[#06080e] flex items-center justify-center p-2 md:p-6 overflow-y-auto font-sans">
-      <div className="absolute inset-0 bg-radial-gradient from-indigo-950/20 via-transparent to-transparent pointer-events-none" />
+    <div id="idol-profile-setup" className="fixed inset-0 z-50 bg-[#06080e] overflow-y-auto font-sans">
+      <div className="absolute inset-0 bg-radial-gradient from-indigo-950/20 via-transparent to-transparent pointer-events-none animate-pulse" />
       
-      {/* Modern High-End Glass Container */}
-      <div className="w-full max-w-5xl bg-[#0d121c]/90 text-white rounded-[32px] overflow-hidden shadow-2xl border border-white/10 flex flex-col md:flex-row relative backdrop-blur-xl">
-        
-        {/* Left Interactive Cosmic Rails */}
-        <div className="md:w-[350px] bg-gradient-to-b from-[#111726] via-[#090d16] to-[#04060b] p-6 md:p-10 flex flex-col justify-between border-r border-white/5 shrink-0 relative overflow-hidden">
-          <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="min-h-full w-full flex items-start md:items-center justify-center p-2 sm:p-4 md:p-6 relative z-10">
+        {/* Modern High-End Glass Container */}
+        <div className="w-full max-w-5xl bg-[#0d121c]/90 text-white rounded-2xl md:rounded-[32px] overflow-hidden shadow-2xl border border-white/10 flex flex-col md:flex-row relative backdrop-blur-xl my-4 md:my-0">
           
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-full text-[10px] text-indigo-300 font-mono mb-6">
-              <Sparkles className="w-3.5 h-3.5 text-purple-400" />
-              IDOL PAD PRO V2.5
-            </div>
-            <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-pink-300 bg-clip-text text-transparent leading-none">
-              IdolPad™ OS
-            </h1>
-            <p className="text-xs text-slate-400 mt-3 leading-relaxed">
-              业界首个高保真深度爱豆企划模拟系统。
-              创建最真实的爱豆履历，从江南皮肤科敷麻加练到体验血雨腥风的绿卡身份危机与零结算财务折磨！
-            </p>
-          </div>
-
-          <div className="my-8 md:my-0 space-y-6 relative z-10">
-            {[1, 2, 3].map((s) => (
-              <div key={s} className="flex items-center gap-4 transition-all">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${step === s ? 'bg-gradient-to-br from-purple-600 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/30' : 'bg-white/5 text-slate-400 border-white/10'}`}>
-                  {s}
-                </div>
-                <div className="flex-1">
-                  <p className={`text-[11px] uppercase font-mono tracking-wider ${step === s ? "text-purple-400 font-bold" : "text-slate-500"}`}>
-                    STAGE_0{s}
-                  </p>
-                  <p className={`text-xs ${step === s ? 'text-white font-semibold' : 'text-slate-400'}`}>
-                    {s === 1 ? "基本个人档案与出生命格" : s === 2 ? "面部精雕与回归画卷" : "选聘娱乐社与最终确人"}
-                  </p>
-                </div>
+          {/* Left Interactive Cosmic Rails */}
+          <div className="md:w-[320px] lg:w-[350px] bg-gradient-to-b from-[#111726] via-[#090d16] to-[#04060b] p-5 md:p-10 flex flex-col justify-between border-b md:border-b-0 md:border-r border-white/5 shrink-0 relative overflow-hidden">
+            <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+            
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 border border-purple-500/20 rounded-full text-[10px] text-indigo-300 font-mono mb-4 md:mb-6">
+                <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                IDOL PAD PRO V2.5
               </div>
-            ))}
+              <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-white via-indigo-200 to-pink-300 bg-clip-text text-transparent leading-none">
+                IdolPad™ OS
+              </h1>
+              <p className="text-xs text-slate-400 mt-2.5 md:mt-3 leading-relaxed">
+                业界首个高保真深度爱豆企划模拟系统。
+                创建最真实的爱豆履历，从江南皮肤科敷麻加练到体验血雨腥风的绿卡身份危机与零结算财务折磨！
+              </p>
+            </div>
+
+            <div className="my-5 md:my-0 space-y-3 md:space-y-6 relative z-10">
+              {[1, 2, 3].map((s) => (
+                <div key={s} className="flex items-center gap-3.5 md:gap-4 transition-all">
+                  <div className={`w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center text-xs font-bold transition-all border ${step === s ? 'bg-gradient-to-br from-purple-600 to-indigo-600 border-purple-400 shadow-lg shadow-purple-500/30' : 'bg-white/5 text-slate-400 border-white/10'}`}>
+                    {s}
+                  </div>
+                  <div className="flex-1">
+                    <p className={`text-[10px] md:text-[11px] uppercase font-mono tracking-wider ${step === s ? "text-purple-400 font-bold" : "text-slate-500"}`}>
+                      STAGE_0{s}
+                    </p>
+                    <p className={`text-[11px] md:text-xs ${step === s ? 'text-white font-semibold' : 'text-slate-400'}`}>
+                      {s === 1 ? "基本个人档案与出生命格" : s === 2 ? "面部精雕与回归画卷" : "选聘娱乐社与最终确认"}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-[10px] text-slate-500 font-mono border-t border-white/5 pt-3 mt-4 md:mt-0">
+              © K-POP REALTIME STRATEGY OS SIMULATOR
+            </div>
           </div>
 
-          <div className="text-[10px] text-slate-650 font-mono border-t border-white/5 pt-4 mt-8 md:mt-0">
-            © K-POP REALTIME STRATEGY OS SIMULATOR
-          </div>
-        </div>
-
-        {/* Right Detail parameters */}
-        <div className="flex-1 p-6 md:p-10 flex flex-col justify-between min-h-[560px] bg-slate-900/20">
+          {/* Right Detail parameters */}
+          <div className="flex-1 p-5 md:p-10 flex flex-col justify-between min-h-[380px] md:min-h-[560px] bg-slate-900/20">
           <div>
             {step === 1 && (
               <div className="space-y-6">
@@ -1069,5 +1070,6 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
       </div>
     </div>
-  );
+  </div>
+);
 }

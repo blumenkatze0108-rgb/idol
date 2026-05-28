@@ -2,7 +2,7 @@ import { useState } from "react";
 import { IdolSchedule, IdolPersona, WeversePost } from "../types";
 import { SH_LIST } from "../mockData";
 import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame } from "lucide-react";
-import { safeFetch } from "./apiHelper";
+import { safeFetch, getSeoulWeather } from "./apiHelper";
 
 interface SchedulesProps {
   persona: IdolPersona;
@@ -148,8 +148,45 @@ export default function SchedulesApp({
     pUpdateObj.dayNumber = pUpdateObj.dayNumber + 1;
     pUpdateObj.energy = Math.min(100, pUpdateObj.energy + 50); // rest Overnight
     pUpdateObj.stress = Math.max(0, pUpdateObj.stress - 15);
-    if (pUpdateObj.stress > 65) {
-      pUpdateObj.skinCondition = pUpdateObj.skinCondition === "perfect" ? "troubled" : "breakout";
+    
+    // Check next day's weather and its impact on skin condition probabilities
+    const nextWeather = getSeoulWeather(pUpdateObj.dayNumber);
+    let skinDecayChance = pUpdateObj.stress > 65 ? 0.75 : 0.08; // Base chance based on stress
+    
+    // Adjust decay probability based on weather
+    if (nextWeather.type === "dry") {
+      skinDecayChance += 0.25; // Drier and dustier environment (+25%)
+    } else if (nextWeather.type === "rainy") {
+      skinDecayChance += 0.20; // High humidity leading to sebum and clogged pores (+20%)
+    } else if (nextWeather.type === "hot") {
+      skinDecayChance += 0.15; // Strong UV ray oxidation stress (+15%)
+    } else if (nextWeather.type === "cold") {
+      skinDecayChance += 0.20; // Cold dry wind harming skin barrier (+20%)
+    }
+
+    if (Math.random() < skinDecayChance) {
+      if (pUpdateObj.skinCondition === "perfect") {
+        pUpdateObj.skinCondition = "glowing";
+      } else if (pUpdateObj.skinCondition === "glowing") {
+        pUpdateObj.skinCondition = "troubled";
+      } else if (pUpdateObj.skinCondition === "troubled") {
+        pUpdateObj.skinCondition = Math.random() > 0.5 ? "breakout" : "exhausted";
+      } else if (pUpdateObj.skinCondition === "breakout") {
+        pUpdateObj.skinCondition = "exhausted";
+      }
+    } else if (nextWeather.type === "sunny" && pUpdateObj.stress < 40) {
+      // Sunny mild climate paired with low stress has a 20% chance to regenerate skin status
+      if (Math.random() < 0.20) {
+        if (pUpdateObj.skinCondition === "exhausted") {
+          pUpdateObj.skinCondition = "breakout";
+        } else if (pUpdateObj.skinCondition === "breakout") {
+          pUpdateObj.skinCondition = "troubled";
+        } else if (pUpdateObj.skinCondition === "troubled") {
+          pUpdateObj.skinCondition = "glowing";
+        } else if (pUpdateObj.skinCondition === "glowing") {
+          pUpdateObj.skinCondition = "perfect";
+        }
+      }
     }
 
     // 2. Draft the API request
@@ -381,8 +418,16 @@ export default function SchedulesApp({
             </div>
           </div>
 
-          <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-3 py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
-            <span>第 <strong>{persona.dayNumber}</strong> 天</span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {/* Stamina Badge */}
+            <div className="bg-amber-950/45 border border-amber-500/25 rounded-full px-2.5 py-1 text-[10px] text-amber-300 font-mono flex items-center gap-1 shadow-sm">
+              <span className="animate-pulse">⚡️</span>
+              <span>体力: <strong>{persona.energy}</strong>/100</span>
+            </div>
+
+            <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2.5 py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
+              <span>第 <strong>{persona.dayNumber}</strong> 天</span>
+            </div>
           </div>
         </div>
 

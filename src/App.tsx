@@ -27,7 +27,7 @@ import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
 import FanMailApp, { FanLetter, generateRandomFanLetter } from "./components/FanMailApp";
-import { safeFetch, triggerToast } from "./components/apiHelper";
+import { safeFetch, triggerToast, getSeoulWeather } from "./components/apiHelper";
 import { motion, AnimatePresence } from "motion/react";
 
 import { 
@@ -35,7 +35,7 @@ import {
   Settings as SettingsIcon, Calendar, MessageSquare, 
   User, Activity, Flame, ShieldAlert, Coins, 
   Download, Upload, Heart, Info, MonitorCheck, Award,
-  Film, Image, Mail, CheckCircle2, AlertCircle
+  Film, Image, Mail, CheckCircle2, AlertCircle, ChevronRight
 } from "lucide-react";
 
 const themeStyles: Record<string, {
@@ -119,6 +119,7 @@ const themeStyles: Record<string, {
 
 export default function App() {
   const [hasStarted, setHasStarted] = useState<boolean>(false);
+  const [showCover, setShowCover] = useState<boolean>(true);
   const [persona, setPersona] = useState<IdolPersona>(DEFAULT_PERSONA);
   const [teammates, setTeammates] = useState<SimulatedTeammate[]>([]);
   
@@ -954,6 +955,238 @@ ${contact.summary || "无"}`;
       "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-amber-950/20 via-slate-950 to-blue-950/30"
     } text-slate-100 flex items-center justify-center`}>
       
+      {/* Immersive Cover Page / User Guide on Load */}
+      {showCover && (
+        <div id="idolpad-cover-screen" className="fixed inset-0 z-[80000] bg-slate-950/95 backdrop-blur-2xl flex items-center justify-center p-3 md:p-6 overflow-y-auto">
+          <div className="absolute inset-0 bg-radial-gradient from-purple-950/40 via-transparent to-transparent pointer-events-none animate-pulse" />
+          
+          {/* Glass Card Container */}
+          <div className="w-full max-w-4xl bg-[#0d121c]/95 text-white rounded-[24px] md:rounded-[32px] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)] border border-purple-500/15 flex flex-col max-h-[92vh] md:max-h-[85vh] relative animate-in fade-in scale-in duration-305">
+            
+            {/* Header Splash */}
+            <div className="bg-gradient-to-r from-purple-900/40 via-[#111726]/90 to-indigo-900/40 p-5 md:p-8 border-b border-white/5 relative overflow-hidden shrink-0">
+              <div className="absolute top-[-50px] right-[-50px] w-48 h-48 bg-purple-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-gradient-to-r from-purple-500/15 to-indigo-500/15 border border-purple-500/25 rounded-full text-[10px] text-purple-300 font-mono mb-3">
+                    <Sparkles className="w-3.5 h-3.5 text-purple-400 rotate-12" />
+                    IDOLPAD OS SIMULATOR V2.5
+                  </div>
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-black tracking-tight bg-gradient-to-r from-white via-indigo-200 to-pink-300 bg-clip-text text-transparent leading-none">
+                    IdolPad™ OS 爱豆生存企划模拟器
+                  </h1>
+                  <p className="text-xs text-slate-400 mt-2 leading-relaxed font-sans">
+                    欢迎来到业界首个高保真深度 K-Pop 爱豆模拟系统。开启你的造星纪元
+                  </p>
+                </div>
+                
+                <button
+                  onClick={() => setShowCover(false)}
+                  className="sm:self-center shrink-0 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-extrabold text-sm rounded-xl shadow-lg shadow-purple-500/20 transition-all cursor-pointer hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                >
+                  启动模拟系统 <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scrollable Core Guide Content */}
+            <div className="flex-1 overflow-y-auto p-5 md:p-8 space-y-8 no-scrollbar bg-slate-900/10">
+              
+              {/* Box 1: 大概背景故事 */}
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute -right-12 -bottom-12 w-32 h-32 bg-purple-500/5 rounded-full blur-2xl pointer-events-none" />
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text flex items-center gap-2 mb-3">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-purple-500/10 rounded border border-purple-500/20">01</span>
+                  🌌 企划前言：深度背景故事 (Lore Profile)
+                </h2>
+                <div className="text-xs text-slate-300 space-y-2.5 leading-relaxed font-sans">
+                  <p>
+                    繁华喧嚣的首尔江南，是闪光灯与璀璨舞台的汇聚之地。数以万计的少男少女在此挥洒汗水，只为争夺那唯一的万众瞩目席位。然而，舞台的背后是无尽的契约、长达数年的地下债务、以及严苛得近乎残酷的角色塑造。
+                  </p>
+                  <p>
+                    在《IdolPad™ OS》模拟企划中，你将接管一台高精度的爱豆生存控制台。你可以选择作为<strong>三大厂高压夹缝下的练习生</strong>（背负高达 ₩2000w 倾家荡产级别的“江南美容加练债务”），或是<strong>刚发布新专辑的Solo/团体正式打歌主唱爱豆</strong>。
+                  </p>
+                  <p>
+                    从零结算的财务账单折磨，到江南清潭洞高级皮肤科的医美急救；从突击回归带来的爆痘状态崩塌，到KakaoTalk上绿卡身份危机与闵经理人、竞争对手的周旋。你的一言一行都将被狂热的粉丝圈、苛刻的娱乐媒体与宿命机制动态评判。
+                  </p>
+                </div>
+              </div>
+
+              {/* Box 2: 玩法与所有功能 */}
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-indigo-400 to-teal-400 bg-clip-text flex items-center gap-2 mb-4">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-indigo-500/10 rounded border border-indigo-500/20">02</span>
+                  📱 拟真终端：玩法与系统功能 (Apps Depot)
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-sans">
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-purple-500/20 transition-all">
+                    <span className="font-bold text-purple-300 flex items-center gap-1.5 mb-1">
+                      <Calendar className="w-3.5 h-3.5" /> 日常行列表 (Schedule)
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      指派全天舞蹈加练、断食抗饿、打歌排练或皮肤管理，平衡你的<strong>体力（Stamina）</strong>与<strong>压力（Stress）</strong>指标。
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-yellow-500/20 transition-all">
+                    <span className="font-bold text-yellow-350 flex items-center gap-1.5 mb-1">
+                      <MessageSquare className="w-3.5 h-3.5" /> KakaoTalk 成员群聊
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      与苛刻的「闵经理人」、威严的「崔社长」、队内队友或毒舌的「竞品同期死对头」进行高保真拟真聊天互动。
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-teal-500/20 transition-all">
+                    <span className="font-bold text-teal-300 flex items-center gap-1.5 mb-1">
+                      <Heart className="w-3.5 h-3.5" /> Weverse 官咖讨论
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      发布官方营业动态，收获粉丝团疯狂刷屏打气或爆破，直接体验血雨腥风的主流粉丝舆论风波。
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-pink-500/20 transition-all">
+                    <span className="font-bold text-pink-300 flex items-center gap-1.5 mb-1">
+                      <Sparkles className="w-3.5 h-3.5" /> Bubble 粉丝订阅消息
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      开启1vN私密泡泡聊天，发送极高亲密度的暖心小作文。实时接收海量付费订阅粉丝的反馈弹幕。
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-indigo-500/20 transition-all">
+                    <span className="font-bold text-indigo-300 flex items-center gap-1.5 mb-1">
+                      <Activity className="w-3.5 h-3.5" /> 皮肤诊所与数据面板 (Derm & Data)
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      监测死忠粉、路人缘与精雕等级。花费代币自费预约江南清潭洞皮肤科（LDM导入、水光针、VIP热玛吉）抗衰救脸！
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-rose-500/20 transition-all">
+                    <span className="font-bold text-rose-350 flex items-center gap-1.5 mb-1">
+                      <Mail className="w-3.5 h-3.5" /> 粉丝实体来信物 (Fan Mail)
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      解锁亲笔拆阅粉丝的信件。可以选择手写回复，暖心或毒舌的言语会改变在 Fandom 中的粉丝死忠留存度。
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-emerald-500/20 transition-all">
+                    <span className="font-bold text-emerald-300 flex items-center gap-1.5 mb-1">
+                      <Film className="w-3.5 h-3.5" /> TikTok卡点 / 小红书穿搭
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      把握移动流媒体网络大潮！紧跟时下热门歌曲拍摄动感舞蹈，或上传在江南日常精美私服搭配引爆美妆推荐榜！
+                    </p>
+                  </div>
+                  <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl hover:border-blue-500/20 transition-all">
+                    <span className="font-bold text-blue-305 flex items-center gap-1.5 mb-1">
+                      🌤️ 首尔动态气候与皮肤干预级影响
+                    </span>
+                    <p className="text-slate-400 leading-relaxed">
+                      首尔特有的5大天气循环（温和晴朗、异常干燥沙尘风、梅雨高湿、烈日暴晒、寒潮气温干裂）将深度扰动体能水合并改变次日爆痘与过敏概率。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 3: 使用教程 */}
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-amber-400 to-rose-400 bg-clip-text flex items-center gap-2 mb-3">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-amber-500/10 rounded border border-amber-500/20">03</span>
+                  💡 新手实操：一步步使用教程 (Step Guide)
+                </h2>
+                <div className="text-xs text-slate-300 space-y-3 leading-relaxed font-sans">
+                  <div className="flex gap-2">
+                    <div className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 font-mono flex items-center justify-center shrink-0">1</div>
+                    <div>
+                      <strong>设定爱豆履历</strong>：在首发的【IdolPad Profile Setup】页面精雕你的名字、血型、外貌底子，选择你的练习生和所属事务所。属性与担当是由你自由判定的。
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 font-mono flex items-center justify-center shrink-0">2</div>
+                    <div>
+                      <strong>进行日常日程</strong>：来到【日常行列表 (Schedule)】挑选练习任务。每天的行动都将增减体力，每达成当天全部行程，点击底部<strong>“过夜结算，开启新一天”</strong>。
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 font-mono flex items-center justify-center shrink-0">3</div>
+                    <div>
+                      <strong>处理社交网络</strong>：遇到带红点提示的 APP 务必跟进。在 KakaoTalk 配合闵经理的吩咐，或者在 Weverse 发起新回复。你的处理选择关系到你的续约倾向性。
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 font-mono flex items-center justify-center shrink-0">4</div>
+                    <div>
+                      <strong>应对限时危机</strong>：当极度疲劳或压力拉爆（Stress &gt; 65）时，过夜会高几率触发黑粉舆论战或痘印彻底爆发。及时用皮肤科套餐或吃喝睡回血。
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 4: 关于备份、密钥设置教程 */}
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-teal-400 to-indigo-400 bg-clip-text flex items-center gap-2 mb-3">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-teal-500/10 rounded border border-teal-500/20">04</span>
+                  🔑 外部兼容：数据备份与密钥设置 (Access & Backup)
+                </h2>
+                <div className="text-xs text-slate-355 space-y-3 leading-relaxed font-sans">
+                  <div className="p-3 bg-[#0c101b] border border-white/5 rounded-xl">
+                    <span className="font-bold text-white block mb-1">🔑 1. 如何解锁超高真度 AI 拟真回复机制?</span>
+                    <p className="text-slate-400 leading-relaxed">
+                      本应用搭载深度沙盒文案系统。若想激活<strong>纯智能生成、与你设定的属性和行为完全丝滑绑定的动态 KakaoTalk 群聊及手写粉丝信回复</strong>：
+                      请在应用外部或 AI Studio 顶部的「Settings（设置）」菜单中提供你的专属 <strong>`GEMINI_API_KEY` （Gemini 密钥）</strong>。本系统会全程在服务器端（Server-side）安全访问，密钥绝不暴露给客户端。
+                    </p>
+                  </div>
+                  <div className="p-3 bg-[#0c101b] border border-white/5 rounded-xl">
+                    <span className="font-bold text-white block mb-1">💾 2. 存档备份与云盘导回机制</span>
+                    <p className="text-slate-400 leading-relaxed">
+                      点击底部最右侧的<strong>「系统设置 (Settings)」</strong>图标。你可以在此实时复制长文格式的 <strong>JSON 存档数据</strong>，并在本地打包。下次游玩时直接贴回「导入状态」并确认即刻完美接轨断点，安全免丢档。
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Box 5: 本次版本更新内容 */}
+              <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text flex items-center gap-2 mb-3">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
+                  🚀 重大迭代：V2.5 系统版本更新内容 (Changelog)
+                </h2>
+                <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
+                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。核心新增特性清单如下：</p>
+                  <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
+                    <li>
+                      <strong className="text-slate-200">☀️ 首尔动态天气监测组件：</strong>由于韩国特有的沙尘和温湿度异常，天气会对爱豆娇嫩皮肤造成巨大压力。我们在 iPad Pro 顶部标尺栏全量新增了温湿度实时预警。
+                    </li>
+                    <li>
+                      <strong className="text-slate-200">⚡ 体力与高敏爆豆计算因子：</strong>行程界面加载了爱豆残余体力指示，干燥/寒潮/梅雨湿气各增加 15% - 25% 皮肤爆痘概率；温和低气压下有 20% 自我修复概率。
+                    </li>
+                    <li>
+                      <strong className="text-slate-200">📣 全自动静音滚动电台跑马灯：</strong>页面极底端新增了电台行进广播风格的无缝跑马灯（Marquee Track），多条系统消息、江南医美折扣、练习事件通知不再堆叠阻塞，一目了然！
+                    </li>
+                    <li>
+                      <strong className="text-slate-200">📱 响应式平板 Dock 排板重构：</strong>对小屏幕手机不友好引起的越界和隐藏选项问题进行了全面侧向滑动（Side-scroll no-scrollbar）支持，小屏幕设备亦能顺滑单手操控！
+                    </li>
+                    <li>
+                      <strong className="text-slate-200">✍️ 错别字彻底清除行动：</strong>已对所有用户触发的文字反馈完成语义校对（修正了如出生命格面板的“最终确人”和升级操作处的“确人，继续”为标准的“确认”字样）。
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Sticky Action Footer */}
+            <div className="p-5 md:p-6 bg-slate-950/85 border-t border-white/5 flex items-center justify-center shrink-0">
+              <button
+                onClick={() => setShowCover(false)}
+                className="w-full max-w-lg py-3.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:via-indigo-500 hover:to-pink-500 text-white font-extrabold text-sm rounded-xl shadow-xl shadow-purple-500/10 transition-all cursor-pointer active:scale-95 text-center flex items-center justify-center gap-2"
+              >
+                我知道了，立即进入 IdolPad™ 生存世界 <Sparkles className="w-4 h-4 text-yellow-300 animate-bounce" />
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Global Toast System Floating Container */}
       <div id="global-toast-portal" className="fixed top-6 right-6 z-[99999] flex flex-col gap-3 w-full max-w-sm pointer-events-none select-none">
         <AnimatePresence>
@@ -1033,6 +1266,21 @@ ${contact.summary || "无"}`;
               <div className="flex items-center gap-2">
                 <span className="font-semibold">{seoulTime}</span>
                 <span className="text-[10px] text-slate-400 font-mono">Seoul KST</span>
+                {/* Weather in Seoul Indicator */}
+                <div 
+                  className="inline-flex items-center gap-1 bg-purple-500/10 border border-purple-500/25 px-2 py-0.5 rounded-full text-[10px] text-purple-305 hover:bg-purple-500/20 active:scale-95 transition-all cursor-pointer"
+                  title={getSeoulWeather(persona.dayNumber).impactText}
+                  onClick={() => {
+                    triggerToast(
+                      `首尔气象局 (Day ${persona.dayNumber})`, 
+                      getSeoulWeather(persona.dayNumber).impactText,
+                      "info"
+                    );
+                  }}
+                >
+                  <span className="animate-pulse">{getSeoulWeather(persona.dayNumber).icon}</span>
+                  <span className="font-bold text-indigo-200">{getSeoulWeather(persona.dayNumber).name}</span>
+                </div>
                 {persona.startType === "trainee" ? (
                   <span className="bg-red-500/15 text-red-400 border border-red-500/25 text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase animate-pulse">
                     TRAIN DEBT: ${persona.traineeDebt}w
@@ -1922,12 +2170,17 @@ ${contact.summary || "无"}`;
                 </div>
 
                 {/* LOGS DISPLAY CONSOLE BOTTOM LINE (Requirement Architectural Cleanliness, Human labels) */}
-                <div id="ipad-announcements" className="h-8 px-4 bg-slate-950/40 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400 select-none pointer-events-none shrink-0 font-mono">
-                  <span className="truncate max-w-[80%] flex items-center gap-1 text-slate-300">
-                    <MonitorCheck className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-                    系统消息: {systemLogs[0] || "IdolPad OS 运行中..."}
-                  </span>
-                  <span className="shrink-0 text-[9px] text-[#868da1]">
+                <div id="ipad-announcements" className="h-8 px-4 bg-slate-950/95 border-t border-white/5 flex items-center justify-between text-[10px] text-slate-400 select-none shrink-0 font-mono relative overflow-hidden">
+                  <div className="flex items-center gap-1.5 text-slate-300 overflow-hidden h-full flex-1 mr-4">
+                    <MonitorCheck className="w-3.5 h-3.5 text-emerald-400 animate-pulse shrink-0 bg-slate-950 z-10 pr-1" />
+                    <span className="text-[10px] text-slate-400 font-bold shrink-0 bg-slate-950 z-10 pr-2">系统消息:</span>
+                    <div className="flex-1 overflow-hidden relative h-full flex items-center">
+                      <span className="animate-marquee whitespace-nowrap absolute left-0 font-medium text-slate-250">
+                        {systemLogs.filter(Boolean).map(log => log.replace(/[\n\r]+/g, " ")).join("     ★     ") || "IdolPad OS 运行中..."}
+                      </span>
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-[9px] text-[#868da1] z-10 bg-slate-950 pl-2">
                     SEOUL UTC+09
                   </span>
                 </div>
@@ -1937,82 +2190,82 @@ ${contact.summary || "无"}`;
             </div>
 
             {/* DOCK BAR FOR IPAD APP SHORTCUTS (Aesthetic shortcuts to different Apps) */}
-            <div id="ipad-bottom-dock" className="h-16 px-4 md:px-12 bg-slate-950/50 border-t border-white/5 backdrop-blur-md flex items-center justify-center gap-3 md:gap-6 shrink-0 relative select-none z-30">
+            <div id="ipad-bottom-dock" className="h-16 px-2 md:px-12 bg-slate-950/50 border-t border-white/5 backdrop-blur-md flex items-center justify-center shrink-0 relative select-none z-30 w-full overflow-x-auto no-scrollbar">
               
-              <div className="px-4 py-1.5 bg-white/5 rounded-2xl flex items-center gap-3 md:gap-5 shadow-lg border border-white/5">
+              <div className="px-2 sm:px-4 py-1.5 bg-white/5 rounded-2xl flex items-center gap-1 sm:gap-3 md:gap-5 shadow-lg border border-white/5 shrink-0 max-w-none">
                 {/* 1. Schedule Calendar */}
                 <button
                   onClick={() => { setActiveApp("schedule"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "schedule" ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "schedule" ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="日常行列表"
                 >
-                  <Calendar className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#f44e73] animate-ping" />
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#f44e73] animate-ping" />
                 </button>
 
                 {/* 2. KakaoTalk */}
                 <button
                   onClick={() => { setActiveApp("kakaotalk"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "kakaotalk" ? "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/10 scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "kakaotalk" ? "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/10 scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="KakaoTalk 成员群聊"
                 >
-                  <MessageSquare className="w-5 h-5" />
+                  <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 3. Weverse */}
                 <button
                   onClick={() => { setActiveApp("weverse"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "weverse" ? "bg-teal-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "weverse" ? "bg-teal-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="Weverse 官咖讨论"
                 >
-                  <Heart className="w-5 h-5" />
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 4. Bubble */}
                 <button
                   onClick={() => { setActiveApp("bubble"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "bubble" ? "bg-blue-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "bubble" ? "bg-blue-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="Bubble 粉丝订阅"
                 >
-                  <Sparkles className="w-5 h-5" />
+                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5. Health & Fandom metrics */}
                 <button
                   onClick={() => { setActiveApp("analytics"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "analytics" ? "bg-indigo-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "analytics" ? "bg-indigo-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="数据与大健康分析"
                 >
-                  <Activity className="w-5 h-5" />
+                  <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5b. TikTok Short video Challenge */}
                 <button
                   onClick={() => { setActiveApp("tiktok"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "tiktok" ? "bg-red-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "tiktok" ? "bg-red-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="TikTok卡点短视频"
                 >
-                  <Film className="w-5 h-5" />
+                  <Film className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5c. XiaoHongShu Outfit */}
                 <button
                   onClick={() => { setActiveApp("xiaohongshu"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "xiaohongshu" ? "bg-rose-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "xiaohongshu" ? "bg-rose-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="小红书好物穿搭"
                 >
-                  <Image className="w-5 h-5" />
+                  <Image className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5d. Fan Mail (手写来信) */}
                 <button
                   onClick={() => { setActiveApp("fanmail"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all relative cursor-pointer outline-none ${activeApp === "fanmail" ? "bg-pink-600 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "fanmail" ? "bg-pink-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="粉丝实体来信物"
                 >
-                  <Mail className="w-5 h-5" />
+                  <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
                   {fanLetters.some((l) => !l.isRead) && (
-                    <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-[#f44e73] animate-pulse border border-[#0e111a]" />
+                    <span className="absolute top-1 right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#f44e73] animate-pulse border border-[#0e111a]" />
                   )}
                 </button>
 
@@ -2022,10 +2275,10 @@ ${contact.summary || "无"}`;
                 {/* 6. Settings Key configuration */}
                 <button
                   onClick={() => { setActiveApp("settings"); setIsControlCenterOpen(false); }}
-                  className={`p-2.5 rounded-xl transition-all cursor-pointer outline-none ${activeApp === "settings" ? "bg-slate-700 text-white shadow-lg scale-110" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all cursor-pointer outline-none shrink-0 ${activeApp === "settings" ? "bg-slate-700 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
                   title="系统API/备份管理"
                 >
-                  <SettingsIcon className="w-5 h-5" />
+                  <SettingsIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
@@ -2074,7 +2327,7 @@ ${contact.summary || "无"}`;
               }}
               className="mt-5 w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer active:scale-95"
             >
-              确人，继续我的演艺生涯！
+              确认，继续我的演艺生涯！
             </button>
           </div>
         </div>
