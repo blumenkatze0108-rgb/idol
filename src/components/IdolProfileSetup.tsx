@@ -32,7 +32,9 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [hairStyle, setHairStyle] = useState("层次狼尾鲻鱼头 (Wolf Cut)");
   const [hairColor, setHairColor] = useState("午夜深海蓝黑");
   const [mbti, setMbti] = useState("ENFJ");
-  const [conceptTheme, setConceptTheme] = useState("Chic Hip-hop Crush (街头酷炫飒爽风)");
+  const [conceptTheme, setConceptTheme] = useState("Hip-Hop (嘻哈说唱)");
+  const [isCustomConcept, setIsCustomConcept] = useState(false);
+  const [customConceptText, setCustomConceptText] = useState("");
   const [company, setCompany] = useState("Aether Label (三大厂牌旗下 - 待遇高，抽成9:1)");
   const [vibeText, setVibeText] = useState(
     "自带清冷慵懒的面部视觉，跳舞时节奏把控极其犀利，眼神极具野心与侵略感。"
@@ -190,12 +192,16 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   ];
 
   const conceptualThemes = [
-    "Chic Hip-hop Crush (街头酷炫飒爽风)",
-    "High Teen (美式复古傲娇学院风)",
-    "Elegant Gothic (暗黑悲伤天鹅哥特风)",
-    "Aesthetic Bright Cute (氧气果汁元气风)",
-    "Traditional Neo-Oriental (经典国潮新中式)",
-    "Cyber Glitch (赛博朋克科幻科技感)"
+    "Hip-Hop (嘻哈说唱)",
+    "Jazz / Soul (复古爵士)",
+    "R&B / Neo-Soul (现代节奏蓝调)",
+    "Synthpop / Retro Wave (合成器流行)",
+    "House / Garage (电子浩室)",
+    "Pop Rock / Alternative (摇滚朋克)",
+    "Bubblegum / Teen Pop (糖果流行)",
+    "R&B Velvet (暗黑节奏蓝调)",
+    "Ballad (感性抒情)",
+    "Latin / Afrobeat (拉丁/非洲律动)"
   ];
 
   const companyLabels = [
@@ -246,20 +252,23 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   };
 
   const generateVibeText = () => {
-    const isGirl = gender === "female";
     let text = "";
-    if (conceptTheme.includes("High Teen")) {
-      text = isGirl 
-        ? "自带清冷而娇贵的傲慢千金脸，跳舞时动作爆发力极强，是当之无愧的舞台绝对核心。"
-        : "少年感扑面而来，具有极高的运动型美男骨相，笑容爽朗治愈，极具大众男友吸引力。";
-    } else if (conceptTheme.includes("Gothic")) {
-      text = isGirl
-        ? "眼底闪烁着厌世冰冷，宛如黑夜里的清冷黑天鹅，直拍打歌极度高贵神秘。"
-        : "散发着吸血鬼公爵般的暗黑高贵。眼线勾魂，清冷不可方物，神级控场。";
-    } else if (conceptTheme.includes("Crush") || conceptTheme.includes("Cyber")) {
-      text = "眼神犀利凶狠，骨相开阔立体，无论是重金属唱腔还是Rap弹射都得心应手，天生帅气领袖。";
+    if (conceptTheme.includes("Hip-Hop")) {
+      text = "眼神犀利冷峻，带有街头律动骨相。无论是Rap急速弹射还是帅气的Hiphop即兴舞步都手到擒来，生来就是舞台上的绝对领头羊。";
+    } else if (conceptTheme.includes("Jazz") || conceptTheme.includes("Soul")) {
+      text = "自带微醺慵懒的复古嗓音与艺术故事感。眼神如深夜烟海般深沉，极具高阶审美与独特的清冷文艺气息。";
+    } else if (conceptTheme.includes("R&B") || conceptTheme.includes("Velvet")) {
+      text = "嗓音微哑慵懒，独具黑丝绒般的质感。动作掌控极其细腻，眼神清冷而勾人，是极具致命吸引力的舞台杀手。";
+    } else if (conceptTheme.includes("Synthpop") || conceptTheme.includes("House") || conceptTheme.includes("Garage")) {
+      text = "节奏感极强，舞蹈动作干练利落、毫不拖泥带水。周身散发着摩登复古的电子科技冷艳感，是行走的画报。";
+    } else if (conceptTheme.includes("Rock") || conceptTheme.includes("Alternative")) {
+      text = "自带摇滚歌手骨子里的野性叛逆与不羁。台风极其硬核霸气，嗓音穿透力拉满，拥有瞬间点燃全场的现场爆发力。";
+    } else if (conceptTheme.includes("Bubblegum") || conceptTheme.includes("Pop") || conceptTheme.includes("Summer")) {
+      text = "充满了高能元气和果汁感。甜美和少年感并存，笑容极具治愈力和感染力，每个镜头对视都仿佛洋溢着夏日的温度。";
+    } else if (conceptTheme.includes("Ballad")) {
+      text = "声线澄澈深情，极具画面共情力。无需繁琐的舞美，只需静静站立歌唱便能触动灵魂，散发出惹人怜惜的清冷易碎感。";
     } else {
-      text = "充满高亲和力和元气果汁感。微笑时眼神明亮有感染力，最擅长在签售会上给大面积暖心饭撒。";
+      text = "具备顶级的概念化理解力与极高辨识度的神颜。自带引人瞩目的爱豆光环，能将独一无二的先锋美学在舞台上完美定格。";
     }
     setVibeText(text);
   };
@@ -873,6 +882,63 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                     />
                   </div>
                 </div>
+
+                {/* 🎭 主概念回归风格 Selection */}
+                <div className="mt-4 bg-[#111622]/40 border border-white/5 p-4 rounded-2xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-[11px] font-bold text-indigo-300 font-mono uppercase tracking-wide">
+                      🎭 出道暨首张回归主概念 (Main Comeback Theme / Music Genre)
+                    </label>
+                    <span className="bg-indigo-500/20 text-indigo-400 border border-indigo-500/10 text-[9px] px-2 py-0.5 rounded font-black font-mono">回归流派</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mb-3 leading-relaxed">
+                    爱豆首张出道或回归专辑的大盘流派核心概念。这不仅决定您在卡片及电台跑马灯上的视觉流派，也会影响后期所有社交平媒上的粉丝和黑粉讨论！
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <select 
+                        value={isCustomConcept ? "custom" : (conceptualThemes.includes(conceptTheme) ? conceptTheme : "custom")}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "custom") {
+                            setIsCustomConcept(true);
+                            const defaultCustom = "Chic Minimalist Noir (清冷极简主义风格)";
+                            setCustomConceptText(defaultCustom);
+                            setConceptTheme(defaultCustom);
+                          } else {
+                            setIsCustomConcept(false);
+                            setConceptTheme(val);
+                          }
+                        }}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 text-slate-205 font-medium"
+                      >
+                        {conceptualThemes.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>
+                            {opt}
+                          </option>
+                        ))}
+                        <option className="bg-[#0b0e17] text-yellow-300 font-bold" value="custom">✍️ ➕ 自定义回归风格 (Custom Style)</option>
+                      </select>
+                    </div>
+
+                    {(isCustomConcept || !conceptualThemes.includes(conceptTheme)) && (
+                      <div className="animate-in fade-in duration-200">
+                        <input 
+                          type="text" 
+                          value={conceptTheme} 
+                          onChange={(e) => {
+                            setCustomConceptText(e.target.value);
+                            setConceptTheme(e.target.value);
+                            setIsCustomConcept(true);
+                          }}
+                          placeholder="手动键盘定格专属概念，例如：德式暗黑工业风"
+                          className="w-full bg-slate-950/80 border border-indigo-500/30 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 text-yellow-300 font-bold"
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
               </div>
             )}
 
