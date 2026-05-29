@@ -282,8 +282,8 @@ export default function XiaohongshuApp({
 
       {/* Immersive Xiaohongshu Styled modal */}
       {selectedPost && (
-        <div id="xhs-detail-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50">
-          <div className="w-full max-w-lg bg-white border border-red-100 rounded-[24px] p-5 md:p-6 max-h-[85vh] overflow-y-auto flex flex-col justify-between text-slate-800 shadow-2xl relative animate-in zoom-in-95 duration-150">
+        <div id="xhs-detail-modal" className="absolute inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 md:p-6 z-50">
+          <div className="w-full max-w-lg bg-white border border-red-100 rounded-[24px] p-5 md:p-6 max-h-[95%] overflow-y-auto flex flex-col justify-between text-slate-800 shadow-2xl relative animate-in zoom-in-95 duration-150">
             <div>
               <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-4 shrink-0">
                 <div className="flex items-center gap-2">

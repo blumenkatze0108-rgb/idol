@@ -7,7 +7,9 @@ import {
   BubbleMessage, 
   IdolSchedule, 
   SimulatedTeammate,
-  BackupData 
+  BackupData,
+  getCalendarPeriod,
+  getBirthdayPeriod
 } from "./types";
 import { 
   generateCoreStaff,
@@ -18,6 +20,7 @@ import {
   ENHANCED_RANDOM_EVENTS
 } from "./mockData";
 import IdolProfileSetup from "./components/IdolProfileSetup";
+import BirthdayGameModal from "./components/BirthdayGameModal";
 import KakaoTalkApp from "./components/KakaoTalkApp";
 import WeverseApp from "./components/WeverseApp";
 import BubbleApp from "./components/BubbleApp";
@@ -119,6 +122,8 @@ const themeStyles: Record<string, {
 
 export default function App() {
   const [hasStarted, setHasStarted] = useState<boolean>(false);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(true);
+  const [showBirthdayEvent, setShowBirthdayEvent] = useState<boolean>(false);
   const [showCover, setShowCover] = useState<boolean>(true);
   const [persona, setPersona] = useState<IdolPersona>(DEFAULT_PERSONA);
   const [teammates, setTeammates] = useState<SimulatedTeammate[]>([]);
@@ -1705,7 +1710,7 @@ ${contact.summary || "无"}`;
                 <div className="space-y-3.5 border-l md:border-l-0 md:border-t border-white/5 pl-4 md:pl-0 pt-0 md:pt-3 flex-1 md:flex-initial">
                   {/* Wallet */}
                   <div>
-                    <span className="text-[9px] text-slate-450 uppercase font-mono block">到手提成费余额</span>
+                    <span className="text-[9px] text-slate-450 uppercase font-mono block">旗下艺人现金与提成余额</span>
                     <span className="text-base font-bold text-yellow-300 font-mono mt-0.5 block flex items-center gap-1">
                       <Coins className="w-4 h-4 text-yellow-500 animate-spin" /> ₩ {persona.money.toLocaleString()} 万
                     </span>
@@ -1794,18 +1799,27 @@ ${contact.summary || "无"}`;
 
                         let evaluationTriggered = false;
                         
-                        // A. Check for trainee debut evaluation on Day 5+
-                        if (persona.startType === "trainee" && newPersona.dayNumber >= 5) {
+                        // A. Check for trainee debut evaluation on Day 36+ (completed 36 turns, moving to Day 37)
+                        if (persona.startType === "trainee" && newPersona.dayNumber >= 37) {
                           evaluationTriggered = true;
-                          const totalTalent = newPersona.vocalSkill + newPersona.danceSkill + newPersona.rapSkill;
+                          const totalTalent = newPersona.vocalSkill + newPersona.danceSkill + newPersona.rapSkill + newPersona.varietySkill;
                           const repValue = newPersona.reputation;
                           const stressValue = newPersona.stress;
                           
-                          if (totalTalent >= 130 && repValue >= 65 && stressValue < 80) {
+                          if (totalTalent >= 150 && repValue >= 65 && stressValue < 80) {
                             setDebutEvaluationStatus("success");
                           } else {
                             setDebutEvaluationStatus("fail");
                           }
+                        }
+
+                        // B. Check for birthday mini game trigger
+                        const birthPeriod = getBirthdayPeriod(newPersona.birthday);
+                        const currentPeriod = getCalendarPeriod(newPersona.dayNumber);
+                        
+                        if (birthPeriod && birthPeriod.month === currentPeriod.month && birthPeriod.period === currentPeriod.period) {
+                          setShowBirthdayEvent(true);
+                          handleAddSystemLog(`🎂 【生日大吉】当前历法轮转到了你的专属生日旬（${birthPeriod.text}）！全厂牌及应援唯粉为你精心布置了生日专属大礼包与感恩剧情游戏！`);
                         }
                         
                         // B. Check for secret dating leak scandal risk or breakup crisis (ONLY if they didn't trigger trainee debut evaluation, or they are already an idol)
@@ -1972,6 +1986,28 @@ ${contact.summary || "无"}`;
                             return c;
                           }));
                           
+                          // Check if new day date is the user's Birthday!
+                          const isBday = (bdayStr: string, dayN: number): boolean => {
+                            if (!bdayStr) return false;
+                            const parts = bdayStr.split("-");
+                            if (parts.length !== 3) return false;
+                            const birthMonth = parseInt(parts[1], 10);
+                            const birthDay = parseInt(parts[2], 10);
+                            
+                            const simDate = new Date(2026, 4, 29); // May 29, 2026 starting point
+                            simDate.setDate(simDate.getDate() + (dayN - 1));
+                            const simMonth = simDate.getMonth() + 1;
+                            const simDateDay = simDate.getDate();
+                            
+                            return birthMonth === simMonth && birthDay === simDateDay;
+                          };
+
+                          if (isBday(newPersona.birthday, newPersona.dayNumber)) {
+                            setShowBirthdayEvent(true);
+                            handleAddSystemLog(`🎂 【生日限定特别剧情】天呐！今天正好逢着主角在档案中设定的专属生日公历日期（${newPersona.birthday}）！全社队友、闵室长已在保姆车中为您筹划重磅惊喜现场，生日限定大包已上线！`);
+                            triggerToast("🎂 Happy Birthday!", "今天到达了本命的专属公历生日，限定的庆典感恩小游戏已被唤醒！", "success");
+                          }
+
                           triggerAutoSave(newPersona, teammates, nextHists, newWeversePosts, bubbleMessages, newSchedules);
                           
                           if (isAutoSummarizeEnabled) {
@@ -2333,6 +2369,8 @@ ${contact.summary || "无"}`;
                         </div>
                       </div>
 
+
+
                     </div>
                   )}
 
@@ -2520,9 +2558,9 @@ ${contact.summary || "无"}`;
 
             <div className="grid grid-cols-3 gap-3 my-5 bg-slate-950/60 p-4 rounded-2xl border border-white/5 text-left">
               <div className="p-2 border border-slate-800 rounded-xl bg-slate-900/30">
-                <span className="text-[10px] text-slate-400 block font-mono">声舞说总评 (Skills Check):</span>
+                <span className="text-[10px] text-slate-400 block font-mono">声舞说艺总评 (Skills Check):</span>
                 <span className="text-sm font-bold text-emerald-400 font-mono">
-                  {persona.vocalSkill + persona.danceSkill + persona.rapSkill} / 130
+                  {persona.vocalSkill + persona.danceSkill + persona.rapSkill + persona.varietySkill} / 150
                 </span>
                 <span className="text-[9px] text-emerald-400/70 block mt-0.5">合格 (Pass)</span>
               </div>
@@ -2604,12 +2642,12 @@ ${contact.summary || "无"}`;
 
             <div className="grid grid-cols-3 gap-3 my-5 bg-slate-950/60 p-4 rounded-2xl border border-white/5 text-left font-mono">
               <div className="p-2 border border-slate-800 rounded-xl bg-slate-900/30">
-                <span className="text-[10px] text-slate-400 block animate-pulse">训练生值 (Skills VS 130):</span>
-                <span className={`text-sm font-bold ${(persona.vocalSkill + persona.danceSkill + persona.rapSkill) >= 130 ? 'text-emerald-400' : 'text-rose-400'}`}>
-                  {persona.vocalSkill + persona.danceSkill + persona.rapSkill} / 130
+                <span className="text-[10px] text-slate-400 block animate-pulse">技能基础分 (Skills VS 150):</span>
+                <span className={`text-sm font-bold ${(persona.vocalSkill + persona.danceSkill + persona.rapSkill + persona.varietySkill) >= 150 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {persona.vocalSkill + persona.danceSkill + persona.rapSkill + persona.varietySkill} / 150
                 </span>
-                <span className={`text-[9px] block mt-0.5 ${(persona.vocalSkill + persona.danceSkill + persona.rapSkill) >= 130 ? 'text-emerald-400/70' : 'text-rose-400/70'}`}>
-                  {(persona.vocalSkill + persona.danceSkill + persona.rapSkill) >= 130 ? '合格' : '不合格'}
+                <span className={`text-[9px] block mt-0.5 ${(persona.vocalSkill + persona.danceSkill + persona.rapSkill + persona.varietySkill) >= 150 ? 'text-emerald-400/70' : 'text-rose-400/70'}`}>
+                  {(persona.vocalSkill + persona.danceSkill + persona.rapSkill + persona.varietySkill) >= 150 ? '合格' : '不合格'}
                 </span>
               </div>
               <div className="p-2 border border-slate-800 rounded-xl bg-slate-900/30">
@@ -2633,7 +2671,7 @@ ${contact.summary || "无"}`;
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed text-left bg-slate-950/30 p-4 border border-white/5 rounded-xl">
-              李社长冷着脸指出：“你的实力目前出去只会在开麦舞台上给厂牌抹黑。要么你加练习，在第二天跨进新日程时重新进行评测；要么只能由你承担额外 <strong>₩2,000万 韩元</strong> 运作公关手续费，强行打通关系包办出道！”
+              李社长冷着脸指出：“你的综合技能实力目前出去只会在开麦舞台上给厂牌抹黑。要么你加紧练习，在第二天跨进新日程时重新进行评测；要么只能由你承担额外 <strong>₩3,000万 韩元</strong> 运作公关手续费，强行打通关系包办贷款出道！”
             </p>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
@@ -2650,7 +2688,7 @@ ${contact.summary || "无"}`;
                 onClick={() => {
                   const p = { ...persona };
                   p.startType = "idol";
-                  p.traineeDebt = p.traineeDebt + 2000; // Debt increases by 20 million KRW!
+                  p.traineeDebt = p.traineeDebt + 3000; // Debt increases by 30 million KRW!
                   p.fansCount = p.fansCount + 100000;
                   p.reputation = Math.min(100, Math.max(55, p.reputation + 5));
                   p.popularity = Math.min(100, Math.max(35, p.popularity + 15));
@@ -2668,7 +2706,7 @@ ${contact.summary || "无"}`;
                 }}
                 className="py-3 bg-gradient-to-r from-red-650 to-pink-600 hover:from-red-600 hover:to-pink-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer active:scale-95 border border-red-500/20"
               >
-                💸 承受负债加重 +₩2,000万 强拍出道！
+                💸 承受负债加重 +₩3,000w 强拍出道！
               </button>
             </div>
           </div>
@@ -2836,6 +2874,105 @@ ${contact.summary || "无"}`;
             </div>
           </div>
         </div>
+      )}
+
+      {/* Update and Debug notification modal */}
+      {showUpdateModal && (
+        <div id="update-notification-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[250] p-4">
+          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-lg w-full shadow-[0_0_50px_rgba(168,85,247,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+            
+            <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4.5">
+              <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
+                  🚀 系统更新与调试测试公告
+                </h3>
+                <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
+                  UPDATE & DEBUG NOTIFICATION | {new Date().toLocaleDateString('zh-CN')}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold">
+                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
+                  1. 玩家性别回复与限制强力增强
+                </div>
+                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
+                  <p>• 针对<strong>男性与女性身份设定</strong>，高强度重设了 AI 在各处的性别人称判断规则与对话防置错流限制。</p>
+                  <p>• <strong>粉丝来信</strong>、<strong>Weverse动态和直播直播评述</strong>、<strong>Bubble（泡泡）消息中粉丝与队友</strong>的互动场景，皆已全面匹配所选性别，如：女性爱豆完美对齐“欧尼 / 姐姐 / 她 + 欧尼/姐”，男性爱豆对齐“欧巴 / 哥哥 / 他 / 哥”，杜绝错位称呼。</p>
+                  <p>• <strong>KakaoTalk（私聊与企划社多人群聊）</strong>中，高层领导、经理人、队友和粉丝对用户的称谓已按性别完成强力适配，提供沉浸式的艺能界社交反馈，不因误触发指令重置性别称谓。</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold">
+                  <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
+                  2. 动态年龄算法与行业出道年龄健康阈值限制 (NEW)
+                </div>
+                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
+                  <p>• <strong>动态年龄判定</strong>：爱豆年龄现转为自动判定，由玩家输入的出生年月日与首尔气象日（2026年5月29日）的日历变动精确计算，不再允许人工挑选岁数，确保逻辑自恰。</p>
+                  <p>• <strong>行业年龄健康限制</strong>：为维护演艺界规制，用户选择的出道年龄不能过小也不能太老：若为<strong>练习生起点制</strong>，起步年龄限制为 12 岁至 24 岁；若选择<strong>成型出道明星起步</strong>，最低法定年龄限制提高为 15 岁，最大签约推荐限制为 30 岁，越界将触发红色安全警告拦截。</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex items-center gap-2 text-pink-300 font-bold">
+                  <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
+                  3. 生日周年庆典限定剧情小游戏与布局全面防溢出
+                </div>
+                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
+                  <p>• <strong>日期精准匹配</strong>：游戏虚拟日期每明日前进时，若系统检测到当前的“x月x旬”轮转至了您填写的生日所在月份与旬，就会即刻触发出道爱豆或练习生专属的「生日主线特别剧情小游戏」。</p>
+                  <p>• <strong>大赏特权回馈</strong>：小游戏可赚取巨额人气值、减免练习生解约清算账务债、或者直接入账 ₩2,500w 生日奖金，并使皮肤完美 (perfect) 及清空压力负荷！</p>
+                  <p>• <strong>高分辨率防溢出矫正</strong>：为了让评委与玩家获得完美的视觉反馈，我们特别将【小红书穿搭分享详情板】与【生日大赏小游戏面板】重构为百分比高自适应、提供完美微流滚轴支持，全尺寸保障各分辨率下完整可见！</p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-white/5">
+                <div className="flex items-center gap-2 text-teal-300 font-bold">
+                  <span className="w-1.5 h-1.5 bg-teal-500 rounded-full"></span>
+                  4. 全新 36期交互历法与最终晋阶出道规制
+                </div>
+                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
+                  <p>• <strong>交互历法重制</strong>：游戏底层逻辑重整合为 12 大月份、每月分为“上、中、下”三旬，全程合共 36 个交互旬（天数），玩家能清楚直观规划自己的行程日程并阅览汉江天气。</p>
+                  <p>• <strong>练习生大考制度（Day 37+）</strong>：练习生须在 36 轮时间内努力修习并积累本领。第 36 天结束后系统将举行「毕设考核」。选手须积累四大爱豆业务属性（声乐 + 舞蹈 + 说唱 + 综艺艺能）综合总星级评分 ≥ 150，业界推荐名誉度 ≥ 65 且身心压力值 ≤ 80% 方能取得厂牌绿灯，直接全网高标准高位出道！</p>
+                  <p>• <strong>延展特训 vs 贷款强制空降</strong>：未达标的练习生现在拥有两个极其真实的韩娱生态选择：要么<strong>不甘屈服、留在练习室在次日日程中申请延展加练深造</strong>；要么可以直接承担额外 <strong>₩3,000w 巨额包装公关费</strong>（转为未结债务），顶着舆论疑云打包强行直接出道！</p>
+                  <p>• <strong>精英课表稳定刷新</strong>：每个月、每一旬，练习生宿舍与事务桌都会固定、准时地刷新出 4 门基础技能必修大课（固定声乐课、固定舞蹈课、固定说唱课、固定艺能课），全方位为评委老师的加点成长保驾护航！</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 text-xs mt-6 pt-3.5 border-t border-white/10">
+              <button 
+                onClick={() => setShowUpdateModal(false)}
+                className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
+              >
+                我知道了，进入爱豆计划
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Specialty Birthday mini game modal */}
+      {showBirthdayEvent && (
+        <BirthdayGameModal
+          persona={persona}
+          teammates={teammates}
+          onAddLog={handleAddSystemLog}
+          onComplete={(updatedP) => {
+            setPersona(updatedP);
+            setShowBirthdayEvent(false);
+            triggerAutoSave(updatedP, teammates, chatHistories, weversePosts, bubbleMessages, schedules);
+            handleAddSystemLog(`🎂 【生日大吉】生日庆典在漫天彩弹与唯粉尖叫声中圆满落下帷幕！所有特权奖励已被稳妥写入您的小名帖！`);
+            triggerToast("🎁 惊喜加注成功", "生日专属礼遇已被完全激活并持久保存入档！", "success");
+          }}
+        />
       )}
 
     </div>

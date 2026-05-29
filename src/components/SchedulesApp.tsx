@@ -1,8 +1,54 @@
 import { useState } from "react";
-import { IdolSchedule, IdolPersona, WeversePost } from "../types";
+import { IdolSchedule, IdolPersona, WeversePost, getCalendarPeriod } from "../types";
 import { SH_LIST } from "../mockData";
 import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame } from "lucide-react";
 import { safeFetch, getSeoulWeather } from "./apiHelper";
+
+export function getFixedSkillSchedules(dayN: number): IdolSchedule[] {
+  const period = getCalendarPeriod(dayN);
+  return [
+    {
+      id: `fixed_vocal_${dayN}`,
+      time: "上午 09:00 - 11:30",
+      title: `【${period.text}·固定声乐课】金牌声轨导师一对一生唱咬字打磨 🎙️`,
+      category: "vocal_lesson",
+      rewardPopularity: 1,
+      rewardReputation: 1,
+      energyCost: 15,
+      completed: false
+    },
+    {
+      id: `fixed_dance_${dayN}`,
+      time: "下午 13:00 - 15:30",
+      title: `【${period.text}·固定舞蹈课】高强度超整齐刀群舞角度肢体节拍矫正 💃`,
+      category: "practice",
+      rewardPopularity: 1,
+      rewardReputation: 1,
+      energyCost: 20,
+      completed: false
+    },
+    {
+      id: `fixed_rap_${dayN}`,
+      time: "下午 16:00 - 18:00",
+      title: `【${period.text}·固定说唱课】暗黑词流律动与吐字爆破气相度特训 🎤`,
+      category: "practice",
+      rewardPopularity: 1,
+      rewardReputation: 1,
+      energyCost: 15,
+      completed: false
+    },
+    {
+      id: `fixed_variety_${dayN}`,
+      time: "晚上 19:35 - 21:30",
+      title: `【${period.text}·固定艺能课】广播级口才辩才与综艺机智模拟对抗 📺`,
+      category: "variety_show",
+      rewardPopularity: 1,
+      rewardReputation: 1,
+      energyCost: 12,
+      completed: false
+    }
+  ];
+}
 
 interface SchedulesProps {
   persona: IdolPersona;
@@ -70,14 +116,22 @@ export default function SchedulesApp({
     let stressGrowth = 5;
 
     // Specific category impacts (Requirement 11, 12)
-    if (sch.category === "practice") {
-      p.danceSkill = Math.min(100, p.danceSkill + 3);
-      weightDrain = 0.2; // heavy dancing drops weight
-      stressGrowth = 8;
-    } else if (sch.category === "vocal_lesson") {
+    if (sch.id.startsWith("fixed_vocal") || sch.category === "vocal_lesson") {
       p.vocalSkill = Math.min(100, p.vocalSkill + 3);
       weightDrain = 0.05;
       stressGrowth = 6;
+    } else if (sch.id.startsWith("fixed_dance") || (sch.category === "practice" && (sch.title.includes("舞蹈") || sch.title.includes("舞") || sch.title.includes("编舞")))) {
+      p.danceSkill = Math.min(100, p.danceSkill + 3);
+      weightDrain = 0.2; // heavy dancing drops weight
+      stressGrowth = 8;
+    } else if (sch.id.startsWith("fixed_rap") || (sch.category === "practice" && (sch.title.includes("说唱") || sch.title.includes("rap") || sch.title.includes("Rap")))) {
+      p.rapSkill = Math.min(100, p.rapSkill + 3);
+      weightDrain = 0.1;
+      stressGrowth = 7;
+    } else if (sch.id.startsWith("fixed_variety") || sch.category === "variety_show" || sch.title.includes("艺能") || sch.title.includes("综艺") || sch.title.includes("口才")) {
+      p.varietySkill = Math.min(100, p.varietySkill + 3);
+      weightDrain = 0.05;
+      stressGrowth = 5;
     } else if (sch.category === "restrictive_diet") {
       p.weight = Math.max(38, p.weight - 0.5);
       stressGrowth = 12;
@@ -336,7 +390,7 @@ export default function SchedulesApp({
     }
 
     // Map scheduled results cleanly to app schedules formats
-    const nextSchedulesList: IdolSchedule[] = parsedResult.schedules.map((s: any, idx: number) => ({
+    const generatedSchedules: IdolSchedule[] = parsedResult.schedules.map((s: any, idx: number) => ({
       id: s.id || `gen_sch_idx_${idx}_${Date.now()}`,
       time: s.time || "中午 12:00",
       title: s.title || "全新定制爱豆商务",
@@ -346,6 +400,10 @@ export default function SchedulesApp({
       energyCost: Number(s.energyCost) || 20,
       completed: false
     }));
+
+    // Prepend tomorrow's 4 fixed skill courses
+    const fixedSchedules = getFixedSkillSchedules(pUpdateObj.dayNumber);
+    const nextSchedulesList = [...fixedSchedules, ...generatedSchedules];
 
     setTransitionResult({
       narrative: parsedResult.narrative,
@@ -426,7 +484,8 @@ export default function SchedulesApp({
             </div>
 
             <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2.5 py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
-              <span>第 <strong>{persona.dayNumber}</strong> 天</span>
+              <span className="font-sans font-bold text-indigo-300 mr-1">📅 {getCalendarPeriod(persona.dayNumber).text}</span>
+              <span>第 <strong>{persona.dayNumber}</strong>/36 天</span>
             </div>
           </div>
         </div>

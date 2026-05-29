@@ -21,6 +21,27 @@ function calculateZodiac(dateStr: string): string {
   return day < bounds[month - 1] ? zodiacs[month - 1] : zodiacs[month];
 }
 
+// Utility to calculate age from birthday relative to simulation baseline date (May 29, 2026)
+function calculateAgeFromBirthday(dateStr: string): number {
+  if (!dateStr) return 18;
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return 18;
+  const by = parseInt(parts[0], 10);
+  const bm = parseInt(parts[1], 10);
+  const bd = parseInt(parts[2], 10);
+  if (isNaN(by) || isNaN(bm) || isNaN(bd)) return 18;
+
+  const currentYear = 2026;
+  const currentMonth = 5;
+  const currentDay = 29;
+
+  let calculatedAge = currentYear - by;
+  if (currentMonth < bm || (currentMonth === bm && currentDay < bd)) {
+    calculatedAge--;
+  }
+  return calculatedAge;
+}
+
 export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("金智敏");
@@ -50,7 +71,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
   const [birthday, setBirthday] = useState("2006-11-23");
   const [zodiac, setZodiac] = useState("射手座");
-  const [age, setAge] = useState(18);
+  const [age, setAge] = useState(19); // Calculated automatically from birthday 2006-11-23 -> 19 in May 2026
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [bloodType, setBloodType] = useState("O型");
   const [specificNationality, setSpecificNationality] = useState("韩国首尔特别市江南区");
   const [isMixed, setIsMixed] = useState(false);
@@ -84,6 +106,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       setRapSkill(50);
       setVarietySkill(55);
     }
+    setValidationError(null); // Reset safety errors when switching start type
   }, [startType]);
 
   // Synchronize height and weight with gender swaps
@@ -104,9 +127,12 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     }
   }, [gender, loverIdentity]);
 
-  // Automatically calculate Zodiac when birthday modifications happen
+  // Automatically calculate Zodiac and Age when birthday modifications happen
   useEffect(() => {
     setZodiac(calculateZodiac(birthday));
+    const calcedAge = calculateAgeFromBirthday(birthday);
+    setAge(calcedAge);
+    setValidationError(null); // Reset validation errors when birthday is changed
   }, [birthday]);
 
   // Adjust default specific nationality based on general nationality
@@ -274,7 +300,34 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     setVibeText(text);
   };
 
+  const getAgeValidationError = (ageVal: number, careerType: "trainee" | "idol"): string | null => {
+    if (careerType === "trainee") {
+      if (ageVal < 12) {
+        return "⚠️ 爱豆年龄偏小（当前通过生日算得为 " + ageVal + " 岁）！练习生训练生起点最低年龄限制为 12 岁，请重新挑选您的出生日期。";
+      }
+      if (ageVal > 24) {
+        return "⚠️ 爱豆年龄偏大（当前设想年岁为 " + ageVal + " 岁）！练习生起步推荐最大年龄为 24 岁以内，请重新挑选。";
+      }
+    } else { // idol
+      if (ageVal < 15) {
+        return "⚠️ 成型明星在业界的最低出道合法年龄不得小于 15 岁（当前算得为 " + ageVal + " 岁）！若要开此低龄挡请切换为【练习生模式】经历累积！";
+      }
+      if (ageVal > 30) {
+        return "⚠️ 成型打歌爱豆推荐年龄不超过 30 岁（当前算得为 " + ageVal + " 岁）！请重新挑选出生日期。";
+      }
+    }
+    return null;
+  };
+
   const handleNext = () => {
+    const ageError = getAgeValidationError(age, startType);
+    if (ageError) {
+      setValidationError(ageError);
+      return;
+    } else {
+      setValidationError(null);
+    }
+
     if (step === 2) {
       generateVibeText();
     }
@@ -514,16 +567,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                     />
                   </div>
                   <div>
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">⏳ 爱豆年龄 (Age)</label>
-                    <select 
-                      value={age}
-                      onChange={(e) => setAge(parseInt(e.target.value) || 18)}
-                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 font-medium text-slate-200"
-                    >
-                      {Array.from({ length: 24 }, (_, i) => i + 12).map((a) => (
-                        <option className="bg-[#0b0e17] text-white font-mono" key={a} value={a}>{a} 岁</option>
-                      ))}
-                    </select>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">⏳ 判定年龄 (Calculated Age)</label>
+                    <div className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-purple-300 font-bold font-mono">
+                      {age} 岁
+                    </div>
                   </div>
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">🌌 出生星座 (Zodiac)</label>
@@ -532,6 +579,13 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                     </div>
                   </div>
                 </div>
+
+                {/* Validation errors for birthday / age */}
+                {validationError && (
+                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-2xl text-[11px] text-red-400 font-medium">
+                    {validationError}
+                  </div>
+                )}
 
                 {/* Customizable Physical Metrics (Criterion 5) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/30 p-3.5 rounded-2xl border border-white/5 bg-slate-900/40">

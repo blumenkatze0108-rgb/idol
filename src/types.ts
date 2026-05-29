@@ -217,3 +217,41 @@ export interface BackupData {
   customApiEndpoint: string;
   fanLetters?: any[]; // Keep any or FanLetter here safely
 }
+
+export function getCalendarPeriod(dayNumber: number): { month: number; period: "early" | "mid" | "late"; text: string } {
+  const index = dayNumber - 1;
+  const month = Math.floor((index / 3) % 12) + 1;
+  const periodIndex = index % 3;
+  const periodStr = periodIndex === 0 ? "上旬" : periodIndex === 1 ? "中旬" : "下旬";
+  const periodType = periodIndex === 0 ? "early" : periodIndex === 1 ? "mid" : "late";
+  const yearText = Math.floor(index / 36) > 0 ? `第 ${Math.floor(index / 36) + 1} 年 ` : "";
+  return {
+    month,
+    period: periodType,
+    text: `${yearText}${month}月${periodStr}`
+  };
+}
+
+export function getBirthdayPeriod(bdayStr: string): { month: number; period: "early" | "mid" | "late"; text: string } | null {
+  if (!bdayStr) return null;
+  const parts = bdayStr.split("-");
+  if (parts.length !== 3) return null;
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (isNaN(month) || isNaN(day)) return null;
+
+  let period: "early" | "mid" | "late" = "early";
+  let periodText = "上旬";
+  if (day > 10 && day <= 20) {
+    period = "mid";
+    periodText = "中旬";
+  } else if (day > 20) {
+    period = "late";
+    periodText = "下旬";
+  }
+  return {
+    month,
+    period,
+    text: `${month}月${periodText}`
+  };
+}
