@@ -21,7 +21,17 @@ export function getClientMockResponse(prompt: string, sInstruction?: string): st
       role = "celeb";
     }
 
-    const isFemalePlayer = sLower.includes("female") || sLower.includes("女") || pLower.includes("欧尼") || pLower.includes("姐");
+    let isFemalePlayer = false;
+    if (sLower.includes('player gender: "female"') || sLower.includes("player gender: female") || sLower.includes("player_gender: \"female\"") || sLower.includes("player is female")) {
+      isFemalePlayer = true;
+    } else if (sLower.includes('player gender: "male"') || sLower.includes("player gender: male") || sLower.includes("player_gender: \"male\"") || sLower.includes("player is male")) {
+      isFemalePlayer = false;
+    } else {
+      isFemalePlayer = sLower.includes("female") || sLower.includes("女") || pLower.includes("欧尼") || pLower.includes("姐");
+      if ((sLower.includes("male") || sLower.includes("男")) && !sLower.includes("female") && !sLower.includes("女")) {
+        isFemalePlayer = false;
+      }
+    }
     const playerGreeting = isFemalePlayer ? "欧尼" : "哥";
 
     if (role === "manager") {

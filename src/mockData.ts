@@ -405,7 +405,7 @@ export const ENHANCED_RANDOM_EVENTS: SystemEvent[] = [
         outcomeText: "你安静温顺地在结算单上签字。经纪人和代表极其欣慰：『这孩子懂感恩、有大局观，不像外面那些动不动拿劳动法仲裁的中小公司训练生。』社长大手一挥，多给了你一个电视剧OST的录音试唱推荐席位，好感度飞涨！"
       },
       {
-        text: "抗拒询问：向财务和闵大元试探性申请生活补助：『欧巴，我兜里连回清潭洞的轻轨票钱都不够了...』",
+        text: "抗拒询问：向财务和闵大元试探性申请生活补助：『室长，我兜里连回清潭洞的轻轨票钱都不够了...』",
         popularityEffect: 0,
         reputationEffect: -5,
         energyEffect: -5,

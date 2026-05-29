@@ -50,6 +50,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
   const [birthday, setBirthday] = useState("2006-11-23");
   const [zodiac, setZodiac] = useState("射手座");
+  const [age, setAge] = useState(18);
   const [bloodType, setBloodType] = useState("O型");
   const [specificNationality, setSpecificNationality] = useState("韩国首尔特别市江南区");
   const [isMixed, setIsMixed] = useState(false);
@@ -321,6 +322,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
         // Detailed choices - Criterion 5
         birthday,
         zodiac,
+        age,
         bloodType,
         specificNationality,
         isMixed,
@@ -497,6 +499,37 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                         <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                {/* Birthday, Age and Zodiac (NEW - Requirement 2) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-purple-950/20 p-3.5 rounded-2xl border border-purple-500/20">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">📅 专属生日 (Birthday)</label>
+                    <input 
+                      type="date" 
+                      value={birthday} 
+                      onChange={(e) => setBirthday(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500 font-mono font-semibold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">⏳ 爱豆年龄 (Age)</label>
+                    <select 
+                      value={age}
+                      onChange={(e) => setAge(parseInt(e.target.value) || 18)}
+                      className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 font-medium text-slate-200"
+                    >
+                      {Array.from({ length: 24 }, (_, i) => i + 12).map((a) => (
+                        <option className="bg-[#0b0e17] text-white font-mono" key={a} value={a}>{a} 岁</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">🌌 出生星座 (Zodiac)</label>
+                    <div className="w-full bg-slate-950/40 border border-white/5 rounded-xl px-4 py-2.5 text-xs text-indigo-300 font-bold font-mono">
+                      {zodiac}
+                    </div>
                   </div>
                 </div>
 
@@ -1089,7 +1122,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                       <div className="mt-4 space-y-2 text-xs text-slate-200 font-sans leading-relaxed">
                         <p>👤 <strong>姓名</strong>: {name} ({stageName}) — <span className="text-sky-300 font-bold uppercase">{gender === "female" ? "女爱豆" : "男爱豆"}</span></p>
                         <p>⚖️ <strong>身姿骨相</strong>: 身高 {height} cm / 初始体重 {weight} kg</p>
-                        <p>🎂 <strong>生日星象</strong>: {birthday} / {zodiac} ({bloodType})</p>
+                        <p>🎂 <strong>生日星象</strong>: {birthday} / {zodiac} | 年龄: {age} 岁 ({bloodType})</p>
                         <p>🗺️ <strong>地缘与背景</strong>: {isMixed ? `【混血】${mixedCountries}` : "纯血本土"} | {specificNationality}</p>
                         <p>👁️ <strong>外貌雕琢</strong>: {eyeShape} | 瞳色:{eyeColor} | 鼻型:{noseShape}</p>
                         <p>💇 <strong>发型发色</strong>: {hairStyle} | {hairColor}</p>

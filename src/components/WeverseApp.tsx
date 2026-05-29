@@ -62,7 +62,7 @@ Do not write any markdown tags or other intro/outro.`;
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
-          systemInstruction: "You are an expert game master managing Kpop social fan simulations.",
+          systemInstruction: `You are an expert game master managing Kpop social fan simulations. Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐" if supportive/fans call her, and NEVER use male-only terms like "欧巴/哥哥/他/哥" to describe her. If male, fans call them "欧巴/哥哥/他" and NEVER use female-only terms like "欧尼/姐姐/她".`,
           customApiKey,
           model: customModel,
           customApiEndpoint
@@ -201,8 +201,8 @@ Do not write any markdown tags or other intro/outro.`;
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Generate a short sweet comment (1 sentence) in Chinese from an active streaming spectator watching Kpop star ${persona.stageName}'s video livestream. Tell them they look gorgeous, congrats, or ask a cute question. Only return the comment text, no formatting.`,
-          systemInstruction: `You are in a live streaming room for Kpop idol "${persona.stageName}".`,
+          prompt: `Generate a short sweet comment (1 sentence) in Chinese from an active streaming spectator watching Kpop star ${persona.stageName}'s video livestream. Tell them they look gorgeous, congrats, or ask a cute question. Only return the comment text, no formatting. Player gender is "${persona.gender}". If female, fans call them "欧尼" or "姐姐"; if male, fans call them "欧巴" or "哥哥".`,
+          systemInstruction: `You are in a live streaming room for Kpop idol "${persona.stageName}". Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐/她" if female, and NEVER use male-only terms like "欧巴/哥哥/他" to describe her. If male, fans call them "欧巴/哥哥/他/哥" and NEVER use female terms like "欧尼/姐姐/她".`,
           customApiKey,
           model: customModel,
           customApiEndpoint

@@ -19,6 +19,7 @@ export interface IdolPersona {
   // Extra detailed profile options (Requirement 5 & 1)
   birthday: string;
   zodiac: string;
+  age?: number;
   bloodType: string;
   specificNationality: string;
   isMixed: boolean;

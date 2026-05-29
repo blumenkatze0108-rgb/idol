@@ -1629,7 +1629,9 @@ ${contact.summary || "无"}`;
                     <div className="space-y-1 leading-tight">
                       <div>
                         <span className="text-[8px] text-slate-500">生辰星盘: </span>
-                        <span className="text-slate-200 font-mono text-[9px]">{persona.birthday || "2006-01-08"} ({persona.zodiac || "魔羯座"})</span>
+                        <span className="text-slate-200 font-mono text-[9px]">
+                          {persona.birthday || "2006-01-08"} ({persona.zodiac || "魔羯座"}){persona.age ? ` | ${persona.age}岁` : ""}
+                        </span>
                       </div>
                       <div>
                         <span className="text-[8px] text-slate-500">具体国籍: </span>

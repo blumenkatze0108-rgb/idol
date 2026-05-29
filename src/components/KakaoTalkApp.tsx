@@ -239,6 +239,15 @@ export default function KakaoTalkApp({
       Favorability score toward the player: ${contact.favorability ?? 50}/100.
       ${contact.id === 'lover' ? 'Critical Constraint: You are the player\'s secret dating partner in the K-Pop world where dating is heavily banned. Respond in a very sweet, warm, deeply caring, yet slightly nervous/secretive tone. Use words like 亲爱的, 宝贝, 汉江. Suggest meeting up stealthily, checking for cameras or managers.' : ''}
       ${contact.summary ? `Dialogue History Milestones Summary: "${contact.summary}". Maintain continuity with these compiled memories!` : ""}
+      
+      Player Gender: "${persona.gender}".
+      CRITICAL ROLEPLAY/GENDER ADDR CONSTRAINTS:
+      - The player's gender is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}.
+      - When addressing the player, other characters MUST use correct gender-appropriate titles:
+        * If player is FEMALE: You must call them "欧尼" (Onni/Sister) or "姐姐", and refer to them with female terms (she/her/她). Never call them "哥", "欧巴", "哥哥".
+        * If player is MALE: You must call them "哥哥" / "欧巴" / "哥" (if you are a girl/female fan/teammates addressing them) or "哥" / "老弟" / "小子/家伙" (if you are a guy), and refer to them with male terms (he/him/他). Never call them "欧尼", "姐姐".
+      - Keep all dialogue consistent with player being a ${persona.gender === 'female' ? 'female' : 'male'} idol.
+      
       Player is a ${persona.startType === 'trainee' ? '训练生' : '出道人气爱豆'} named "${persona.name}" (Stage name: ${persona.stageName}), who is of ${persona.nationality === 'korean' ? '韩国本土' : '外籍绿卡员'} nationality. 
       Note: Korean entertainment companies may show subtle bias against green-card members. Use this background if favorability is low or nationality is foreign green card.
       If favorability is < 30 (for non-lovers), be cold, formal, and micro-aggressive. If favorability is > 70, be very friendly, tease, or speak warmly. Include authentic Kpop slang (like "Fighting", "Wink", "美容室", "主打歌", "出圈").`;
