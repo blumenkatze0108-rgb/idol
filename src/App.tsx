@@ -25,7 +25,7 @@ import KakaoTalkApp from "./components/KakaoTalkApp";
 import WeverseApp from "./components/WeverseApp";
 import BubbleApp from "./components/BubbleApp";
 import FandomAnalyticsApp from "./components/FandomAnalyticsApp";
-import SchedulesApp from "./components/SchedulesApp";
+import SchedulesApp, { getFixedSkillSchedules } from "./components/SchedulesApp";
 import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
@@ -124,9 +124,134 @@ export default function App() {
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(true);
   const [showBirthdayEvent, setShowBirthdayEvent] = useState<boolean>(false);
+  const [birthdayPersonaIndices, setBirthdayPersonaIndices] = useState<number[]>([]);
   const [showCover, setShowCover] = useState<boolean>(true);
-  const [persona, setPersona] = useState<IdolPersona>(DEFAULT_PERSONA);
-  const [teammates, setTeammates] = useState<SimulatedTeammate[]>([]);
+  // Parallel storage lists of multi-member data for the "组合双人/三人模式, 应用双开" mechanics
+  const [personas, setPersonas] = useState<IdolPersona[]>([DEFAULT_PERSONA]);
+  const [activePersonaIdx, setActivePersonaIdx] = useState<number>(0);
+
+  const [personasTeammates, setPersonasTeammates] = useState<SimulatedTeammate[][]>([[]]);
+  const [personasChatContacts, setPersonasChatContacts] = useState<ChatContact[][]>([[]]);
+  const [personasChatHistories, setPersonasChatHistories] = useState<Record<string, ChatMessage[]>[]>([{}]);
+  const [personasWeversePosts, setPersonasWeversePosts] = useState<WeversePost[][]>([INITIAL_WEVERSE_POSTS]);
+  const [personasBubbleMessages, setPersonasBubbleMessages] = useState<BubbleMessage[][]>([INITIAL_BUBBLE_MESSAGES]);
+  const [personasSchedules, setPersonasSchedules] = useState<IdolSchedule[][]>([SH_LIST]);
+  const [personasFanLetters, setPersonasFanLetters] = useState<any[][]>([[]]);
+
+  // Derived current active single states matching legacy naming conventions
+  const persona = personas[activePersonaIdx] || personas[0] || DEFAULT_PERSONA;
+  const teammates = personasTeammates[activePersonaIdx] || personasTeammates[0] || [];
+  const chatContacts = personasChatContacts[activePersonaIdx] || personasChatContacts[0] || [];
+  const chatHistories = personasChatHistories[activePersonaIdx] || personasChatHistories[0] || {};
+  const weversePosts = personasWeversePosts[activePersonaIdx] || personasWeversePosts[0] || INITIAL_WEVERSE_POSTS;
+  const bubbleMessages = personasBubbleMessages[activePersonaIdx] || personasBubbleMessages[0] || INITIAL_BUBBLE_MESSAGES;
+  const schedules = personasSchedules[activePersonaIdx] || personasSchedules[0] || SH_LIST;
+  const fanLetters = personasFanLetters[activePersonaIdx] || personasFanLetters[0] || [];
+
+  // State synchronization setters that transparently update the correct active index
+  const setPersona = (val: IdolPersona | ((p: IdolPersona) => IdolPersona)) => {
+    setPersonas(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || DEFAULT_PERSONA);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setTeammates = (val: SimulatedTeammate[] | ((p: SimulatedTeammate[]) => SimulatedTeammate[])) => {
+    setPersonasTeammates(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || []);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setChatContacts = (val: ChatContact[] | ((p: ChatContact[]) => ChatContact[])) => {
+    setPersonasChatContacts(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || []);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setChatHistories = (val: Record<string, ChatMessage[]> | ((p: Record<string, ChatMessage[]>) => Record<string, ChatMessage[]>)) => {
+    setPersonasChatHistories(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || {});
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setWeversePosts = (val: WeversePost[] | ((p: WeversePost[]) => WeversePost[])) => {
+    setPersonasWeversePosts(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || INITIAL_WEVERSE_POSTS);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setBubbleMessages = (val: BubbleMessage[] | ((p: BubbleMessage[]) => BubbleMessage[])) => {
+    setPersonasBubbleMessages(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || INITIAL_BUBBLE_MESSAGES);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setSchedules = (val: IdolSchedule[] | ((p: IdolSchedule[]) => IdolSchedule[])) => {
+    setPersonasSchedules(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || SH_LIST);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setFanLetters = (val: any[] | ((p: any[]) => any[])) => {
+    setPersonasFanLetters(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || []);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
   
   // Anti-Reseller Domain authorization check
   const [isDomainAuthorized, setIsDomainAuthorized] = useState<boolean>(true);
@@ -172,6 +297,20 @@ export default function App() {
     
     setIsDomainAuthorized(isAllowed);
   }, []);
+
+  // Synchronize traineeDebt across all personas if playing in a multi-persona group (Close-knit friend debt pooling)
+  useEffect(() => {
+    if (personas.length > 1) {
+      const activeP = personas[activePersonaIdx] || personas[0];
+      if (activeP) {
+        const targetDebt = activeP.traineeDebt;
+        const needsSync = personas.some(p => p.traineeDebt !== targetDebt);
+        if (needsSync) {
+          setPersonas(prev => prev.map(p => ({ ...p, traineeDebt: targetDebt })));
+        }
+      }
+    }
+  }, [activePersonaIdx, personas.map(p => p.traineeDebt).join(",")]);
   
   // App navigation state
   const [activeApp, setActiveApp] = useState<string>("schedule"); // "kakaotalk" | "weverse" | "bubble" | "analytics" | "schedule" | "settings"
@@ -293,15 +432,6 @@ export default function App() {
     }
   };
 
-  // KakaoTalk state
-  const [chatContacts, setChatContacts] = useState<ChatContact[]>([]);
-  const [chatHistories, setChatHistories] = useState<Record<string, ChatMessage[]>>({});
-
-  // Social feeds
-  const [weversePosts, setWeversePosts] = useState<WeversePost[]>(INITIAL_WEVERSE_POSTS);
-  const [bubbleMessages, setBubbleMessages] = useState<BubbleMessage[]>(INITIAL_BUBBLE_MESSAGES);
-  const [schedules, setSchedules] = useState<IdolSchedule[]>(SH_LIST);
-
   // Random Event trigger state
   const [activeEvent, setActiveEvent] = useState<any | null>(null);
   const [eventOutcomeText, setEventOutcomeText] = useState<string | null>(null);
@@ -321,7 +451,6 @@ export default function App() {
   } | null>(null);
 
   // Fan Letters & Popup states
-  const [fanLetters, setFanLetters] = useState<FanLetter[]>([]);
   const [arrivedMailPopup, setArrivedMailPopup] = useState<FanLetter | null>(null);
 
   const [seoulTime, setSeoulTime] = useState<string>("12:00PM");
@@ -523,25 +652,37 @@ ${contact.summary || "无"}`;
     const backup = localStorage.getItem("idolpad_os_backup_v2.5");
     if (backup) {
       try {
-        const parsed: BackupData = JSON.parse(backup);
-        if (parsed.persona && parsed.persona.name) {
-          setPersona(parsed.persona);
-          setTeammates(parsed.teammates || []);
-          if (parsed.chatHistories) setChatHistories(parsed.chatHistories);
-          const remappedContacts = generateSubContacts(parsed.persona, parsed.teammates || [], parsed.chatHistories || {});
-          setChatContacts(remappedContacts);
-
-          if (parsed.weversePosts) setWeversePosts(parsed.weversePosts);
-          if (parsed.bubbleMessages) setBubbleMessages(parsed.bubbleMessages);
-          if (parsed.schedules) setSchedules(parsed.schedules);
+        const parsed: any = JSON.parse(backup);
+        if (parsed.personas && parsed.personas.length > 0) {
+          setPersonas(parsed.personas);
+          setActivePersonaIdx(parsed.activePersonaIdx || 0);
+          if (parsed.personasTeammates) setPersonasTeammates(parsed.personasTeammates);
+          if (parsed.personasChatContacts) setPersonasChatContacts(parsed.personasChatContacts);
+          if (parsed.personasChatHistories) setPersonasChatHistories(parsed.personasChatHistories);
+          if (parsed.personasWeversePosts) setPersonasWeversePosts(parsed.personasWeversePosts);
+          if (parsed.personasBubbleMessages) setPersonasBubbleMessages(parsed.personasBubbleMessages);
+          if (parsed.personasSchedules) setPersonasSchedules(parsed.personasSchedules);
+          if (parsed.personasFanLetters) setPersonasFanLetters(parsed.personasFanLetters);
           if (parsed.customApiKey) setCustomApiKey(parsed.customApiKey);
           if (parsed.customModel) setCustomModel(parsed.customModel);
-          if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint);
-          if (parsed.fanLetters) {
-            setFanLetters(parsed.fanLetters);
-          } else {
-            setFanLetters([generateRandomFanLetter(parsed.persona, parsed.persona.dayNumber)]);
-          }
+          if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint || "");
+          setHasStarted(true);
+        } else if (parsed.persona && parsed.persona.name) {
+          setPersonas([parsed.persona]);
+          setActivePersonaIdx(0);
+          setPersonasTeammates([parsed.teammates || []]);
+          setPersonasChatHistories([parsed.chatHistories || {}]);
+          setPersonasWeversePosts([parsed.weversePosts || INITIAL_WEVERSE_POSTS]);
+          setPersonasBubbleMessages([parsed.bubbleMessages || INITIAL_BUBBLE_MESSAGES]);
+          setPersonasSchedules([parsed.schedules || SH_LIST]);
+          setPersonasFanLetters([parsed.fanLetters || [generateRandomFanLetter(parsed.persona, parsed.persona.dayNumber)]]);
+
+          const contactList = generateSubContacts(parsed.persona, parsed.teammates || [], parsed.chatHistories || {});
+          setPersonasChatContacts([contactList]);
+
+          if (parsed.customApiKey) setCustomApiKey(parsed.customApiKey);
+          if (parsed.customModel) setCustomModel(parsed.customModel);
+          if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint || "");
           setHasStarted(true);
         }
       } catch (err) {
@@ -745,12 +886,12 @@ ${contact.summary || "无"}`;
 
         setChatContacts(prev => [stalkerContact, ...prev]);
         setChatHistories(prev => {
-          const updatedHist = {
+          const updatedHist: Record<string, ChatMessage[]> = {
             ...prev,
             [stalkerId]: [
               {
                 id: `creepy_init_${Date.now()}`,
-                sender: "fan",
+                sender: "other",
                 text: chosenCreepy,
                 time: "刚刚"
               }
@@ -775,7 +916,34 @@ ${contact.summary || "无"}`;
     currSch = schedules,
     currFanLetters = fanLetters
   ) => {
-    const data: BackupData = {
+    const idx = activePersonaIdx;
+
+    const updatedPersonas = [...personas];
+    updatedPersonas[idx] = currPersona;
+
+    const updatedTeammates = [...personasTeammates];
+    updatedTeammates[idx] = currTeammates;
+
+    const updatedContacts = [...personasChatContacts];
+    updatedContacts[idx] = chatContacts;
+
+    const updatedHistories = [...personasChatHistories];
+    updatedHistories[idx] = currHist;
+
+    const updatedWeverse = [...personasWeversePosts];
+    updatedWeverse[idx] = currWeverse;
+
+    const updatedBubble = [...personasBubbleMessages];
+    updatedBubble[idx] = currBubble;
+
+    const updatedSchedules = [...personasSchedules];
+    updatedSchedules[idx] = currSch;
+
+    const updatedFanLetters = [...personasFanLetters];
+    updatedFanLetters[idx] = currFanLetters;
+
+    const data: any = {
+      // Legacy compatibility single values
       persona: currPersona,
       teammates: currTeammates,
       chatHistories: currHist,
@@ -784,67 +952,124 @@ ${contact.summary || "无"}`;
       schedules: currSch,
       tickTokVideos: [],
       xiaohongshuPosts: [],
+      fanLetters: currFanLetters,
+
+      // Modern multi-open parallel arrays
+      personas: updatedPersonas,
+      activePersonaIdx: idx,
+      personasTeammates: updatedTeammates,
+      personasChatContacts: updatedContacts,
+      personasChatHistories: updatedHistories,
+      personasWeversePosts: updatedWeverse,
+      personasBubbleMessages: updatedBubble,
+      personasSchedules: updatedSchedules,
+      personasFanLetters: updatedFanLetters,
+
       customApiKey,
       customModel,
-      customApiEndpoint,
-      fanLetters: currFanLetters
+      customApiEndpoint
     };
     localStorage.setItem("idolpad_os_backup_v2.5", JSON.stringify(data));
   };
 
   // Complete profile step & launch simulation
-  const handleSetupComplete = (newPersona: IdolPersona, generatedTeammates: SimulatedTeammate[]) => {
-    setPersona(newPersona);
-    setTeammates(generatedTeammates);
-    
-    // Pre-populate unread letters
-    const initialLetters = [
-      generateRandomFanLetter(newPersona, 1),
-      generateRandomFanLetter(newPersona, 1)
-    ];
-    setFanLetters(initialLetters);
-    
-    // Auto populate custom chat histories
-    const contactList = generateSubContacts(newPersona, generatedTeammates);
-    setChatContacts(contactList);
+  const handleSetupComplete = (newPersonaInput: IdolPersona[], generatedTeammatesInput: SimulatedTeammate[]) => {
+    const finalPersonas: IdolPersona[] = [];
+    const finalTeammatesList: SimulatedTeammate[][] = [];
+    const finalChatContactsList: ChatContact[][] = [];
+    const finalChatHistoriesList: Record<string, ChatMessage[]>[] = [];
+    const finalWeversePostsList: WeversePost[][] = [];
+    const finalBubbleMessagesList: BubbleMessage[][] = [];
+    const finalSchedulesList: IdolSchedule[][] = [];
+    const finalFanLettersList: any[][] = [];
 
-    const initialHist: Record<string, ChatMessage[]> = {};
-    contactList.forEach((c) => {
-      initialHist[c.id] = [
-        { id: `sys_init_${c.id}`, sender: "system", text: "—— 建立了安全的私人加密会话通道 ——", time: "上午 09:00" },
-        { id: `init_${c.id}`, sender: "other", text: c.lastMessage, time: "上午 09:12" }
+    newPersonaInput.forEach((p, idx) => {
+      // 1. Teammates setup (include other player slots as close companion sisters)
+      const otherPlayers: SimulatedTeammate[] = [];
+      newPersonaInput.forEach((otherP, otherIdx) => {
+        if (otherIdx !== idx) {
+          otherPlayers.push({
+            id: `player_mate_${otherIdx}`,
+            name: otherP.name,
+            stageName: otherP.stageName,
+            mbti: otherP.mbti,
+            role: otherP.roleInGroup || "企划搭档",
+            nationality: otherP.nationality,
+            favorability: 98,
+            trait: "自创组合组员 (Playable Twin Unit)",
+            avatar: ""
+          });
+        }
+      });
+      const tms = [...otherPlayers, ...generatedTeammatesInput];
+
+      // 2. Chat contacts
+      const contactList = generateSubContacts(p, tms);
+
+      // 3. Chat histories
+      const initialHist: Record<string, ChatMessage[]> = {};
+      contactList.forEach((c) => {
+        initialHist[c.id] = [
+          { id: `sys_init_${c.id}`, sender: "system", text: "—— 建立了安全的私人加密会话通道 ——", time: "上午 09:00" },
+          { id: `init_${c.id}`, sender: "other", text: c.lastMessage, time: "上午 09:12" }
+        ];
+      });
+
+      // 4. Letters
+      const initLetters = [
+        generateRandomFanLetter(p, 1),
+        generateRandomFanLetter(p, 1)
       ];
+
+      finalPersonas.push(p);
+      finalTeammatesList.push(tms);
+      finalChatContactsList.push(contactList);
+      finalChatHistoriesList.push(initialHist);
+      finalWeversePostsList.push([...INITIAL_WEVERSE_POSTS]);
+      finalBubbleMessagesList.push([...INITIAL_BUBBLE_MESSAGES]);
+      finalSchedulesList.push([...SH_LIST]);
+      finalFanLettersList.push(initLetters);
     });
 
-    setChatHistories(initialHist);
-    // Explicitly show mandatory 5-seconds anti-resell disclaimer
+    setPersonas(finalPersonas);
+    setActivePersonaIdx(0);
+    setPersonasTeammates(finalTeammatesList);
+    setPersonasChatContacts(finalChatContactsList);
+    setPersonasChatHistories(finalChatHistoriesList);
+    setPersonasWeversePosts(finalWeversePostsList);
+    setPersonasBubbleMessages(finalBubbleMessagesList);
+    setPersonasSchedules(finalSchedulesList);
+    setPersonasFanLetters(finalFanLettersList);
+
     setShowPostSetupDisclaimer(true);
     setDisclaimerCountdown(5);
     setHasStarted(true);
-    handleAddSystemLog(`创建了档案 "${newPersona.name}" (${newPersona.stageName})`);
-    
-    // Direct save
-    const archive: BackupData = {
-      persona: newPersona,
-      teammates: generatedTeammates,
-      chatHistories: initialHist,
-      weversePosts: INITIAL_WEVERSE_POSTS,
-      bubbleMessages: INITIAL_BUBBLE_MESSAGES,
-      schedules: SH_LIST,
-      tickTokVideos: [],
-      xiaohongshuPosts: [],
+
+    const groupSymbol = finalPersonas.length > 1 ? `【${finalPersonas[0].groupName}】的 ${finalPersonas.length}人` : `单人常规`;
+    handleAddSystemLog(`创世纪元！自建 ${groupSymbol} 企划档案创建就位！`);
+
+    // Multi save structured
+    const archive = {
+      personas: finalPersonas,
+      activePersonaIdx: 0,
+      personasTeammates: finalTeammatesList,
+      personasChatContacts: finalChatContactsList,
+      personasChatHistories: finalChatHistoriesList,
+      personasWeversePosts: finalWeversePostsList,
+      personasBubbleMessages: finalBubbleMessagesList,
+      personasSchedules: finalSchedulesList,
+      personasFanLetters: finalFanLettersList,
       customApiKey,
       customModel,
-      customApiEndpoint,
-      fanLetters: initialLetters
+      customApiEndpoint
     };
     localStorage.setItem("idolpad_os_backup_v2.5", JSON.stringify(archive));
   };
 
   // Export progress
   const handleExportData = () => {
-    const data: BackupData = {
-      persona,
+    const data: any = {
+      persona, // Fallback for single-character
       teammates,
       chatHistories,
       weversePosts,
@@ -854,16 +1079,28 @@ ${contact.summary || "无"}`;
       xiaohongshuPosts: [],
       customApiKey,
       customModel,
-      customApiEndpoint
+      customApiEndpoint,
+      fanLetters,
+
+      // Multi-Play Supports
+      personas,
+      activePersonaIdx,
+      personasTeammates,
+      personasChatContacts,
+      personasChatHistories,
+      personasWeversePosts,
+      personasBubbleMessages,
+      personasSchedules,
+      personasFanLetters
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `idolpad_backup_${persona.stageName}_day${persona.dayNumber}.json`;
+    link.download = `idolpad_multi_backup_${persona.stageName || "group"}_day${persona.dayNumber}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    handleAddSystemLog("成功导出存档文件！");
+    handleAddSystemLog("成功导出多开联动组合全套存档文件！");
   };
 
   // Import JSON progress
@@ -874,22 +1111,51 @@ ${contact.summary || "无"}`;
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const parsed: BackupData = JSON.parse(event.target?.result as string);
-        if (parsed.persona && parsed.persona.name) {
-          setPersona(parsed.persona);
-          setTeammates(parsed.teammates || []);
-          if (parsed.chatHistories) setChatHistories(parsed.chatHistories);
-          const mapped = generateSubContacts(parsed.persona, parsed.teammates || []);
-          setChatContacts(mapped);
-
-          if (parsed.weversePosts) setWeversePosts(parsed.weversePosts);
-          if (parsed.bubbleMessages) setBubbleMessages(parsed.bubbleMessages);
-          if (parsed.schedules) setSchedules(parsed.schedules);
+        const parsed: any = JSON.parse(event.target?.result as string);
+        if (parsed.personas && parsed.personas.length > 0) {
+          setPersonas(parsed.personas);
+          setActivePersonaIdx(parsed.activePersonaIdx || 0);
+          if (parsed.personasTeammates) setPersonasTeammates(parsed.personasTeammates);
+          if (parsed.personasChatContacts) setPersonasChatContacts(parsed.personasChatContacts);
+          if (parsed.personasChatHistories) setPersonasChatHistories(parsed.personasChatHistories);
+          if (parsed.personasWeversePosts) setPersonasWeversePosts(parsed.personasWeversePosts);
+          if (parsed.personasBubbleMessages) setPersonasBubbleMessages(parsed.personasBubbleMessages);
+          if (parsed.personasSchedules) setPersonasSchedules(parsed.personasSchedules);
+          if (parsed.personasFanLetters) setPersonasFanLetters(parsed.personasFanLetters);
           if (parsed.customApiKey) setCustomApiKey(parsed.customApiKey);
           if (parsed.customModel) setCustomModel(parsed.customModel);
           if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint || "");
           setHasStarted(true);
-          handleAddSystemLog("同步成功！已恢复本地备份数据。");
+          handleAddSystemLog("同步成功！已恢复本地多开角色组合备份数据。");
+
+          // Auto save
+          const firstP = parsed.personas[0];
+          triggerAutoSave(
+            firstP,
+            parsed.personasTeammates?.[0] || [],
+            parsed.personasChatHistories?.[0] || {},
+            parsed.personasWeversePosts?.[0] || INITIAL_WEVERSE_POSTS,
+            parsed.personasBubbleMessages?.[0] || INITIAL_BUBBLE_MESSAGES,
+            parsed.personasSchedules?.[0] || SH_LIST
+          );
+        } else if (parsed.persona && parsed.persona.name) {
+          setPersonas([parsed.persona]);
+          setActivePersonaIdx(0);
+          setPersonasTeammates([parsed.teammates || []]);
+          setPersonasChatHistories([parsed.chatHistories || {}]);
+          setPersonasWeversePosts([parsed.weversePosts || INITIAL_WEVERSE_POSTS]);
+          setPersonasBubbleMessages([parsed.bubbleMessages || INITIAL_BUBBLE_MESSAGES]);
+          setPersonasSchedules([parsed.schedules || SH_LIST]);
+          setPersonasFanLetters([parsed.fanLetters || [generateRandomFanLetter(parsed.persona, parsed.persona.dayNumber)]]);
+
+          const contactList = generateSubContacts(parsed.persona, parsed.teammates || [], parsed.chatHistories || {});
+          setPersonasChatContacts([contactList]);
+
+          if (parsed.customApiKey) setCustomApiKey(parsed.customApiKey);
+          if (parsed.customModel) setCustomModel(parsed.customModel);
+          if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint || "");
+          setHasStarted(true);
+          handleAddSystemLog("同步成功！已恢复本地单角色备份数据。");
           
           triggerAutoSave(
             parsed.persona,
@@ -1534,6 +1800,50 @@ ${contact.summary || "无"}`;
               </div>
             </div>
 
+            {/* 👥 企划多开与双人/三人组合多开控制台 */}
+            {personas.length > 1 && (
+              <div className="bg-slate-950/80 backdrop-blur-md border-b border-white/5 px-4 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs relative z-40 select-none">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-pink-500"></span>
+                  </span>
+                  <span className="text-[10px] uppercase font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-purple-300 to-indigo-400 font-mono tracking-wider">
+                    🌌 Combo Group Dual Space (自创组合多开独立运行空间)
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 overflow-x-auto py-0.5 max-w-full">
+                  {personas.map((p, idx) => {
+                    const isCurrent = activePersonaIdx === idx;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setActivePersonaIdx(idx);
+                          triggerToast(
+                            `🎮 组合双开环境切线`, 
+                            `已完美切换至组合成员 [${p.name}] 专属加密系统环境和所有单独的Kakao/Weverse通讯链路！`, 
+                            "success"
+                          );
+                        }}
+                        className={`px-3.5 py-1 text-xs rounded-full font-semibold flex items-center gap-1.5 transition-all outline-none cursor-pointer ${
+                          isCurrent
+                            ? "bg-gradient-to-r from-purple-600 via-fuchsia-600 to-pink-600 text-white shadow-lg shadow-pink-500/20 scale-103 ring-1.5 ring-white/20"
+                            : "bg-slate-900/60 border border-white/5 text-slate-400 hover:text-white hover:border-white/10"
+                        }`}
+                      >
+                        <span className="text-[9px] bg-white/10 px-1 py-0.2 rounded uppercase font-mono">成员{idx+1}</span>
+                        <span>{p.name}</span>
+                        <span className="text-[9px] text-slate-350/80 font-mono">({p.stageName})</span>
+                        {isCurrent && <span className="text-[9px] px-1 py-0.1 bg-white/25 rounded animate-pulse">LIVE</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             {/* QUICK SETTINGS CONTROL BOARD */}
             {isControlCenterOpen && (
               <div id="quick-controls" className="absolute top-9 right-4 w-72 bg-slate-950/95 border border-white/10 rounded-2xl p-4 shadow-2xl z-50 animate-in fade-in slide-in-from-top-2 duration-150 backdrop-blur">
@@ -1749,6 +2059,7 @@ ${contact.summary || "无"}`;
                   {activeApp === "schedule" && (
                     <SchedulesApp
                       persona={persona}
+                      personas={personas}
                       schedules={schedules}
                       weversePosts={weversePosts}
                       customApiKey={customApiKey}
@@ -1813,13 +2124,22 @@ ${contact.summary || "无"}`;
                           }
                         }
 
-                        // B. Check for birthday mini game trigger
-                        const birthPeriod = getBirthdayPeriod(newPersona.birthday);
+                        // B. Check for birthday mini game trigger (Group / Coordinated Anniversary checking)
                         const currentPeriod = getCalendarPeriod(newPersona.dayNumber);
-                        
-                        if (birthPeriod && birthPeriod.month === currentPeriod.month && birthPeriod.period === currentPeriod.period) {
+                        const bdayPeriodIndices: number[] = [];
+                        personas.forEach((p, idx) => {
+                          const bdayVal = idx === activePersonaIdx ? newPersona.birthday : p.birthday;
+                          const bPeriod = getBirthdayPeriod(bdayVal);
+                          if (bPeriod && bPeriod.month === currentPeriod.month && bPeriod.period === currentPeriod.period) {
+                            bdayPeriodIndices.push(idx);
+                          }
+                        });
+
+                        if (bdayPeriodIndices.length > 0) {
+                          setBirthdayPersonaIndices(bdayPeriodIndices);
                           setShowBirthdayEvent(true);
-                          handleAddSystemLog(`🎂 【生日大吉】当前历法轮转到了你的专属生日旬（${birthPeriod.text}）！全厂牌及应援唯粉为你精心布置了生日专属大礼包与感恩剧情游戏！`);
+                          const celebratingNames = bdayPeriodIndices.map(idx => (idx === activePersonaIdx ? newPersona.stageName : personas[idx].stageName)).join(" & ");
+                          handleAddSystemLog(`🎂 【生日大吉】当前历法轮转到了 [${celebratingNames}] 的专属生日旬！全厂牌及应援唯粉精心筹备了联合生日专属迎新庆典与感恩游戏！`);
                         }
                         
                         // B. Check for secret dating leak scandal risk or breakup crisis (ONLY if they didn't trigger trainee debut evaluation, or they are already an idol)
@@ -1917,9 +2237,71 @@ ${contact.summary || "无"}`;
                           handleAddSystemLog(`📫 【信物送件】有热心粉丝的手写实体信已寄达厂牌前台小货架！快去小卡盒里查看！`);
                         }
 
-                        setPersona(newPersona);
-                        setSchedules(newSchedules);
-                        setWeversePosts(newWeversePosts);
+                        if (personas.length > 1) {
+                          setPersonas(prev => prev.map((p, idx) => {
+                            if (idx === activePersonaIdx) {
+                              return newPersona;
+                            } else {
+                              const sibling = { ...p };
+                              sibling.dayNumber = newPersona.dayNumber; // Keep dayNumber in lock-step!
+                              sibling.energy = Math.min(100, sibling.energy + 50); // Overnight rest
+                              sibling.stress = Math.max(0, sibling.stress - 15);
+                              
+                              // Check standard skin decay chance for the teammate
+                              let skinDecayChance = sibling.stress > 65 ? 0.75 : 0.08;
+                              const nextWeather = getSeoulWeather(sibling.dayNumber);
+                              if (nextWeather.type === "dry") skinDecayChance += 0.25;
+                              else if (nextWeather.type === "rainy") skinDecayChance += 0.20;
+                              else if (nextWeather.type === "hot") skinDecayChance += 0.15;
+                              else if (nextWeather.type === "cold") skinDecayChance += 0.20;
+
+                              if (Math.random() < skinDecayChance) {
+                                if (sibling.skinCondition === "perfect") sibling.skinCondition = "glowing";
+                                else if (sibling.skinCondition === "glowing") sibling.skinCondition = "troubled";
+                                else if (sibling.skinCondition === "troubled") sibling.skinCondition = Math.random() > 0.5 ? "breakout" : "exhausted";
+                                else if (sibling.skinCondition === "breakout") sibling.skinCondition = "exhausted";
+                              }
+
+                              // Auto-execute teammate's queued completed tasks to gain passive attributes!
+                              const siblingSchedules = personasSchedules[idx] || [];
+                              siblingSchedules.forEach(sch => {
+                                if (sch.completed) {
+                                  sibling.fansCount += sch.rewardPopularity * 40;
+                                  sibling.reputation = Math.min(100, sibling.reputation + sch.rewardReputation);
+                                }
+                              });
+
+                              // traineeDebt is synchronized group-wide
+                              sibling.traineeDebt = newPersona.traineeDebt;
+
+                              return sibling;
+                            }
+                          }));
+
+                          setPersonasSchedules(prev => prev.map((schs, idx) => {
+                            if (idx === activePersonaIdx) {
+                              return newSchedules;
+                            } else {
+                              return getFixedSkillSchedules(newPersona.dayNumber);
+                            }
+                          }));
+
+                          setPersonasWeversePosts(prev => prev.map((posts, idx) => {
+                            if (idx === activePersonaIdx) {
+                              return newWeversePosts;
+                            } else {
+                              return posts;
+                            }
+                          }));
+
+                          setPersona(newPersona);
+                          setSchedules(newSchedules);
+                          setWeversePosts(newWeversePosts);
+                        } else {
+                          setPersona(newPersona);
+                          setSchedules(newSchedules);
+                          setWeversePosts(newWeversePosts);
+                        }
                         
                         setChatHistories(prev => {
                           let nextHists = { ...prev };
@@ -1986,7 +2368,7 @@ ${contact.summary || "无"}`;
                             return c;
                           }));
                           
-                          // Check if new day date is the user's Birthday!
+                           // Check if new day date is the user's Birthday! (Group/Coordinated exact birthday checking)
                           const isBday = (bdayStr: string, dayN: number): boolean => {
                             if (!bdayStr) return false;
                             const parts = bdayStr.split("-");
@@ -2002,10 +2384,20 @@ ${contact.summary || "无"}`;
                             return birthMonth === simMonth && birthDay === simDateDay;
                           };
 
-                          if (isBday(newPersona.birthday, newPersona.dayNumber)) {
+                          const celebratingBdayDateIndices: number[] = [];
+                          personas.forEach((p, idx) => {
+                            const bdayVal = idx === activePersonaIdx ? newPersona.birthday : p.birthday;
+                            if (isBday(bdayVal, newPersona.dayNumber)) {
+                              celebratingBdayDateIndices.push(idx);
+                            }
+                          });
+
+                          if (celebratingBdayDateIndices.length > 0) {
+                            setBirthdayPersonaIndices(celebratingBdayDateIndices);
                             setShowBirthdayEvent(true);
-                            handleAddSystemLog(`🎂 【生日限定特别剧情】天呐！今天正好逢着主角在档案中设定的专属生日公历日期（${newPersona.birthday}）！全社队友、闵室长已在保姆车中为您筹划重磅惊喜现场，生日限定大包已上线！`);
-                            triggerToast("🎂 Happy Birthday!", "今天到达了本命的专属公历生日，限定的庆典感恩小游戏已被唤醒！", "success");
+                            const celebratingNames = celebratingBdayDateIndices.map(idx => (idx === activePersonaIdx ? newPersona.stageName : personas[idx].stageName)).join(" & ");
+                            handleAddSystemLog(`🎂 【联合生日限定特别剧情】天呐！今天正好逢着组合本命成员 [${celebratingNames}] 在档案中设定的专属生日公历日期！全社队友、闵室长已在保姆车中为您筹划联合重磅惊喜现场，生日限定大礼包已上线！`);
+                            triggerToast("🎂 Happy Birthday!", `今天到达了 [${celebratingNames}] 的专属生日，联合生日限定庆典游戏已被唤醒！`, "success");
                           }
 
                           triggerAutoSave(newPersona, teammates, nextHists, newWeversePosts, bubbleMessages, newSchedules);
@@ -2073,6 +2465,7 @@ ${contact.summary || "无"}`;
                         setChatContacts(updatedContacts);
                         triggerAutoSave(updatedPersona, teammates, chatHistories, weversePosts, bubbleMessages, schedules, fanLetters);
                       }}
+                      personas={personas}
                     />
                   )}
 
@@ -2093,6 +2486,7 @@ ${contact.summary || "无"}`;
                         triggerAutoSave(up);
                       }}
                       onAddLog={handleAddSystemLog}
+                      personas={personas}
                     />
                   )}
 
@@ -2114,6 +2508,7 @@ ${contact.summary || "无"}`;
                         triggerAutoSave(up);
                       }}
                       onAddLog={handleAddSystemLog}
+                      personas={personas}
                     />
                   )}
 
@@ -2173,6 +2568,55 @@ ${contact.summary || "无"}`;
                         </h4>
                         <p className="text-[10px] text-slate-400 mt-0.5">您可以配置自定义的 LLM 代理，输入对应的 Api Key 和端口网关来实现高恢复回复。</p>
                       </div>
+
+                      {/* Romance Position settings panel (Requirement: switch left/right in settings, changes prompts) */}
+                      {persona.hasLover && (
+                        <div className="bg-slate-950 p-4 rounded-xl border border-pink-500/15 space-y-3">
+                          <span className="text-[10px] block font-mono text-pink-450 uppercase font-bold tracking-wide flex items-center gap-1.5 text-pink-400">
+                            💖 地下恋爱状态与剧情攻受定位切换 (Romance Alignment Adjustment)
+                          </span>
+                          <p className="text-[10px] text-slate-400 leading-relaxed">
+                            您当前正与 <strong>{persona.loverName}</strong> 进行地下秘密交往。在此随时调整你在关系中的<strong>剧情心理定位（左位 / 右位）</strong>，从而微调对方在 KakaoTalk 聊天和剧情事件中的性格切线和甜蜜对话基调：
+                          </p>
+
+                          <div className="grid grid-cols-2 gap-2.5 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = { ...persona, romancePosition: "left" as const };
+                                setPersona(updated);
+                                triggerAutoSave(updated);
+                                handleAddSystemLog(`[定位更新] 成功将与 ${persona.loverName} 的交往定位切换至【左位 (左/攻/Top)】！`);
+                                triggerToast("💘 定位切换成功", "心意切线调整：恋人将转变偏受(温柔依恋依顺)风格！", "success");
+                              }}
+                              className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                                (persona.romancePosition || "right") === "left"
+                                  ? "bg-purple-950/40 border-purple-500 text-purple-300 shadow-md font-extrabold"
+                                  : "bg-slate-900 border-white/5 text-slate-500 hover:text-slate-300"
+                              }`}
+                            >
+                              左位 (左 / 攻 / Top / 保护方)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const updated = { ...persona, romancePosition: "right" as const };
+                                setPersona(updated);
+                                triggerAutoSave(updated);
+                                handleAddSystemLog(`[定位更新] 成功将与 ${persona.loverName} 的交往定位切换至【右位 (右/受/Bottom)】！`);
+                                triggerToast("💘 定位切换成功", "心意切线调整：恋人将转变偏攻 (宠溺霸气强欲) 风格！", "success");
+                              }}
+                              className={`py-2 px-3 rounded-xl border text-xs font-bold text-center transition-all cursor-pointer ${
+                                (persona.romancePosition || "right") === "right"
+                                  ? "bg-pink-950/40 border-pink-500 text-pink-300 shadow-md font-extrabold"
+                                  : "bg-slate-900 border-white/10 text-slate-500 hover:text-slate-300"
+                              }`}
+                            >
+                              右位 (右 / 受 / Bottom / 被宠爱)
+                            </button>
+                          </div>
+                        </div>
+                      )}
 
                       {/* API Input Block */}
                       <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-white/5">
@@ -2879,9 +3323,9 @@ ${contact.summary || "无"}`;
       {/* Update and Debug notification modal */}
       {showUpdateModal && (
         <div id="update-notification-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[250] p-4">
-          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-lg w-full shadow-[0_0_50px_rgba(168,85,247,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
+          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-lg w-full shadow-[0_0_50px_rgba(147,51,234,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl"></div>
             
             <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4.5">
               <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
@@ -2889,70 +3333,64 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  🚀 系统更新与调试测试公告
+                  🍲 企划社最新巨献公告 (爱豆重名防护与健康增重)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  UPDATE & DEBUG NOTIFICATION | {new Date().toLocaleDateString('zh-CN')}
+                  SYSTEM UPDATE STATUS | NAME SHIELDING & GAINER MODULES INSTALLED
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold">
-                  <span className="w-1.5 h-1.5 bg-purple-500 rounded-full"></span>
-                  1. 玩家性别回复与限制强力增强
+              
+              {/* Feature 1: Name Duplicate filtering */}
+              <div className="bg-purple-950/20 border border-purple-500/20 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>🛡️ 爱豆重名/冲突规避校验系统上线</span>
                 </div>
-                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
-                  <p>• 针对<strong>男性与女性身份设定</strong>，高强度重设了 AI 在各处的性别人称判断规则与对话防置错流限制。</p>
-                  <p>• <strong>粉丝来信</strong>、<strong>Weverse动态和直播直播评述</strong>、<strong>Bubble（泡泡）消息中粉丝与队友</strong>的互动场景，皆已全面匹配所选性别，如：女性爱豆完美对齐“欧尼 / 姐姐 / 她 + 欧尼/姐”，男性爱豆对齐“欧巴 / 哥哥 / 他 / 哥”，杜绝错位称呼。</p>
-                  <p>• <strong>KakaoTalk（私聊与企划社多人群聊）</strong>中，高层领导、经理人、队友和粉丝对用户的称谓已按性别完成强力适配，提供沉浸式的艺能界社交反馈，不因误触发指令重置性别称谓。</p>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为了规避在多人企划（双人/三人模式）以及单开模式下突发的重名通信乱序问题，系统全新升级了姓名检测防御壁垒：
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-[10.5px] text-slate-400">
+                  <li><strong>自建成员间防撞</strong>：多开槽位中不允许设置相同的本名（不分大小写/空格）和舞台艺名（Stage Name）。</li>
+                  <li><strong>NPC人物避免重名</strong>：防止自建姓名或艺名与经纪人（严相勋/闵相勋）、董事代表（李秉旭）以及同台竞争对手（张秀彬/崔镇浩）冲突。</li>
+                  <li><strong>防止与默认队友重名</strong>：限制在单人组合模式中与系统默认生成的宿怨队友（智雅、智恩、香橙、樱子等）使用一模一样的姓名或艺名，确保消息归档及长期记忆树的绝对唯一与精确隔离。</li>
+                </ul>
+              </div>
+
+              {/* Feature 2: High Energy Diet Weight Gainer */}
+              <div className="bg-amber-950/10 border border-amber-500/20 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
+                  <span>⚖️ 爱豆健康增重补给系统 (理疗沙龙大增幅)</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  针对长期极饿有氧或打歌而过度消瘦的爱豆，我们在【粉丝声量与自我增值 / 理疗沙龙】中增加了三大深夜奢享补给单品：
+                </p>
+                <div className="space-y-2 pl-1 mt-1 text-[10.5px]">
+                  <p>🍗 <strong>深夜宿舍炸鸡宵夜</strong>：花费 ₩3万，体重增加 <strong>+0.5kg</strong>，快速补充体力 <strong>+30</strong>，释压 <strong>-15</strong>。</p>
+                  <p>🥩 <strong>高端炭火烤韩牛大餐</strong>：花费 ₩15万，体重增长 <strong>+0.3kg</strong>，极限狂飙体力 <strong>+55</strong>，大幅释压 <strong>-25</strong>，胶原蛋白可直接<strong>治愈因压力引起的受损暗淡痘肌</strong>！</p>
+                  <p>🥤 <strong>干净能量高卡碳水燕麦糊</strong>：花费 ₩6万，规律增肌增加 <strong>+0.8kg</strong>，增肌恢复两不误。</p>
                 </div>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-white/5">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold">
-                  <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full"></span>
-                  2. 动态年龄算法与行业出道年龄健康阈值限制 (NEW)
+              {/* Feature 3: LLM Memory Compression */}
+              <div className="bg-slate-900/45 border border-white/5 p-3 rounded-xl space-y-1">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12px]">
+                  <span>🧠 长期对话 LLM 记忆大纲归档系统</span>
                 </div>
-                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
-                  <p>• <strong>动态年龄判定</strong>：爱豆年龄现转为自动判定，由玩家输入的出生年月日与首尔气象日（2026年5月29日）的日历变动精确计算，不再允许人工挑选岁数，确保逻辑自恰。</p>
-                  <p>• <strong>行业年龄健康限制</strong>：为维护演艺界规制，用户选择的出道年龄不能过小也不能太老：若为<strong>练习生起点制</strong>，起步年龄限制为 12 岁至 24 岁；若选择<strong>成型出道明星起步</strong>，最低法定年龄限制提高为 15 岁，最大签约推荐限制为 30 岁，越界将触发红色安全警告拦截。</p>
-                </div>
+                <p className="text-[10.5px] text-slate-400 leading-relaxed">
+                  当与成员、恋人或关系人的 KakaoTalk/Bubble 回复行数超过临界值时，AI 将自主启动长效记忆总结提炼，用 120 字微芯片大纲封存好感里程碑，<strong>永久节省 80%+ 的上下文消耗</strong>，杜绝由于代币高发引起的掉档或回复断头现象。
+                </p>
               </div>
 
-              <div className="space-y-2 pt-2 border-t border-white/5">
-                <div className="flex items-center gap-2 text-pink-300 font-bold">
-                  <span className="w-1.5 h-1.5 bg-pink-500 rounded-full"></span>
-                  3. 生日周年庆典限定剧情小游戏与布局全面防溢出
-                </div>
-                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
-                  <p>• <strong>日期精准匹配</strong>：游戏虚拟日期每明日前进时，若系统检测到当前的“x月x旬”轮转至了您填写的生日所在月份与旬，就会即刻触发出道爱豆或练习生专属的「生日主线特别剧情小游戏」。</p>
-                  <p>• <strong>大赏特权回馈</strong>：小游戏可赚取巨额人气值、减免练习生解约清算账务债、或者直接入账 ₩2,500w 生日奖金，并使皮肤完美 (perfect) 及清空压力负荷！</p>
-                  <p>• <strong>高分辨率防溢出矫正</strong>：为了让评委与玩家获得完美的视觉反馈，我们特别将【小红书穿搭分享详情板】与【生日大赏小游戏面板】重构为百分比高自适应、提供完美微流滚轴支持，全尺寸保障各分辨率下完整可见！</p>
-                </div>
-              </div>
-
-              <div className="space-y-2 pt-2 border-t border-white/5">
-                <div className="flex items-center gap-2 text-teal-300 font-bold">
-                  <span className="w-1.5 h-1.5 bg-teal-500 rounded-full"></span>
-                  4. 全新 36期交互历法与最终晋阶出道规制
-                </div>
-                <div className="pl-3.5 space-y-1.5 text-[11px] text-slate-400 leading-relaxed">
-                  <p>• <strong>交互历法重制</strong>：游戏底层逻辑重整合为 12 大月份、每月分为“上、中、下”三旬，全程合共 36 个交互旬（天数），玩家能清楚直观规划自己的行程日程并阅览汉江天气。</p>
-                  <p>• <strong>练习生大考制度（Day 37+）</strong>：练习生须在 36 轮时间内努力修习并积累本领。第 36 天结束后系统将举行「毕设考核」。选手须积累四大爱豆业务属性（声乐 + 舞蹈 + 说唱 + 综艺艺能）综合总星级评分 ≥ 150，业界推荐名誉度 ≥ 65 且身心压力值 ≤ 80% 方能取得厂牌绿灯，直接全网高标准高位出道！</p>
-                  <p>• <strong>延展特训 vs 贷款强制空降</strong>：未达标的练习生现在拥有两个极其真实的韩娱生态选择：要么<strong>不甘屈服、留在练习室在次日日程中申请延展加练深造</strong>；要么可以直接承担额外 <strong>₩3,000w 巨额包装公关费</strong>（转为未结债务），顶着舆论疑云打包强行直接出道！</p>
-                  <p>• <strong>精英课表稳定刷新</strong>：每个月、每一旬，练习生宿舍与事务桌都会固定、准时地刷新出 4 门基础技能必修大课（固定声乐课、固定舞蹈课、固定说唱课、固定艺能课），全方位为评委老师的加点成长保驾护航！</p>
-                </div>
-              </div>
             </div>
 
             <div className="flex justify-end gap-2.5 text-xs mt-6 pt-3.5 border-t border-white/10">
               <button 
                 onClick={() => setShowUpdateModal(false)}
-                className="w-full py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
+                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
               >
-                我知道了，进入爱豆计划
+                开始健康调理，进入爱豆计划
               </button>
             </div>
           </div>
@@ -2962,14 +3400,17 @@ ${contact.summary || "无"}`;
       {/* Specialty Birthday mini game modal */}
       {showBirthdayEvent && (
         <BirthdayGameModal
-          persona={persona}
+          personas={personas}
+          celebratingIndices={birthdayPersonaIndices.length > 0 ? birthdayPersonaIndices : [activePersonaIdx]}
           teammates={teammates}
           onAddLog={handleAddSystemLog}
-          onComplete={(updatedP) => {
-            setPersona(updatedP);
+          onComplete={(updatedPList) => {
+            setPersonas(updatedPList);
+            const currentP = updatedPList[activePersonaIdx] || updatedPList[0] || persona;
+            setPersona(currentP);
             setShowBirthdayEvent(false);
-            triggerAutoSave(updatedP, teammates, chatHistories, weversePosts, bubbleMessages, schedules);
-            handleAddSystemLog(`🎂 【生日大吉】生日庆典在漫天彩弹与唯粉尖叫声中圆满落下帷幕！所有特权奖励已被稳妥写入您的小名帖！`);
+            triggerAutoSave(currentP, teammates, chatHistories, weversePosts, bubbleMessages, schedules);
+            handleAddSystemLog(`🎂 【生日大吉】生日庆典在漫天彩弹与唯粉尖叫声中圆满落下帷幕！所有特权奖励已被稳妥写入寿星成员的名誉簿里！`);
             triggerToast("🎁 惊喜加注成功", "生日专属礼遇已被完全激活并持久保存入档！", "success");
           }}
         />

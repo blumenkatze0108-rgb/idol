@@ -11,6 +11,7 @@ interface TikTokProp {
   customApiEndpoint: string;
   onUpdateStats: (popularity: number, reputation: number, energy: number, stress: number) => void;
   onAddLog: (log: string) => void;
+  personas?: IdolPersona[];
 }
 
 interface VideoPost {
@@ -32,7 +33,8 @@ export default function TikTokApp({
   customModel,
   customApiEndpoint,
   onUpdateStats,
-  onAddLog
+  onAddLog,
+  personas
 }: TikTokProp) {
   const [activeTab, setActiveTab] = useState<"feed" | "plan">("feed");
   const [danceChoice, setDanceChoice] = useState("新歌主打《Siren Dance》魔性震动挑战");
@@ -103,8 +105,13 @@ export default function TikTokApp({
     try {
       let partnerName = "Solo 独舞";
       if (collabPartner !== "solo") {
-        const found = teammates.find((t) => t.id === collabPartner);
-        partnerName = found ? found.name : "队友";
+        if (personas && personas.length > 1) {
+          const found = personas.find((p) => p.name === collabPartner);
+          partnerName = found ? `${found.name} (艺名: ${found.stageName})` : "团队成员";
+        } else {
+          const found = teammates.find((t) => t.id === collabPartner);
+          partnerName = found ? found.name : "队友";
+        }
       }
 
       // Generate simulation stats
@@ -115,11 +122,17 @@ export default function TikTokApp({
       const viralScore = Math.floor(Math.random() * 40) + 60; // high viral potential
 
       // Call LLM for custom creative script or suggestion
-      const sysPrompt = `You are a creative social media consultant for a K-Pop idol on TikTok. Help write a cute, viral TikTok description based on:
+      let sysPrompt = `You are a creative social media consultant for a K-Pop idol on TikTok. Help write a cute, viral TikTok description based on:
       Idol Stage Name: "${persona.stageName}"
       Challenge Choice: "${danceChoice}"
-      Collaboration: "${partnerName}"
-      Keep the description within 1-2 lines, in Chinese, with cute young-style hashtags (e.g. #Kpop #TikTokChallenge #IdolPad).`;
+      Collaboration: "${partnerName}"`;
+      
+      if (personas && personas.length > 1) {
+        const grpMembers = personas.map(p => `${p.name} (艺名: ${p.stageName}, 担当: ${p.roleInGroup})`).join(", ");
+        sysPrompt += `\n极其重要限制：该组合目前属于高保真多角色主掌模式，全明星团队名为 "${persona.groupName}"，成员阵容仅限以下这几位：[${grpMembers}]。绝对禁止在TikTok描述、文案或标签里捏造、幻想、提到任何其他未包含的用户设计组合队友。文案应该多以全团角度出发！`;
+      }
+      
+      sysPrompt += `\nKeep the description within 1-2 lines, in Chinese, with cute young-style hashtags (e.g. #Kpop #TikTokChallenge #IdolPad).`;
 
       const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
@@ -287,11 +300,21 @@ export default function TikTokApp({
                   className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-red-500 text-white font-medium"
                 >
                   <option value="solo">🧍 Solo 独树一帜单跳</option>
-                  {teammates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      👯‍♂️ 共同录制: {t.name} (好感:{t.favorability}/100) — {t.trait.substring(0, 15)}...
-                    </option>
-                  ))}
+                  {personas && personas.length > 1 ? (
+                    personas
+                      .filter((p) => p.name !== persona.name)
+                      .map((p) => (
+                        <option key={p.name} value={p.name}>
+                          👯‍♂️ 共同录制: {p.name} (艺名:{p.stageName || p.name}) — {p.roleInGroup || "队友"}
+                        </option>
+                      ))
+                  ) : (
+                    teammates.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        👯‍♂️ 共同录制: {t.name} (好感:{t.favorability}/100) — {t.trait.substring(0, 15)}...
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 

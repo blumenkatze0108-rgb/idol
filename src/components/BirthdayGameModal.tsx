@@ -3,18 +3,25 @@ import { IdolPersona, SimulatedTeammate } from "../types";
 import { Sparkles, Cake, Gift, Heart, Tv, Award, Smile, CheckCircle2 } from "lucide-react";
 
 interface BirthdayGameModalProps {
-  persona: IdolPersona;
+  personas: IdolPersona[];
+  celebratingIndices: number[];
   teammates: SimulatedTeammate[];
-  onComplete: (updatedPersona: IdolPersona) => void;
+  onComplete: (updatedPersonas: IdolPersona[]) => void;
   onAddLog: (log: string) => void;
 }
 
 export default function BirthdayGameModal({
-  persona,
+  personas,
+  celebratingIndices = [0],
   teammates,
   onComplete,
   onAddLog
 }: BirthdayGameModalProps) {
+  const persona = personas[celebratingIndices[0]] || personas[0];
+  const celebratingNames = celebratingIndices.map(idx => personas[idx]?.stageName).join(" & ");
+  const isJointBday = celebratingIndices.length > 1;
+  const jointSibsText = isJointBday ? celebratingIndices.map(idx => personas[idx]?.stageName).join(" 与 ") : "";
+  
   const [phase, setPhase] = useState<1 | 2 | 3 | 4>(1);
 
   // Selections
@@ -47,25 +54,30 @@ export default function BirthdayGameModal({
     let logStr = "";
 
     if (option === 1) {
-      logStr = "你感动得抱住队友们大哭并吃掉大草莓。队友关系空前升温！";
-      tf = 15;
-      str = -20;
-      nrg = 15;
+      logStr = isJointBday 
+        ? `你们双生寿星双双手捧草莓，在全场拥蹙大哭合影！双倍团魂，全队关系狂飙！`
+        : "你感动得抱住队友们大哭并吃掉大草莓。队友关系空前升温！";
+      tf = isJointBday ? 25 : 15;
+      str = -25;
+      nrg = 20;
     } else if (option === 2) {
-      logStr = "你理智优雅地对镜头摆出返图完美表情。粉丝被惊艳生日生图秒出圈！";
-      pop = 100000;
-      rep = 5;
-      varietySkill: 3;
+      logStr = isJointBday
+        ? `在粉色泡沫中，你与 ${jointSibsText} 摆出默契心型对视！绝美出圈神图直接引爆全网双子热搜！`
+        : "你理智优雅地对镜头摆出返图完美表情。粉丝被惊艳生日生图秒出圈！";
+      pop = isJointBday ? 160000 : 100000;
+      rep = isJointBday ? 8 : 5;
     } else {
       if (persona.relationshipStatus === "dating" || persona.relationshipStatus === "revealed") {
         logStr = `在这个特别的日子，你心底泛起涟漪，脑海中全是秘密爱人 ${persona.loverName || "林舒阳"} 的手写贺卡：【做你的底气】。`;
         str = -35;
         nrg = 10;
       } else {
-        logStr = "你默默许愿：早日解除清算，成为登顶大赏的顶流！你内心充满搞事业的无限干劲。";
-        str = -25;
-        nrg = 20;
-        rep = 5;
+        logStr = isJointBday
+          ? `你们闭上双眼，在巨型联名蛋糕前虔诚许愿：‘不负韶华，携手解债，让组合彻底登顶！’`
+          : "你默默许愿：早日解除清算，成为登顶大赏的顶流！你内心充满搞事业的无限干劲。";
+        str = -30;
+        nrg = 25;
+        rep = isJointBday ? 8 : 5;
       }
     }
 
@@ -97,25 +109,33 @@ export default function BirthdayGameModal({
     if (option === 1) {
       const isSkilled = (persona.vocalSkill || 30) >= 40 || (persona.danceSkill || 30) >= 40;
       if (isSkilled) {
-        logStr = "直播中展现顶级声演实力，弹幕疯狂点赞支持，口碑逆天！";
-        pop = 220000;
-        rep = 8;
+        logStr = isJointBday
+          ? `双星开麦！你们高低音声线咬合交织，生唱高音震惊韩娱，唯粉狂欢大出圈！`
+          : "直播中展现顶级声演实力，弹幕疯狂点赞支持，口碑逆天！";
+        pop = isJointBday ? 300000 : 220000;
+        rep = isJointBday ? 10 : 8;
         vs = 2;
       } else {
-        logStr = "虽然气息微微带喘，但诚意满满的生唱打动了在场直播的所有唯粉！";
-        pop = 140000;
-        rep = 4;
+        logStr = isJointBday
+          ? `双子同屏一唱一和，微喘的真诚合唱打动了直播间过百万名涌入的合体粉丝！`
+          : "虽然气息微微带喘，但诚意满满的生唱打动了在场直播的所有唯粉！";
+        pop = isJointBday ? 200000 : 140000;
+        rep = isJointBday ? 6 : 4;
         vs = 1;
       }
     } else if (option === 2) {
-      logStr = "各种wink和双马尾/兔耳朵情话大派送，韩网粉丝心碎大喊『怎么会这么可爱欧尼』！";
-      pop = 280000;
+      logStr = isJointBday
+        ? `你们套上粉白双色软萌小兔耳、在镜头前交替Wink，中日韩粉丝被可爱击倒彻底沦陷！`
+        : "各种wink和双马尾/兔耳朵情话大派送，韩网粉丝心碎大喊『怎么会这么可爱欧尼』！";
+      pop = isJointBday ? 360000 : 280000;
       str = 10;
     } else {
       const mateName = teammates.length > 0 ? teammates[0].name : "队内好友";
-      logStr = `邀请了队内人气队友 ${mateName} 友情出镜，直播内鬼故事互相大爆黑历史，CP超级出圈！`;
-      pop = 250000;
-      tf = 10;
+      logStr = isJointBday
+        ? `由于你们全员均是今天寿星，直接在镜头前爆出旧日宿舍争抢吹风机的绝赞猛料，热播登顶爆搜！`
+        : `邀请了队内人气队友 ${mateName} 友情出镜，直播内鬼故事互相大爆黑历史，CP超级出圈！`;
+      pop = isJointBday ? 320000 : 250000;
+      tf = isJointBday ? 16 : 10;
     }
 
     onAddLog(`【生日限定 W-LIVE】${logStr}`);
@@ -146,20 +166,26 @@ export default function BirthdayGameModal({
 
     if (option === 1) {
       if (persona.startType === "trainee") {
-        logStr = "社长特许：生日回馈减免 ₩4,000w 的练习生清算前长约高额债务！";
-        debtRed = 4000;
+        logStr = isJointBday
+          ? "【双雄特赦免债】社长龙颜大悦：特批你们各自减免 ₩5,500w 巨额练习生旧约欠账！"
+          : "社长特许：生日回馈减免 ₩4,000w 的练习生清算前长约高额债务！";
+        debtRed = isJointBday ? 5500 : 4000;
       } else {
-        logStr = "生日特殊大赏红利发放：结算账户直接派发 ₩2,500w 可支配奖金！";
-        cash = 2500;
+        logStr = isJointBday
+          ? "【双星大赏双爆利】直接给你们各自结算账户划拨 ₩3,500w 巨额自由支配纯奖金！"
+          : "生日特殊大赏红利发放：结算账户直接派发 ₩2,500w 可支配奖金！";
+        cash = isJointBday ? 3500 : 2500;
       }
     } else if (option === 2) {
-      logStr = "身披 Dior/Chanel 生日名奢特别限时高订，机场神级名生图霸榜首尔时尚娱乐头条！";
-      pop = 320000;
-      rep = 15;
+      logStr = isJointBday
+        ? "身披 Chanel 与 Dior 极罕‘限定秋季联名高订双子秋装’，霸榜全网时尚娱乐封面！"
+        : "身披 Dior/Chanel 生日名奢特别限时高订，机场神级名生图霸榜首尔时尚娱乐头条！";
+      pop = isJointBday ? 420000 : 320000;
+      rep = isJointBday ? 20 : 15;
     } else {
-      logStr = "公司江南顶级会所敷麻，LDM水光注入，你的皮肤条件完美自愈，疲惫风暴全扫！";
+      logStr = "江南顶级双人黄金皮疗诊所，LDM水光超凡抗皱疗愈，皮肤状态完美复甦，压力彻底归零！";
       skin = "perfect";
-      str = -50;
+      str = -60;
     }
 
     onAddLog(`【生日大牌资源】${logStr}`);
@@ -179,33 +205,46 @@ export default function BirthdayGameModal({
   };
 
   const handleClaimAndClose = () => {
-    // Apply final sum to copy
-    const p = { ...persona };
+    // Multi-member reward application: Apply individual rewards to all birthday heroes respectively
+    const updated = [...personas];
 
-    // Increase stats
-    p.popularity = Math.min(100, p.popularity + Math.floor(rewards.popularity / 10000)); // normalized popup multiplier
-    p.reputation = Math.max(0, Math.min(100, p.reputation + rewards.reputation));
-    p.energy = Math.max(0, Math.min(100, p.energy + rewards.energy));
-    p.stress = Math.max(0, Math.min(100, Math.max(0, p.stress + rewards.stress)));
-    p.teammatesFavorability = Math.max(0, Math.min(100, p.teammatesFavorability + rewards.teammatesFavorability));
-    
-    // Skills
-    p.vocalSkill = Math.min(100, p.vocalSkill + rewards.vocalSkill);
-    p.danceSkill = Math.min(100, p.danceSkill + rewards.danceSkill);
-    
-    // Debt & Cash split
-    if (p.startType === "trainee") {
-      p.traineeDebt = Math.max(0, p.traineeDebt - rewards.debtReduction);
-      p.money = p.money + 50; // extra cash
-    } else {
-      p.money = p.money + rewards.money;
+    celebratingIndices.forEach((idx) => {
+      const p = { ...updated[idx] };
+
+      // Increase stats individually as requested
+      p.popularity = Math.min(100, p.popularity + Math.floor(rewards.popularity / 10000)); // normalized popup multiplier
+      p.reputation = Math.max(0, Math.min(100, p.reputation + rewards.reputation));
+      p.energy = Math.max(0, Math.min(100, p.energy + rewards.energy));
+      p.stress = Math.max(0, Math.min(100, Math.max(0, p.stress + rewards.stress)));
+      p.teammatesFavorability = Math.max(0, Math.min(100, p.teammatesFavorability + rewards.teammatesFavorability));
+      
+      // Skills
+      p.vocalSkill = Math.min(100, p.vocalSkill + rewards.vocalSkill);
+      p.danceSkill = Math.min(100, p.danceSkill + rewards.danceSkill);
+      
+      // Debt & Cash split: Money is individual, traineeDebt is shared group-wide
+      if (p.startType === "trainee") {
+        p.traineeDebt = Math.max(0, p.traineeDebt - rewards.debtReduction);
+        p.money = p.money + 50; 
+      } else {
+        p.money = p.money + rewards.money;
+      }
+
+      p.fansCount = p.fansCount + rewards.popularity;
+      p.skinCondition = rewards.skinCondition;
+
+      updated[idx] = p;
+    });
+
+    // traineeDebt is group-wide synchronized
+    if (updated.length > 1) {
+      const minDebt = Math.min(...celebratingIndices.map(i => updated[i].traineeDebt));
+      updated.forEach((p) => {
+        p.traineeDebt = minDebt;
+      });
     }
 
-    // Fans count direct modifier based on popularity explosion
-    p.fansCount = p.fansCount + rewards.popularity;
-    p.skinCondition = rewards.skinCondition;
-
-    onComplete(p);
+    onComplete(updated);
   };
 
   return (
@@ -226,7 +265,7 @@ export default function BirthdayGameModal({
               SPECIAL ANNIVERSARY EVENT
             </span>
             <h2 className="text-base font-black text-slate-100 flex items-center gap-2">
-              🎂 {persona.stageName} 的生日限时惊喜大赏剧情！
+              🎂 {celebratingNames} 的生日限时惊喜大赏剧情！
             </h2>
           </div>
         </div>
@@ -236,7 +275,12 @@ export default function BirthdayGameModal({
           <div className="space-y-4">
             <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 text-xs leading-relaxed text-slate-300">
               <p className="font-semibold text-pink-300 mb-1">【江清潭洞 企划社练习室】</p>
-              夜里十一点，当你做完最后的平衡拉伸刚要收拾包离开时，练习室的大灯突然熄灭。在一片寂静中，队友们手里捧着插着蜡烛的经典红丝绒奶油蛋糕缓缓推门进来，欢快的生日歌响彻整座空旷安静的公司大楼。
+              {isJointBday ? (
+                <span>🌌 <strong>【生辰交叠奇迹！双子寿星大合流 Twin Festival】</strong><br/>
+                夜里十一点，极具宿命感的事业线降临！今晚练习室的一板一眼被李代表亲自布置成了铺满彩条、香槟与巨型双重红丝绒奶油蛋糕的梦幻仙境！你们竟然在同一个周期生日，全队队员搂抱在粉色海洋中高声合唱团队感恩歌。</span>
+              ) : (
+                <span>夜里十一点，当你做完最后的平衡拉伸刚要收拾包离开时，练习室的大灯突然熄灭。在一片寂静中，队友们手里捧着插着蜡烛的经典红丝绒奶油蛋糕缓缓推门进来，欢快的生日歌响彻整座空旷安静的公司大楼。</span>
+              )}
               {persona.relationshipStatus === "dating" && (
                 <span className="text-pink-300 font-medium">（特别提醒：由于你目前处于恋爱，在保姆车的暗匣里还惊喜放有一条写有温暖情话的手作香芬卡片！）</span>
               )}
@@ -293,7 +337,12 @@ export default function BirthdayGameModal({
           <div className="space-y-4">
             <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 text-xs leading-relaxed text-slate-300">
               <p className="font-semibold text-indigo-300 mb-1">【W-LIVE 生日感谢专属直播】</p>
-              你开启了久违的生日庆祝直播！短短几分钟，中、韩、日、西方数十万在线粉丝瞬间将直播间塞爆！飞快的滚动弹幕和漫天的粉丝吹捧让你应接不暇。你需要挑选最适合今晚的互动回馈方式：
+              {isJointBday ? (
+                <span>📺 <strong>【双星同屏！联手塞爆全网中立直播狂欢】</strong><br/>
+                今晚，你与 <strong>{jointSibsText}</strong> 携手坐在一架镜头下开启了联合感恩直播！滚动的多国打赏弹幕几乎塞爆了服务器！世界各地的团粉与唯粉在大喊『这是什么绝色双天至尊大同框！』</span>
+              ) : (
+                <span>你开启了久违的生日庆祝直播！短短几分钟，中、韩、日、西方数十万在线粉丝瞬间将直播间塞爆！飞快的滚动弹幕和漫天的粉丝吹捧让你应接不暇。你需要挑选最适合今晚的互动回馈方式：</span>
+              )}
             </div>
 
             <div className="space-y-2.5 pt-1">
@@ -349,7 +398,12 @@ export default function BirthdayGameModal({
           <div className="space-y-4">
             <div className="bg-slate-900/60 border border-white/5 rounded-2xl p-4 text-xs leading-relaxed text-slate-300">
               <p className="font-semibold text-yellow-400 mb-1">【企划社李社长的生日黄金特免契礼】</p>
-              看到你最近飙升的粉丝黏度以及超话人气，社长（代表）面心大慰，并亲自在年末预算中特批了仅限于生日当天提取的三个高额重置权益包之一。你要带走哪一份生日贺礼？
+              {isJointBday ? (
+                <span>👑 <strong>【代表开恩——联合特权红利惊天大升级 (+25% 联合增幅款)】</strong><br/>
+                看到你们二人在本周期爆发的极高话题度，李秉旭社长笑得合不拢嘴。特批将联合免债特赦和奖金池直推增涨 25%！这是组合史上绝无仅有的金牌大包！</span>
+              ) : (
+                <span>看到你最近飙升的粉丝黏度以及超话人气，社长（代表）面心大慰，并亲自在年末预算中特批了仅限于生日当天提取的三个高额重置权益包之一。你要带走哪一份生日贺礼？</span>
+              )}
             </div>
 
             <div className="space-y-2.5 pt-1">

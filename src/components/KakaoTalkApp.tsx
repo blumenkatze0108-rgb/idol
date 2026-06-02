@@ -14,6 +14,7 @@ interface KakaoTalkProp {
   onUpdateHistories: (histories: Record<string, ChatMessage[]>, contacts: ChatContact[]) => void;
   onAddLog: (log: string) => void;
   onUpdatePersona?: (p: IdolPersona) => void;
+  personas?: IdolPersona[];
 }
 
 export default function KakaoTalkApp({
@@ -26,7 +27,8 @@ export default function KakaoTalkApp({
   customApiEndpoint,
   onUpdateHistories,
   onAddLog,
-  onUpdatePersona
+  onUpdatePersona,
+  personas
 }: KakaoTalkProp) {
   const [selectedContactId, setSelectedContactId] = useState<string>("manager");
   const [inputText, setInputText] = useState("");
@@ -237,7 +239,12 @@ export default function KakaoTalkApp({
       Your Role: "${contact.role}" (${contact.id === 'lover' ? '偷偷交往的地下恋爱恋人' : contact.role === 'manager' ? '总负责人/经纪人' : contact.role === 'member' ? '队内合伙队友' : '社长高级领袖'}).
       MBTI Profile: "${contact.mbti || 'ESTJ'}".
       Favorability score toward the player: ${contact.favorability ?? 50}/100.
-      ${contact.id === 'lover' ? 'Critical Constraint: You are the player\'s secret dating partner in the K-Pop world where dating is heavily banned. Respond in a very sweet, warm, deeply caring, yet slightly nervous/secretive tone. Use words like 亲爱的, 宝贝, 汉江. Suggest meeting up stealthily, checking for cameras or managers.' : ''}
+      ${contact.id === 'lover' ? `Critical Constraint: You are the player's secret underground dating partner in the K-Pop world where dating is heavily banned. Respond in a very sweet, warm, deeply caring, yet slightly nervous/secretive tone. Use words like 亲爱的, 宝贝, 汉江. Suggest meeting up stealthily, checking for cameras or managers.
+      Current Roleplay Position: Player is configured in settings as "${persona.romancePosition || 'right'}" (左位 means the player is dominant/Top/Gong; 右位 means the player is reliant/Bottom/Shou).
+      ${(persona.romancePosition || 'right') === 'left'
+        ? 'Because the player is Top/Gong (左位), YOU (the replier) are Bottom/Shou (右位). Your response should be incredibly cute, gentle, soft, delicate, reliant, and slightly shy. Emphasize that you feel completely safe with them, ask them to hug or pet you, act spoiled, write with delicate emotion, and describe wanting to rest on their shoulder.'
+        : 'Because the player is Bottom/Shou (右位), YOU (the replier) are Top/Gong (左位). Your response should be deeply protective, pampering, strong-willed, dominant, and assertively caring. Treat them like your adorable baby who needs protection from manager eyes and full spoiling. Call them cute nicknames or pet names like 宝宝, 傻瓜, 小鬼, my little one. Tell them you will hold them tightly and face any stress together.'
+      }` : ''}
       ${contact.summary ? `Dialogue History Milestones Summary: "${contact.summary}". Maintain continuity with these compiled memories!` : ""}
       
       Player Gender: "${persona.gender}".
@@ -251,6 +258,19 @@ export default function KakaoTalkApp({
       Player is a ${persona.startType === 'trainee' ? '训练生' : '出道人气爱豆'} named "${persona.name}" (Stage name: ${persona.stageName}), who is of ${persona.nationality === 'korean' ? '韩国本土' : '外籍绿卡员'} nationality. 
       Note: Korean entertainment companies may show subtle bias against green-card members. Use this background if favorability is low or nationality is foreign green card.
       If favorability is < 30 (for non-lovers), be cold, formal, and micro-aggressive. If favorability is > 70, be very friendly, tease, or speak warmly. Include authentic Kpop slang (like "Fighting", "Wink", "美容室", "主打歌", "出圈").`;
+
+      if (personas && personas.length > 1) {
+        const groupDesc = personas.map((p, pIdx) => {
+          return `- 成员 ${pIdx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}, MBTI: ${p.mbti}, 国籍: ${p.nationality}`;
+        }).join("\n");
+        customSystemPrompt += `\n\n【极其重要：多开组合团队背景】
+当前玩家所在的是一个 ${personas.length} 人的高精度组合，名字叫 "${persona.groupName}"，所属经纪公司为 "${persona.company}"。
+这个组合内的所有成员都是玩家同时可切换扮演的主角。成员明细如下：
+${groupDesc}
+现在正在和你说话的扮演者当前是："${persona.name}"（艺名 "${persona.stageName}"）。
+当你们交流时，请时刻保持对这个组合以及其他合伙成员的充分认知。在言谈中可以自然地提及其他成员并关注组合的近期练习、称重、债务情况、生活日常或打歌互助关系，让对话极具团队实感与多角色沉浸度！
+极其重要限制：玩家所在的组合仅限于上述 [${personas.map(p => p.stageName || p.name).join(", ")}] 成员，绝对禁止脑补或虚构出任何此明细名字之外的捏造韩国名假队友！所有团内互动只能谈及这几位成员，展现极高团队属性和高定沉浸感！`;
+      }
 
       // Call API
       try {

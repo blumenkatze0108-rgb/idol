@@ -12,6 +12,7 @@ interface WeverseAppProps {
   onUpdatePosts: (posts: WeversePost[]) => void;
   onUpdateStats: (popularity: number, reputation: number, energy: number, stress: number) => void;
   onAddLog: (log: string) => void;
+  personas?: IdolPersona[];
 }
 
 export default function WeverseApp({
@@ -22,7 +23,8 @@ export default function WeverseApp({
   customApiEndpoint,
   onUpdatePosts,
   onUpdateStats,
-  onAddLog
+  onAddLog,
+  personas
 }: WeverseAppProps) {
   const [activePostId, setActivePostId] = useState<string>("w_1");
   const [newPostContent, setNewPostContent] = useState("");
@@ -56,13 +58,23 @@ Do not write any markdown tags or other intro/outro.`;
     let haterUser = "NetizenHater";
     let haterText = "怎么天天有空发Weverse，到底有没有好好练习唱歌啊？发音一塌糊涂。";
 
+    let systemInstruction = `You are an expert game master managing Kpop social fan simulations. Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐" if supportive/fans call her, and NEVER use male-only terms like "欧巴/哥哥/他/哥" to describe her. If male, fans call them "欧巴/哥哥/他" and NEVER use female-only terms like "欧尼/姐姐/她".`;
+    if (personas && personas.length > 1) {
+      const gDesc = personas.map((p, idx) => `- 成员 ${idx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}, MBTI: ${p.mbti}`).join("\n");
+      systemInstruction += `\n\n【重要：当前属于一个 ${personas.length} 人的自制高保真高定全明星组合 "${persona.groupName}"】
+组合成员如下：
+${gDesc}
+任何粉丝在评价发帖和吐槽、或者唯粉评价当前说话的爱豆 "${persona.stageName}" 时，可能会提起并提及其他组合成员的名字或才艺状态（例如炒CP、或者拿队员来进行数值/才华拉踩对比），言之有物，带有最逼真的Kpop粉圈属性互撕与饭圈抱团乱象！
+极其重要限制：该组合仅限于以上这 ${personas.length} 位成员姓名，绝对禁止幻想、捏造或虚构在此名字明细之外的不知名假队员！内容评价须尽量以团体高度开展，禁止脑补不存在的拉胯关系！`;
+    }
+
     try {
       const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: promptText,
-          systemInstruction: `You are an expert game master managing Kpop social fan simulations. Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐" if supportive/fans call her, and NEVER use male-only terms like "欧巴/哥哥/他/哥" to describe her. If male, fans call them "欧巴/哥哥/他" and NEVER use female-only terms like "欧尼/姐姐/她".`,
+          systemInstruction,
           customApiKey,
           model: customModel,
           customApiEndpoint
@@ -196,13 +208,23 @@ Do not write any markdown tags or other intro/outro.`;
     let commentAuthor = "YunaAngel";
     let commentTxt = "直播里的智允宝宝太可爱了，素颜状态也超级好，清冷感美女实锤！";
 
+    let sysInstruction = `You are in a live streaming room for Kpop idol "${persona.stageName}". Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐/她" if female, and NEVER use male-only terms like "欧巴/哥哥/他" to describe her. If male, fans call them "欧巴/哥哥/慢/他/哥" and NEVER use female terms like "欧尼/姐姐/她".`;
+    if (personas && personas.length > 1) {
+      const gDesc = personas.map((p, idx) => `- 成员 ${idx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}`).join("\n");
+      sysInstruction += `\n\n【重要：官方组合 "${persona.groupName}" 直播背景】
+本场直播属于组合官方频道。其余亲生姐妹/兄弟自创玩家输入角色是：
+${gDesc}
+在直播间留言里，观众可能会很惊喜、很激动、或很有爱地询问其他同组多开成员的最新去向或消息（例如“XX姐去哪里了呀，今晚不跟宝宝一起吗？”、“XX和宝宝刚才是在厨房打架吗哈哈”），以增加真实的团队直播互动氛围！
+极其重要：该自选团队仅限于上述这些玩家定制的成员姓名，绝对禁止捏造、脑补或提及任何此列表名字之外的捏造韩国队友！提问或留言须符合高保真全队氛围。`;
+    }
+
     try {
       const response = await safeFetch("/api/gemini/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: `Generate a short sweet comment (1 sentence) in Chinese from an active streaming spectator watching Kpop star ${persona.stageName}'s video livestream. Tell them they look gorgeous, congrats, or ask a cute question. Only return the comment text, no formatting. Player gender is "${persona.gender}". If female, fans call them "欧尼" or "姐姐"; if male, fans call them "欧巴" or "哥哥".`,
-          systemInstruction: `You are in a live streaming room for Kpop idol "${persona.stageName}". Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐/她" if female, and NEVER use male-only terms like "欧巴/哥哥/他" to describe her. If male, fans call them "欧巴/哥哥/他/哥" and NEVER use female terms like "欧尼/姐姐/她".`,
+          systemInstruction: sysInstruction,
           customApiKey,
           model: customModel,
           customApiEndpoint

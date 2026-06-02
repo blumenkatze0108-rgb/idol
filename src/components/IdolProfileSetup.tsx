@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { IdolPersona, SimulatedTeammate } from "../types";
 import { generateRandomTeammates, generateCoreStaff } from "../mockData";
 import { Sparkles, ArrowRight, User, Star, Briefcase, Smile, ShieldAlert, Eye, Heart } from "lucide-react";
 
 interface SetupProps {
-  onComplete: (persona: IdolPersona, teammates: SimulatedTeammate[]) => void;
+  onComplete: (personas: IdolPersona[], teammates: SimulatedTeammate[]) => void;
 }
 
 // Utility to calculate constellation/zodiac based on date
@@ -44,6 +44,10 @@ function calculateAgeFromBirthday(dateStr: string): number {
 
 export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [step, setStep] = useState(1);
+  const isSwitchingRef = useRef(false);
+  const [playMode, setPlayMode] = useState<"single" | "duo" | "trio">("single");
+  const [memberEditIdx, setMemberEditIdx] = useState(0);
+
   const [name, setName] = useState("金智敏");
   const [stageName, setStageName] = useState("JIMIN");
   const [gender, setGender] = useState<"female" | "male">("female");
@@ -54,6 +58,23 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [hairColor, setHairColor] = useState("午夜深海蓝黑");
   const [mbti, setMbti] = useState("ENFJ");
   const [conceptTheme, setConceptTheme] = useState("Hip-Hop (嘻哈说唱)");
+  const updateConceptTheme = (val: string) => {
+    setConceptTheme(val);
+    if (playMode !== "single") {
+      setMembersData(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(k => {
+          if (next[Number(k)]) {
+            next[Number(k)] = {
+              ...next[Number(k)],
+              conceptTheme: val
+            };
+          }
+        });
+        return next;
+      });
+    }
+  };
   const [isCustomConcept, setIsCustomConcept] = useState(false);
   const [customConceptText, setCustomConceptText] = useState("");
   const [company, setCompany] = useState("Aether Label (三大厂牌旗下 - 待遇高，抽成9:1)");
@@ -68,6 +89,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [loverGender, setLoverGender] = useState<"female" | "male">("male");
   const [loverAge, setLoverAge] = useState<"same_age" | "older" | "younger">("same_age");
   const [loverIdentity, setLoverIdentity] = useState<"non_celeb" | "celebrity">("non_celeb");
+  const [romancePosition, setRomancePosition] = useState<"left" | "right">("right"); // Default to right-side (受) unless configured
   const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
   const [birthday, setBirthday] = useState("2006-11-23");
   const [zodiac, setZodiac] = useState("射手座");
@@ -93,8 +115,225 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [rapSkill, setRapSkill] = useState(20);
   const [varietySkill, setVarietySkill] = useState(20);
 
+  const [membersData, setMembersData] = useState<Record<number, any>>({
+    0: {
+      name: "金智敏",
+      stageName: "JIMIN",
+      gender: "female",
+      style: "group",
+      roleInGroup: "队长 & 主唱 & 门面担当",
+      hairStyle: "层次狼尾鲻鱼头 (Wolf Cut)",
+      hairColor: "午夜深海蓝黑",
+      mbti: "ENFJ",
+      conceptTheme: "Hip-Hop (嘻哈说唱)",
+      vibeText: "自带清冷慵懒的面部视觉，跳舞时节奏把控极其犀利，眼神极具野心与侵略感。",
+      startType: "trainee",
+      nationality: "korean",
+      birthday: "2006-11-23",
+      zodiac: "射手座",
+      age: 19,
+      bloodType: "O型",
+      specificNationality: "韩国首尔特别市江南区",
+      isMixed: false,
+      mixedCountries: "中/韩 (Sino-Korean)",
+      eyeShape: "瑞凤眼 (清冷俊雅)",
+      eyeColor: "琥珀浅晶茶棕",
+      noseShape: "直挺悬胆鼻 (经典立体)",
+      height: 167,
+      weight: 46.5,
+      vocalSkill: 30,
+      danceSkill: 30,
+      rapSkill: 20,
+      varietySkill: 20,
+      hasLover: false,
+      loverName: "林舒阳",
+      loverGender: "male",
+      loverAge: "same_age",
+      loverIdentity: "non_celeb"
+    },
+    1: {
+      name: "申美延",
+      stageName: "MIYEON",
+      gender: "female",
+      style: "group",
+      roleInGroup: "主舞 & 门面担当",
+      hairStyle: "慵懒长卷发配一刀切刘海",
+      hairColor: "玫瑰雾粉配银丝挂耳染",
+      mbti: "ISFP",
+      conceptTheme: "Jazz / Soul (复古爵士)",
+      vibeText: "釜山海风般温柔动人的质感，舞台表情和感染力出彩。",
+      startType: "trainee",
+      nationality: "korean",
+      birthday: "2006-01-31",
+      zodiac: "水瓶座",
+      age: 20,
+      bloodType: "B型",
+      specificNationality: "韩国釜山广域市",
+      isMixed: false,
+      mixedCountries: "",
+      eyeShape: "桃花眼 (含情脉脉、男女莫辨)",
+      eyeColor: "琥珀浅晶茶棕 (水润灵气)",
+      noseShape: "圆润小翘鼻 (可爱自然亲切感)",
+      height: 165,
+      weight: 45.0,
+      vocalSkill: 35,
+      danceSkill: 30,
+      rapSkill: 20,
+      varietySkill: 35,
+      hasLover: false,
+      loverName: "",
+      loverGender: undefined,
+      loverAge: undefined,
+      loverIdentity: undefined
+    },
+    2: {
+      name: "韩媛雅",
+      stageName: "WONY",
+      gender: "female",
+      style: "group",
+      roleInGroup: "领舞 & 团宠担当",
+      hairStyle: "清爽高马尾配碎发",
+      hairColor: "甜酷焦糖栗子深棕",
+      mbti: "ENFP",
+      conceptTheme: "Bubblegum / Teen Pop (糖果流行)",
+      vibeText: "元气满满的活力美少女，甜美亲和度十足，台下鬼马精灵。",
+      startType: "trainee",
+      nationality: "korean",
+      birthday: "2007-08-31",
+      zodiac: "处女座",
+      age: 18,
+      bloodType: "A型",
+      specificNationality: "韩国大邱广域市",
+      isMixed: false,
+      mixedCountries: "",
+      eyeShape: "下垂狗狗眼 (极致无辜、人畜无害)",
+      eyeColor: "曜石浓墨黑 (深沉吸粉)",
+      noseShape: "直挺悬胆鼻 (传统精雕神颜模板)",
+      height: 168,
+      weight: 46.0,
+      vocalSkill: 25,
+      danceSkill: 35,
+      rapSkill: 30,
+      varietySkill: 30,
+      hasLover: false,
+      loverName: "",
+      loverGender: undefined,
+      loverAge: undefined,
+      loverIdentity: undefined
+    }
+  });
+
+  const getMemberName = (idx: number) => {
+    if (memberEditIdx === idx) return name;
+    return membersData[idx]?.name || (idx === 0 ? "金智敏" : idx === 1 ? "申美延" : "韩媛雅");
+  };
+
+  const getMemberStageName = (idx: number) => {
+    if (memberEditIdx === idx) return stageName;
+    return membersData[idx]?.stageName || (idx === 0 ? "JIMIN" : idx === 1 ? "MIYEON" : "WONY");
+  };
+
+  const saveMember = (idx: number) => {
+    const data = {
+      name,
+      stageName,
+      gender,
+      style: playMode === "single" ? style : "group",
+      roleInGroup,
+      hairStyle,
+      hairColor,
+      mbti,
+      conceptTheme,
+      vibeText,
+      startType,
+      nationality,
+      birthday,
+      zodiac,
+      age,
+      bloodType,
+      specificNationality,
+      isMixed,
+      mixedCountries,
+      eyeShape,
+      eyeColor,
+      noseShape,
+      height,
+      weight,
+      vocalSkill,
+      danceSkill,
+      rapSkill,
+      varietySkill,
+      hasLover,
+      loverName,
+      loverGender,
+      loverAge,
+      loverIdentity,
+      romancePosition
+    };
+    setMembersData(prev => ({
+      ...prev,
+      [idx]: data
+    }));
+  };
+
+  const loadMember = (idx: number, optData?: any) => {
+    const data = optData || membersData[idx];
+    if (!data) return;
+
+    isSwitchingRef.current = true;
+    setValidationError(null);
+    setName(data.name);
+    setStageName(data.stageName);
+    setGender(data.gender);
+    setRoleInGroup(data.roleInGroup || (idx === 0 ? "队长 & 主唱 & 门面担当" : idx === 1 ? "主舞 & 门面担当" : "领舞 & 团宠担当"));
+    if (playMode === "single") {
+      setStyle(data.style || "group");
+    } else {
+      setStyle("group");
+    }
+    setHairStyle(data.hairStyle);
+    setHairColor(data.hairColor);
+    setMbti(data.mbti);
+    if (playMode === "single") {
+      setConceptTheme(data.conceptTheme || "Hip-Hop (嘻哈说唱)");
+    } else {
+      // Force all members to use the unified group concept theme
+      setConceptTheme(conceptTheme);
+    }
+    setVibeText(data.vibeText);
+    setStartType(data.startType);
+    setNationality(data.nationality);
+    setBirthday(data.birthday);
+    setZodiac(data.zodiac);
+    setAge(data.age);
+    setBloodType(data.bloodType);
+    setSpecificNationality(data.specificNationality);
+    setIsMixed(data.isMixed);
+    setMixedCountries(data.mixedCountries);
+    setEyeShape(data.eyeShape);
+    setEyeColor(data.eyeColor);
+    setNoseShape(data.noseShape);
+    setHeight(data.height);
+    setWeight(data.weight);
+    setVocalSkill(data.vocalSkill);
+    setDanceSkill(data.danceSkill);
+    setRapSkill(data.rapSkill);
+    setVarietySkill(data.varietySkill);
+    setHasLover(data.hasLover);
+    setLoverName(data.loverName);
+    setLoverGender(data.loverGender);
+    setLoverAge(data.loverAge);
+    setLoverIdentity(data.loverIdentity);
+    setRomancePosition(data.romancePosition || "right");
+
+    setTimeout(() => {
+      isSwitchingRef.current = false;
+    }, 50);
+  };
+
   // Synchronize initial skill attributes with startType
   useEffect(() => {
+    if (isSwitchingRef.current) return;
     if (startType === "trainee") {
       setVocalSkill(30);
       setDanceSkill(30);
@@ -111,12 +350,14 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
   // Synchronize height and weight with gender swaps
   useEffect(() => {
+    if (isSwitchingRef.current) return;
     setHeight(gender === "female" ? 167 : 181);
     setWeight(gender === "female" ? 46.5 : 62.0);
   }, [gender]);
 
   // Adjust default lover details based on gender/identity swaps for convenience
   useEffect(() => {
+    if (isSwitchingRef.current) return;
     const oppGender = gender === "female" ? "male" : "female";
     setLoverGender(oppGender);
     
@@ -129,6 +370,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
   // Automatically calculate Zodiac and Age when birthday modifications happen
   useEffect(() => {
+    if (isSwitchingRef.current) return;
     setZodiac(calculateZodiac(birthday));
     const calcedAge = calculateAgeFromBirthday(birthday);
     setAge(calcedAge);
@@ -137,6 +379,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
   // Adjust default specific nationality based on general nationality
   useEffect(() => {
+    if (isSwitchingRef.current) return;
     if (nationality === "korean") {
       setSpecificNationality("韩国首尔特别市江南区");
     } else if (nationality === "chinese_green") {
@@ -332,113 +575,322 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       generateVibeText();
     }
     if (step < 3) {
+      saveMember(memberEditIdx);
       setStep(step + 1);
     } else {
-      // Create dynamically generated teammates & default profile entries
-      let generatedTeammates = style === "group" ? generateRandomTeammates(gender, 4) : [];
-      
-      const isTrainee = startType === "trainee";
+      // Save current member form states first to the member index before compiling
+      saveMember(memberEditIdx);
 
-      // Align individual teammate favorability scores to the starting stats
-      generatedTeammates = generatedTeammates.map(t => ({
+      // Create dynamically generated teammates & default profile entries
+      const isTrainee = startType === "trainee";
+      const actualSplit = company.includes("7:3") ? "7:3" : (company.includes("8:2") ? "8:2" : "9:1");
+
+      const finalPersonas: IdolPersona[] = [];
+      const numMembers = playMode === "single" ? 1 : (playMode === "duo" ? 2 : 3);
+
+      // Prevent duplicate roles/responsibilities and duplicate names/stageNames
+      const namesSet = new Set<string>();
+      const stageNamesSet = new Set<string>();
+      const staffInfoForCheck = generateCoreStaff(gender);
+      const teammateListForCheck = generateRandomTeammates(gender, 4);
+
+      const staffNamesToCheck = [
+        staffInfoForCheck.manager.name,
+        staffInfoForCheck.ceo.name,
+        staffInfoForCheck.rival.name
+      ].map(n => n.split(" ")[0].trim().toLowerCase()); // Get first name or full name split
+
+      const teammateNamesToCheck = teammateListForCheck.map(t => t.name.trim().toLowerCase());
+      const teammateStageNamesToCheck = teammateListForCheck.map(t => t.stageName.trim().toUpperCase());
+
+      for (let i = 0; i < numMembers; i++) {
+        const m = i === memberEditIdx
+          ? { name, stageName, roleInGroup }
+          : membersData[i];
+        if (m) {
+          const cleanName = m.name?.trim() || "";
+          const cleanNameLower = cleanName.toLowerCase();
+          const cleanStageName = m.stageName?.trim().toUpperCase() || "";
+
+          if (!cleanName) {
+            setValidationError(`⚠️ 请填写第 ${i + 1} 位组合成员的本名！`);
+            return;
+          }
+          if (!cleanStageName) {
+            setValidationError(`⚠️ 请填写第 ${i + 1} 位组合成员的舞台艺名！`);
+            return;
+          }
+
+          // 1. Playable members with themselves
+          if (namesSet.has(cleanNameLower)) {
+            setValidationError(`⚠️ 组合内成员本名不能重复！检测到重复的候选本名：『${cleanName}』。请点击左侧各成员的头像卡片，为其起一个独特的本名。`);
+            return;
+          }
+          if (stageNamesSet.has(cleanStageName)) {
+            setValidationError(`⚠️ 组合内成员舞台艺名不能重复！检测到重复的艺名：『${cleanStageName}』。请点击左侧各成员的头像卡片修改。`);
+            return;
+          }
+
+          // 2. Playable members with staff
+          if (staffNamesToCheck.some(sn => cleanNameLower.includes(sn) || sn.includes(cleanNameLower))) {
+            setValidationError(`⚠️ 设定的本名『${cleanName}』不能与系统企划社核心人物（经纪人、代表董事、Rival明星等）产生重名冲突！请重新起名。`);
+            return;
+          }
+
+          // 3. Playable members with default companions
+          if (playMode === "single" && style === "group") {
+            if (teammateNamesToCheck.includes(cleanNameLower)) {
+              setValidationError(`⚠️ 设定的本名『${cleanName}』与系统默认自动生成的刀群舞队友名冲突！请重新起名，以防引发通信与数据归档逻辑碰撞。`);
+              return;
+            }
+            if (teammateStageNamesToCheck.includes(cleanStageName)) {
+              setValidationError(`⚠️ 设定的舞台艺名『${cleanStageName}』与系统默认自动生成的队友艺名冲突！请重新换个艺名。`);
+              return;
+            }
+          }
+
+          namesSet.add(cleanNameLower);
+          stageNamesSet.add(cleanStageName);
+        }
+      }
+
+      if (playMode !== "single") {
+        const rolesSet = new Set<string>();
+        for (let i = 0; i < numMembers; i++) {
+          const m = i === memberEditIdx
+            ? { name, roleInGroup }
+            : membersData[i];
+          if (m) {
+            if (!m.roleInGroup) {
+              setValidationError(`⚠️ %%% 错误：% - 组合内全部成员都必须确定一个定位担当！`);
+              return;
+            }
+            if (rolesSet.has(m.roleInGroup)) {
+              setValidationError(`⚠️ 团队内成员的独立主打定位/担当不能重复！检测到重复的担当：『${m.roleInGroup}』。请点击左侧各成员的头像卡片，为其挑选专属性质担当。`);
+              return;
+            }
+            rolesSet.add(m.roleInGroup);
+          }
+        }
+      }
+
+      for (let i = 0; i < numMembers; i++) {
+        let m = i === memberEditIdx ? {
+          name,
+          stageName,
+          gender,
+          style: playMode === "single" ? style : "group",
+          roleInGroup,
+          hairStyle,
+          hairColor,
+          mbti,
+          conceptTheme,
+          vibeText,
+          startType,
+          nationality,
+          birthday,
+          zodiac,
+          age,
+          bloodType,
+          specificNationality,
+          isMixed,
+          mixedCountries: isMixed ? mixedCountries : "",
+          eyeShape,
+          eyeColor,
+          noseShape,
+          height,
+          weight,
+          vocalSkill,
+          danceSkill,
+          rapSkill,
+          varietySkill,
+          hasLover,
+          loverName,
+          loverGender,
+          loverAge,
+          loverIdentity
+        } : membersData[i];
+
+        // Fallback matching default empty values if not touched
+        if (!m) {
+          if (i === 1) {
+            m = {
+              name: "申美延",
+              stageName: "MIYEON",
+              gender: "female",
+              style: "group",
+              roleInGroup: "主舞 & 门面担当",
+              hairStyle: "慵懒长卷发配一刀切刘海",
+              hairColor: "玫瑰雾粉配银丝挂耳染",
+              mbti: "ISFP",
+              conceptTheme: "Jazz / Soul (复古爵士)",
+              vibeText: "釜山海风般温柔动人的质感，舞台表情和感染力出彩。",
+              startType,
+              nationality: "korean",
+              birthday: "2006-01-31",
+              zodiac: "水瓶座",
+              age: 20,
+              bloodType: "B型",
+              specificNationality: "韩国釜山广域市",
+              isMixed: false,
+              mixedCountries: "",
+              eyeShape: "桃花眼 (含情脉脉、男女莫辨)",
+              eyeColor: "琥珀浅晶茶棕 (水润灵气)",
+              noseShape: "圆润小翘鼻 (可爱自然亲切感)",
+              height: 165,
+              weight: 45.0,
+              vocalSkill: isTrainee ? 35 : 70,
+              danceSkill: isTrainee ? 30 : 65,
+              rapSkill: isTrainee ? 20 : 50,
+              varietySkill: isTrainee ? 35 : 75,
+              hasLover: false,
+              loverName: "",
+              loverGender: undefined,
+              loverAge: undefined,
+              loverIdentity: undefined
+            };
+          } else {
+            m = {
+              name: "韩媛雅",
+              stageName: "WONY",
+              gender: "female",
+              style: "group",
+              roleInGroup: "领舞 & 团宠担当",
+              hairStyle: "清爽高马尾配碎发",
+              hairColor: "甜酷焦糖栗子深棕",
+              mbti: "ENFP",
+              conceptTheme: "Bubblegum / Teen Pop (糖果流行)",
+              vibeText: "元气满满的活力美少女，甜美亲和度十足，台下鬼马精灵。",
+              startType,
+              nationality: "korean",
+              birthday: "2007-08-31",
+              zodiac: "处女座",
+              age: 18,
+              bloodType: "A型",
+              specificNationality: "韩国大邱广域市",
+              isMixed: false,
+              mixedCountries: "",
+              eyeShape: "下垂狗狗眼 (极致无辜、人畜无害)",
+              eyeColor: "曜石浓墨黑 (深沉吸粉)",
+              noseShape: "直挺悬胆鼻 (传统精雕神颜模板)",
+              height: 168,
+              weight: 46.0,
+              vocalSkill: isTrainee ? 25 : 62,
+              danceSkill: isTrainee ? 35 : 78,
+              rapSkill: isTrainee ? 30 : 68,
+              varietySkill: isTrainee ? 30 : 70,
+              hasLover: false,
+              loverName: "",
+              loverGender: undefined,
+              loverAge: undefined,
+              loverIdentity: undefined
+            };
+          }
+        }
+
+        const startPopularity = isTrainee ? 0 : (playMode === "single" && m.style === "solo" ? 50 : 65);
+        const startReputation = isTrainee ? 40 : 70;
+        const startFans = isTrainee ? 50 : (playMode === "single" && m.style === "solo" ? 750000 : 1800000);
+        const startAlbumSales = isTrainee ? 0 : (playMode === "single" && m.style === "solo" ? 35000 : 190000);
+        const startMoney = isTrainee ? 10 : 1200;
+        const debt = isTrainee ? 15000 : 1200;
+        const personMBTI = m.mbti.toUpperCase() || "ENFJ";
+
+        const pObj: IdolPersona = {
+          name: m.name,
+          stageName: m.stageName.toUpperCase() || m.name,
+          gender: m.gender,
+          style: playMode === "single" ? m.style : "group",
+          groupName: playMode === "single" ? (m.style === "group" ? groupName : "独立Solo客制人设") : groupName,
+          roleInGroup: playMode === "single" ? (m.style === "group" ? roleInGroup : "独立全能唱作歌手") : (m.roleInGroup || "主唱 & 领舞"),
+          hairStyle: m.hairStyle,
+          hairColor: m.hairColor,
+          mbti: personMBTI,
+          conceptTheme: m.conceptTheme,
+          company,
+          vibeText: m.vibeText,
+          startType: m.startType,
+          nationality: m.nationality,
+          birthday: m.birthday,
+          zodiac: m.zodiac,
+          age: m.age,
+          bloodType: m.bloodType,
+          specificNationality: m.specificNationality,
+          isMixed: m.isMixed,
+          mixedCountries: m.isMixed ? m.mixedCountries : "",
+          eyeShape: m.eyeShape,
+          eyeColor: m.eyeColor,
+          noseShape: m.noseShape,
+          height: m.height,
+          weight: m.weight,
+          skinCondition: "perfect",
+          vocalSkill: m.vocalSkill,
+          danceSkill: m.danceSkill,
+          rapSkill: m.rapSkill,
+          varietySkill: m.varietySkill,
+          stress: isTrainee ? 15 : 40,
+          traineeDebt: debt,
+          companySplit: actualSplit,
+          managerFavorability: isTrainee ? 12 : 35, 
+          teammatesFavorability: isTrainee ? 10 : 42, 
+          ceoFavorability: isTrainee ? 8 : 30, 
+          pdFavorability: isTrainee ? 15 : 45, 
+          popularity: startPopularity,
+          reputation: startReputation,
+          energy: 100,
+          fansCount: startFans,
+          albumSales: startAlbumSales,
+          money: startMoney,
+          dayNumber: 1,
+          hasLover: isTrainee ? false : m.hasLover,
+          loverName: isTrainee ? "" : (m.hasLover ? m.loverName : ""),
+          relationshipStatus: isTrainee ? "single" : (m.hasLover ? "dating" : "single"),
+          scandalPrejudice: isTrainee ? 5 : (m.hasLover ? 35 : 8),
+          loverGender: isTrainee ? undefined : (m.hasLover ? m.loverGender : undefined),
+          loverAge: isTrainee ? undefined : (m.hasLover ? m.loverAge : undefined),
+          loverIdentity: isTrainee ? undefined : (m.hasLover ? m.loverIdentity : undefined),
+          loverMood: isTrainee ? undefined : (m.hasLover ? 85 : undefined),
+          romancePosition: isTrainee ? undefined : (m.hasLover ? (m.romancePosition || "right") : undefined),
+          fansDistribution: isTrainee ? {
+            otFans: 70,
+            soloFans: 15,
+            cpFans: 5,
+            antiFans: 10
+          } : {
+            otFans: 45,
+            soloFans: 30,
+            cpFans: 15,
+            antiFans: 10
+          }
+        };
+
+        const currentLoverMood = m.hasLover ? 85 : undefined;
+        if (m.hasLover) {
+          pObj.loverMood = currentLoverMood;
+        }
+
+        finalPersonas.push(pObj);
+      }
+
+      // Generate companions
+      // If single and group: generate companions (4 companions to make 5 total). If duo/trio, keep 0 companion teammates as K-pop has 2-3 member group debuts.
+      const numCompanionsNeeded = playMode === "single" ? (style === "group" ? 4 : 0) : 0;
+      let companions = numCompanionsNeeded > 0 ? generateRandomTeammates(gender, numCompanionsNeeded) : [];
+      companions = companions.map(t => ({
         ...t,
         favorability: isTrainee ? 10 : 42
       }));
-      
-      const startPopularity = isTrainee ? 0 : (style === "solo" ? 50 : 65);
-      const startReputation = isTrainee ? 40 : 70;
-      const startFans = isTrainee ? 50 : (style === "solo" ? 750000 : 1800000);
-      const startAlbumSales = isTrainee ? 0 : (style === "solo" ? 35000 : 190000);
-      const startMoney = isTrainee ? 10 : 1200; // trainees start nearly empty
-      const debt = isTrainee ? 15000 : 1200; // ₩1.5 Billion KRW debt for trainees
 
-      const personMBTI = mbti.toUpperCase() || "ENFJ";
-      const actualSplit = company.includes("7:3") ? "7:3" : (company.includes("8:2") ? "8:2" : "9:1");
-
-      const startingPersona: IdolPersona = {
-        name,
-        stageName: stageName.toUpperCase() || name,
-        gender,
-        style,
-        groupName: style === "group" ? groupName : "独立Solo客制人设",
-        roleInGroup: style === "group" ? roleInGroup : "独立全能唱作歌手",
-        hairStyle,
-        hairColor,
-        mbti: personMBTI,
-        conceptTheme,
-        company,
-        vibeText,
-        
-        startType,
-        nationality,
-        
-        // Detailed choices - Criterion 5
-        birthday,
-        zodiac,
-        age,
-        bloodType,
-        specificNationality,
-        isMixed,
-        mixedCountries: isMixed ? mixedCountries : "",
-        eyeShape,
-        eyeColor,
-        noseShape,
-
-        // High requirements, customizable Kpop model standard
-        height: height,
-        weight: weight,
-        skinCondition: "perfect",
-        vocalSkill: vocalSkill,
-        danceSkill: danceSkill,
-        rapSkill: rapSkill,
-        varietySkill: varietySkill,
-        stress: isTrainee ? 15 : 40,
-        
-        traineeDebt: debt,
-        companySplit: actualSplit,
-        
-        // Starts with specialized K-Pop industry favorability configs
-        managerFavorability: isTrainee ? 12 : 35, 
-        teammatesFavorability: isTrainee ? 10 : 42, 
-        ceoFavorability: isTrainee ? 8 : 30, 
-        pdFavorability: isTrainee ? 15 : 45, 
-        
-        popularity: startPopularity,
-        reputation: startReputation,
-        energy: 100,
-        fansCount: startFans,
-        albumSales: startAlbumSales,
-        money: startMoney,
-        dayNumber: 1,
-
-        hasLover: isTrainee ? false : hasLover,
-        loverName: isTrainee ? "" : (hasLover ? loverName : ""),
-        relationshipStatus: isTrainee ? "single" : (hasLover ? "dating" : "single"),
-        scandalPrejudice: isTrainee ? 5 : (hasLover ? 35 : 8),
-        loverGender: isTrainee ? undefined : (hasLover ? loverGender : undefined),
-        loverAge: isTrainee ? undefined : (hasLover ? loverAge : undefined),
-        loverIdentity: isTrainee ? undefined : (hasLover ? loverIdentity : undefined),
-        loverMood: isTrainee ? undefined : (hasLover ? 85 : undefined),
-
-        fansDistribution: isTrainee ? {
-          otFans: 70,
-          soloFans: 15,
-          cpFans: 5,
-          antiFans: 10
-        } : {
-          otFans: 45,
-          soloFans: 30,
-          cpFans: 15,
-          antiFans: 10
-        }
-      };
-
-      onComplete(startingPersona, generatedTeammates);
+      onComplete(finalPersonas, companions);
     }
   };
 
   const handleBack = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 1) {
+      saveMember(memberEditIdx);
+      setStep(step - 1);
+      setValidationError(null);
+    }
   };
 
   return (
@@ -493,6 +945,38 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           {/* Right Detail parameters */}
           <div className="flex-1 p-5 md:p-10 flex flex-col justify-between min-h-[380px] md:min-h-[560px] bg-slate-900/20">
           <div>
+            {/* Switch tab buttons for custom character profiles editing - Persistently visible across all steps */}
+            {playMode !== "single" && (
+              <div className="flex items-center gap-2 bg-slate-950/30 p-2.5 rounded-xl border border-indigo-500/20 overflow-x-auto select-none mb-6">
+                <span className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider font-mono shrink-0 mr-1 flex items-center gap-1">
+                  <span>🛠️ 编辑中自选成员:</span>
+                </span>
+                {[0, 1, 2].slice(0, playMode === "duo" ? 2 : 3).map((idx) => {
+                  const isCurrent = memberEditIdx === idx;
+                  const mName = getMemberName(idx);
+                  const mStage = getMemberStageName(idx);
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        saveMember(memberEditIdx);
+                        setMemberEditIdx(idx);
+                        loadMember(idx);
+                      }}
+                      className={`px-3 py-1.5 text-xs rounded-lg border font-bold flex items-center gap-1.5 transition-all outline-none shrink-0 ${
+                        isCurrent
+                          ? "bg-gradient-to-br from-[#6366f1]/40 to-[#a855f7]/40 border-indigo-500 text-white shadow-md animate-pulse shadow-indigo-500/10"
+                          : "bg-slate-950/40 border-white/5 text-slate-400 hover:text-white hover:border-white/25"
+                      }`}
+                    >
+                      <span>👤 {isCurrent ? "✍️ " : ""}成员 {idx + 1}: {mName} ({mStage.toUpperCase()})</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {step === 1 && (
               <div className="space-y-6">
                 <div>
@@ -502,6 +986,66 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                   <p className="text-xs text-slate-400 mt-1">
                     系统为您提供高自由度的自定义基础！拒绝死板选项，制定真实的生日、血型和高自由度本姓名片。
                   </p>
+                </div>
+
+                {/* 🔮 组合/双开/人设模式特色控制选择器 */}
+                <div className="bg-slate-950/40 p-4 rounded-2xl border border-white/5 space-y-3">
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider font-mono">
+                    🔮 企划扮演模式 (Gameplay Scenario Node)
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        saveMember(memberEditIdx);
+                        setPlayMode("single");
+                        setMemberEditIdx(0);
+                        setStyle("group");
+                      }}
+                      className={`py-2.5 px-3 rounded-xl border text-left flex flex-col justify-between h-20 transition-all ${
+                        playMode === "single"
+                          ? "bg-gradient-to-br from-purple-950/30 via-indigo-950/20 to-indigo-900/30 border-purple-500 text-white shadow-lg"
+                          : "bg-slate-950/40 border-white/5 text-slate-400 hover:bg-slate-950/80 hover:text-white"
+                      }`}
+                    >
+                      <span className="text-xs font-bold block">🕴️ 单人常规操控模式</span>
+                      <span className="text-[10px] text-slate-400 leading-normal block">标准单角色深度扮演</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        saveMember(memberEditIdx);
+                        setPlayMode("duo");
+                        setMemberEditIdx(0);
+                        setStyle("group");
+                      }}
+                      className={`py-2.5 px-3 rounded-xl border text-left flex flex-col justify-between h-20 transition-all ${
+                        playMode === "duo"
+                          ? "bg-gradient-to-br from-pink-950/30 via-rose-950/20 to-rose-900/30 border-pink-500 text-white shadow-lg"
+                          : "bg-slate-950/40 border-white/5 text-slate-400 hover:bg-slate-950/80 hover:text-white"
+                      }`}
+                    >
+                      <span className="text-xs font-bold block">👯 双人组合双开模式</span>
+                      <span className="text-[10px] text-pink-300/80 leading-normal block">自建 2 人小分队同时操作</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        saveMember(memberEditIdx);
+                        setPlayMode("trio");
+                        setMemberEditIdx(0);
+                        setStyle("group");
+                      }}
+                      className={`py-2.5 px-3 rounded-xl border text-left flex flex-col justify-between h-20 transition-all ${
+                        playMode === "trio"
+                          ? "bg-gradient-to-br from-teal-950/30 via-emerald-950/20 to-emerald-900/40 border-teal-500 text-white shadow-lg"
+                          : "bg-slate-950/40 border-white/5 text-slate-400 hover:bg-slate-950/80 hover:text-white"
+                      }`}
+                    >
+                      <span className="text-xs font-bold block">🎤 三人精锐打歌模式</span>
+                      <span className="text-[10px] text-teal-300/80 leading-normal block">自建 3 人超新星企划双开</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Name, StageName inputs and Genders */}
@@ -580,12 +1124,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                   </div>
                 </div>
 
-                {/* Validation errors for birthday / age */}
-                {validationError && (
-                  <div className="bg-red-500/10 border border-red-500/20 p-3 rounded-2xl text-[11px] text-red-400 font-medium">
-                    {validationError}
-                  </div>
-                )}
+                {/* Birthday/age validation warning */}
 
                 {/* Customizable Physical Metrics (Criterion 5) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-950/30 p-3.5 rounded-2xl border border-white/5 bg-slate-900/40">
@@ -644,25 +1183,27 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 text-xs col-span-1">
-                    <span className="block font-semibold text-slate-400 uppercase font-mono">偶像出道构架方式 (Promotion Structure)</span>
-                    <div className="grid grid-cols-2 gap-2.5">
-                      <button 
-                        type="button" onClick={() => setStyle("solo")}
-                        className={`p-3 rounded-xl border text-left transition-all ${style === "solo" ? "bg-indigo-950/30 border-indigo-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
-                      >
-                        <p className="font-bold text-xs">🎙️ 独立Solo歌手</p>
-                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">独享全部舞台及分词高规格待遇，但宣发预算较小抗网暴难度高。</p>
-                      </button>
-                      <button 
-                        type="button" onClick={() => setStyle("group")}
-                        className={`p-3 rounded-xl border text-left transition-all ${style === "group" ? "bg-emerald-950/30 border-emerald-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
-                      >
-                        <p className="font-bold text-xs">👯‍♂️ 5人高精度组合</p>
-                        <p className="text-[9px] text-slate-400 mt-1 leading-tight">自动随机生成4位各有高光反差 of 宿怨队友，暗潮涌动争抢核心Center！</p>
-                      </button>
+                  {playMode === "single" && (
+                    <div className="space-y-1.5 text-xs col-span-1">
+                      <span className="block font-semibold text-slate-400 uppercase font-mono">偶像出道构架方式 (Promotion Structure)</span>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <button 
+                          type="button" onClick={() => setStyle("solo")}
+                          className={`p-3 rounded-xl border text-left transition-all ${style === "solo" ? "bg-indigo-950/30 border-indigo-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                        >
+                          <p className="font-bold text-xs">🎙️ 独立Solo歌手</p>
+                          <p className="text-[9px] text-slate-400 mt-1 leading-tight">独享全部舞台及分词高规格待遇，但宣发预算较小抗网暴难度高。</p>
+                        </button>
+                        <button 
+                          type="button" onClick={() => setStyle("group")}
+                          className={`p-3 rounded-xl border text-left transition-all ${style === "group" ? "bg-emerald-950/30 border-emerald-500 text-white" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                        >
+                          <p className="font-bold text-xs">👯‍♂️ 5人高精度组合</p>
+                          <p className="text-[9px] text-slate-400 mt-1 leading-tight">自动随机生成4位各有高光反差 of 宿怨队友，暗潮涌动争抢核心Center！</p>
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Secret relationship available to both trainees and idols */}
@@ -755,8 +1296,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                               className="bg-slate-800 border border-white/10 rounded-lg px-2 text-[10px] text-slate-300"
                             >
                               <option value="">🔮 快捷导入明星</option>
+                              <option value="队内高冷颜值门面队友 - 申美延">申美延 (队内高冷颜值队友 - 队内恋爱)</option>
+                              <option value="队内元气甜酷主舞队友 - 韩媛雅">韩媛雅 (队内元气甜酷队友 - 队内恋爱)</option>
                               <option value="顶流行星男团 Center - 姜在赫">姜在赫 (大势顶流团)</option>
-                              <option value="同厂牌高音SOLO天后 - 申美延">申美延 (巨肺SOLO同门)</option>
+                              <option value="同厂牌高音SOLO天后 - Miyeon">Miyeon (巨肺SOLO同门)</option>
                               <option value="忠武路大牌青年人气男演员 - 崔胜贤">崔胜贤 (影坛巨头新人)</option>
                               <option value="队内御用顶级先锋编舞总监 - JAY">JAY (舞室王牌)</option>
                             </select>
@@ -776,12 +1319,34 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                           )}
                         </div>
                       </div>
+
+                      {/* Left/Right Position selection */}
+                      <div className="pt-1 border-t border-white/5">
+                        <label className="text-[10px] text-pink-300 font-bold block mb-1">💑 双人合照偏好：玩家在恋爱剧情中偏好什么定位？</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setRomancePosition("left")}
+                            className={`py-1.5 rounded-lg border text-xs font-bold text-center transition-all ${romancePosition === "left" ? "bg-purple-950/40 border-purple-500 text-purple-300 shadow-md" : "bg-slate-900 border-white/5 text-slate-400"}`}
+                          >
+                            左位 (左 / 攻 / Top / 主动保护)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRomancePosition("right")}
+                            className={`py-1.5 rounded-lg border text-xs font-bold text-center transition-all ${romancePosition === "right" ? "bg-pink-950/40 border-pink-500 text-pink-300 shadow-md" : "bg-slate-900 border-white/10 text-slate-400"}`}
+                          >
+                            右位 (右 / 受 / Bottom / 被宠依恋)
+                          </button>
+                        </div>
+                        <p className="text-[8px] text-slate-500 mt-1 leading-tight">不同的定位不仅会改变恋爱提示词，还会极大影响恋爱倾诉的感情基调与互动甜度！</p>
+                      </div>
                     </div>
                   )}
                 </div>
 
 
-                {style === "group" && (
+                {(style === "group" || playMode !== "single") && (
                   <div className="animate-in fade-in slide-in-from-top-1.5">
                     <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">组合团体企划代号 (Group Project Code)</label>
                     <input 
@@ -991,10 +1556,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                             setIsCustomConcept(true);
                             const defaultCustom = "Chic Minimalist Noir (清冷极简主义风格)";
                             setCustomConceptText(defaultCustom);
-                            setConceptTheme(defaultCustom);
+                            updateConceptTheme(defaultCustom);
                           } else {
                             setIsCustomConcept(false);
-                            setConceptTheme(val);
+                            updateConceptTheme(val);
                           }
                         }}
                         className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-purple-500 text-slate-205 font-medium"
@@ -1015,7 +1580,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                           value={conceptTheme} 
                           onChange={(e) => {
                             setCustomConceptText(e.target.value);
-                            setConceptTheme(e.target.value);
+                            updateConceptTheme(e.target.value);
                             setIsCustomConcept(true);
                           }}
                           placeholder="手动键盘定格专属概念，例如：德式暗黑工业风"
@@ -1132,25 +1697,57 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                       </div>
                     </div>
 
-                    {style === "group" && (
+                    {(style === "group" || playMode !== "single") && (
                       <div>
                         <label className="block text-[11px] font-semibold text-slate-350 mb-1 uppercase font-mono">自主确定或更改队伍中的定位担当 (Group Position)</label>
-                        <div className="grid grid-cols-1 gap-1 max-h-[100px] overflow-y-auto pr-1">
-                          {rolesOptionsByGender[gender].map((role) => (
-                            <button
-                              key={role}
-                              type="button"
-                              onClick={() => setRoleInGroup(role)}
-                              className={`text-left px-3 py-1.5 text-xs rounded-xl border flex items-center justify-between transition-all ${roleInGroup === role ? "border-purple-500 bg-purple-500/10 text-white font-bold" : "border-white/5 bg-slate-950/40 text-slate-400 hover:bg-slate-950/80"}`}
-                            >
-                              <span>{role}</span>
-                              {roleInGroup === role ? (
-                                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                              ) : role === getRecommendedRole() ? (
-                                <span className="text-[8px] text-purple-400 font-bold uppercase tracking-wider bg-purple-950/50 px-1 border border-purple-500/20 rounded">推荐</span>
-                              ) : null}
-                            </button>
-                          ))}
+                        <div className="grid grid-cols-1 gap-1 max-h-[120px] overflow-y-auto pr-1">
+                          {rolesOptionsByGender[gender].map((role) => {
+                            // Find if someone else is already taking this role
+                            const takenByIdx = playMode !== "single" ? (() => {
+                              const numMembers = playMode === "duo" ? 2 : 3;
+                              for (let i = 0; i < numMembers; i++) {
+                                if (i !== memberEditIdx && membersData[i]?.roleInGroup === role) {
+                                  return i;
+                                }
+                              }
+                              return undefined;
+                            })() : undefined;
+                            const isTaken = takenByIdx !== undefined;
+                            const otherMemberName = isTaken ? (membersData[takenByIdx!].name || `成员 ${takenByIdx! + 1}`) : "";
+
+                            return (
+                              <button
+                                key={role}
+                                type="button"
+                                disabled={isTaken}
+                                onClick={() => {
+                                  if (isTaken) return;
+                                  setRoleInGroup(role);
+                                }}
+                                className={`text-left px-3 py-1.5 text-xs rounded-xl border flex items-center justify-between transition-all ${
+                                  roleInGroup === role 
+                                    ? "border-purple-500 bg-purple-500/10 text-white font-bold" 
+                                    : isTaken
+                                      ? "border-red-950/10 bg-slate-950/10 text-slate-600 opacity-60 cursor-not-allowed select-none"
+                                      : "border-white/5 bg-slate-950/40 text-slate-400 hover:bg-slate-950/80"
+                                }`}
+                              >
+                                <span className="flex items-center gap-1.5">
+                                  <span>{role}</span>
+                                  {isTaken && (
+                                    <span className="text-[8px] leading-none border border-red-500/30 text-red-400 bg-red-950/20 rounded px-1.5 py-0.5 font-bold animate-pulse">
+                                      🚫 已由 {otherMemberName} 担当
+                                    </span>
+                                  )}
+                                </span>
+                                {roleInGroup === role ? (
+                                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                                ) : (!isTaken && role === getRecommendedRole()) ? (
+                                  <span className="text-[8px] text-purple-400 font-bold uppercase tracking-wider bg-purple-950/50 px-1 border border-purple-500/20 rounded">推荐</span>
+                                ) : null}
+                              </button>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -1195,6 +1792,12 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
               </div>
             )}
           </div>
+
+          {validationError && (
+            <div className="bg-red-950/40 border-2 border-red-500/40 p-4 rounded-2xl text-xs text-red-200 font-semibold mb-3 shadow-[0_0_15px_rgba(239,68,68,0.2)]">
+              {validationError}
+            </div>
+          )}
 
           <div className="flex items-center justify-between border-t border-white/5 pt-5 mt-8 shrink-0">
             {step > 1 ? (

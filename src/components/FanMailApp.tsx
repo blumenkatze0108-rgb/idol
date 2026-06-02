@@ -36,6 +36,7 @@ interface FanMailAppProps {
   customApiKey?: string;
   customModel?: string;
   customApiEndpoint?: string;
+  personas?: IdolPersona[];
 }
 
 // Preset library of authentic K-pop industry letters
@@ -209,7 +210,8 @@ export default function FanMailApp({
   onAddLog,
   customApiKey,
   customModel,
-  customApiEndpoint
+  customApiEndpoint,
+  personas
 }: FanMailAppProps) {
   const [activeTab, setActiveTab] = useState<"unread" | "archived">("unread");
   const [selectedLetter, setSelectedLetter] = useState<FanLetter | null>(null);
@@ -265,8 +267,16 @@ export default function FanMailApp({
     setIsAiGenerating(true);
 
     try {
-      const isGrp = persona.style === "group";
-      const grpText = isGrp ? `组合团名: "${persona.groupName}"，成员定位是: "${persona.roleInGroup}"。有队友: ${teammates.map(t=>t.name).join(", ")}。` : "Solo大势出道，没有队内拉扯。";
+      const isGrp = persona.style === "group" || (personas && personas.length > 1);
+      let grpText = "";
+      if (personas && personas.length > 1) {
+        const otherMembersStr = personas.map(p => `${p.name} (艺名: ${p.stageName}, 担当: ${p.roleInGroup})`).join(", ");
+        grpText = `由用户自选创建的核心全明星组合名为 "${persona.groupName}"，该组合不涉及任何不知名杂牌成员，阵容仅限定为这几位真实核心成员构成: [${otherMembersStr}]。当前来信直接对话的是其一主控成员: "${persona.stageName}"。`;
+      } else if (isGrp) {
+        grpText = `组合团名: "${persona.groupName}"，成员定位是: "${persona.roleInGroup}"。有队友: ${teammates.map(t=>t.name).join(", ")}。`;
+      } else {
+        grpText = "Solo大势出道，没有队内拉扯。";
+      }
       const skinText = persona.skinCondition === "perfect" || persona.skinCondition === "glowing" ? "皮肤状态极佳发亮" : "皮肤浮肿或者有些憔悴冒粉刺";
       const datingText = persona.hasLover ? `秘密地下交往对象: "${persona.loverName}" 关系状态是: "${persona.relationshipStatus}"。` : "母胎单身，零绯闻。";
 
@@ -281,6 +291,7 @@ export default function FanMailApp({
 
 请根据以上的当前真实属性：
 1. 撰写一封符合高逼真、带有浓重韩圈熟词腔调（例如：上班路、直拍、主打、切瓜、消音舞台、C位、站姐、毒唯、小卡、私生、打歌一套服、美容室、宿舍）的手写信。
+极其重要：如果来信涉及到日常团队或多名成员，必须绝对局限、提及、并尊重以上用户自创设计的真实组合成员姓名：[${personas && personas.length > 1 ? personas.map(p => p.stageName).join(", ") : (teammates.length > 0 ? teammates.map(t => t.name).join(", ") : "无")}]！绝对禁止捏造、脑补或另外发明任何此列表中未列出的其他组合队友姓名。
 2. 粉丝类型可以随机：可以是极端的战斗小唯粉、护犊子的大站姐、喜欢暗戳戳磕你和队友CP的Shipper粉、或者在异乡打拼的留学生心疼关照你的怒那粉，也可以是毒舌但默默关注你的直男吐槽粉。
 3. 如果主角有地下恋爱关系且绯闻传出（status: revealed），请写一封伤心脱粉求证的或者是永远相信你可以守护你的坚强信。
 4. 严格只返回以下标准的合法纯 JSON 代码包（不要附加 markdown 代码块前缀）：

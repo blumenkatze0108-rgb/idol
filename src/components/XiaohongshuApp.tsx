@@ -10,6 +10,7 @@ interface XiaohongshuProp {
   customApiEndpoint: string;
   onUpdateStats: (popularity: number, reputation: number, energy: number, stress: number) => void;
   onAddLog: (log: string) => void;
+  personas?: IdolPersona[];
 }
 
 interface RedPost {
@@ -30,7 +31,8 @@ export default function XiaohongshuApp({
   customModel,
   customApiEndpoint,
   onUpdateStats,
-  onAddLog
+  onAddLog,
+  personas
 }: XiaohongshuProp) {
   const [activeTab, setActiveTab] = useState<"diary" | "create">("diary");
   const [ootdStyle, setOotdStyle] = useState("清冷感白大衣+超大黑框极简黑眼镜 (Noir Minimalist)");
@@ -90,11 +92,17 @@ export default function XiaohongshuApp({
 
     try {
       // Call LLM
-      const sysPrompt = `You are a trendy Xiaohongshu (小红书) lifestyle editor for a high-profile K-Pop idol. Help write an incredibly engaging, emoji-rich, friendly lifestyle post in Chinese with topics like:
+      let sysPrompt = `You are a trendy Xiaohongshu (小红书) lifestyle editor for a high-profile K-Pop idol. Help write an incredibly engaging, emoji-rich, friendly lifestyle post in Chinese with topics like:
       OOTD Style: "${ootdStyle}"
       Makeup Detail: "${makeupChoice}"
-      Idol Stage Name: "${persona.stageName}"
-      Ensure there are many tags like #爱豆私服 #江南美容室 #MyOOTD at the end of the content. Keep it to 3 short bullet point statements.`;
+      Idol Stage Name: "${persona.stageName}"`;
+
+      if (personas && personas.length > 1) {
+        const grpMembers = personas.map(p => `${p.name} (艺名: ${p.stageName}, 担当: ${p.roleInGroup})`).join(", ");
+        sysPrompt += `\n极其重要限制：该组合目前属于高保真多角色主掌模式，自建全唯舞团名为 "${persona.groupName}"，成员明细绝对只能是这几位：[${grpMembers}]。在这篇小红书笔记里，如果提及团队或日常，绝对禁止脑补、幻想或捏造任何其他未列在此列表中的虚拟组合队友。文案应该充分融入这些真实的名字，体现队粉狂热。`;
+      }
+      
+      sysPrompt += `\nEnsure there are many tags like #爱豆私服 #江南美容室 #MyOOTD at the end of the content. Keep it to 3 short bullet point statements.`;
 
       const response = await safeFetch("/api/gemini/generate", {
         method: "POST",

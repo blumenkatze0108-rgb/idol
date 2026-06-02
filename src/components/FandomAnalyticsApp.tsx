@@ -155,6 +155,58 @@ export default function FandomAnalyticsApp({
     onUpdatePersona(p);
   };
 
+  const handleFriedChicken = () => {
+    const cost = 3;
+    const p = { ...persona };
+    if (p.money < cost && p.startType === "idol") {
+      onAddLog("资金不足！深夜炸鸡宵夜需要 ₩3万。");
+      return;
+    }
+    p.money = Math.max(0, p.money - cost);
+    p.weight = Math.min(80, p.weight + 0.5);
+    p.energy = Math.min(100, p.energy + 30);
+    p.stress = Math.max(0, p.stress - 15);
+    onAddLog("【宿舍炸鸡宵夜】宿舍熄灯后偷偷点了一份韩式香脆炸鸡外卖。幸福满满，压力全消，体重健康增加 0.5kg！");
+    onUpdatePersona(p);
+  };
+
+  const handleHanwoo = () => {
+    const cost = 15;
+    const p = { ...persona };
+    if (p.money < cost && p.startType === "idol") {
+      onAddLog("资金不足！特级炭火韩牛大餐需要 ₩15万。");
+      return;
+    }
+    p.money = Math.max(0, p.money - cost);
+    p.weight = Math.min(80, p.weight + 0.3);
+    p.energy = Math.min(100, p.energy + 55);
+    p.stress = Math.max(0, p.stress - 25);
+    
+    // Improve skin because of top tier collagen & protein
+    if (p.skinCondition === "exhausted") p.skinCondition = "troubled";
+    else if (p.skinCondition === "breakout") p.skinCondition = "troubled";
+    else if (p.skinCondition === "troubled") p.skinCondition = "glowing";
+    else if (p.skinCondition === "glowing" || p.skinCondition === "perfect") p.skinCondition = "perfect";
+
+    onAddLog("【顶级烤韩牛】一顿滋滋作响的高级炭火大韩牛！优质蛋白充足恢复，精神焕发，压力狂降，皮肤甚至透亮了起来，体重健康增长 0.3kg！");
+    onUpdatePersona(p);
+  };
+
+  const handleGainerShake = () => {
+    const cost = 6;
+    const p = { ...persona };
+    if (p.money < cost && p.startType === "idol") {
+      onAddLog("资金不足！专业高能碳水增肌奶昔需要 ₩6万。");
+      return;
+    }
+    p.money = Math.max(0, p.money - cost);
+    p.weight = Math.min(80, p.weight + 0.8);
+    p.energy = Math.min(100, p.energy + 20);
+    p.stress = Math.max(0, p.stress - 5);
+    onAddLog("【清洁高卡碳水糊】饮用专业营养师配制的饱满干净增重燕麦燕麦糊。能量稳健，干净且规律地增重 0.8kg！");
+    onUpdatePersona(p);
+  };
+
   return (
     <div id="fandom-analytics-app" className="flex flex-col h-full rounded-2xl overflow-hidden bg-[#0d111a] border border-slate-800 text-white glass-panel">
       
@@ -508,7 +560,7 @@ export default function FandomAnalyticsApp({
               <div className="grid grid-cols-3 gap-2.5 text-center mt-2.5">
                 <button
                   onClick={handleFasting}
-                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-rose-500/20 transition-all text-left flex flex-col justify-between h-[105px]"
+                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-rose-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
                 >
                   <div>
                     <span className="text-[10px] font-bold text-rose-300 block">24h无盐绝水断食</span>
@@ -519,7 +571,7 @@ export default function FandomAnalyticsApp({
 
                 <button
                   onClick={handlePilates}
-                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-indigo-500/20 transition-all text-left flex flex-col justify-between h-[105px]"
+                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-indigo-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
                 >
                   <div>
                     <span className="text-[10px] font-bold text-slate-200 block">1v1 普拉提塑形</span>
@@ -530,13 +582,54 @@ export default function FandomAnalyticsApp({
 
                 <button
                   onClick={handleFreeGym}
-                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-all text-left flex flex-col justify-between h-[105px]"
+                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-emerald-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
                 >
                   <div>
                     <span className="text-[10px] font-bold text-slate-200 block">公司重铁深蹲</span>
                     <span className="text-[9px] text-slate-400 block mt-1 leading-tight">免费。消耗20体力，瘦身0.1kg，增加体力。</span>
                   </div>
                   <span className="text-[9px] text-emerald-400 font-bold block bg-emerald-950/20 py-0.5 rounded text-center">撸铁深蹲</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Nutritious Diet & Weight Gain */}
+            <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/5 space-y-2">
+              <span className="text-xs font-bold text-amber-400">🍲 爱豆高能营养膳食与健康增重补给</span>
+              <p className="text-[10px] text-slate-400">提供高热量加餐。可在因过度节食或锻炼而体重偏轻、虚弱时进行健康增重增肌与压力释放。</p>
+
+              <div className="grid grid-cols-3 gap-2.5 text-center mt-2.5">
+                <button
+                  onClick={handleFriedChicken}
+                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-amber-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold text-amber-300 block">宿舍深夜炸鸡宵夜</span>
+                    <span className="text-[9px] text-slate-400 block mt-1 leading-tight">费用 ₩3万。体重 +0.5kg，体力恢复 +30，压力舒缓 -15。</span>
+                  </div>
+                  <span className="text-[9px] text-amber-500 font-bold block bg-amber-950/20 py-0.5 rounded text-center">点外卖 (₩3w)</span>
+                </button>
+
+                <button
+                  onClick={handleHanwoo}
+                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-pink-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold text-pink-300 block">炭火顶级韩牛大餐</span>
+                    <span className="text-[9px] text-slate-400 block mt-1 leading-tight">费用 ₩15万。体重 +0.3kg，体力 +55，压力 -25，明显改善肤质。</span>
+                  </div>
+                  <span className="text-[9px] text-pink-400 font-bold block bg-pink-950/20 py-0.5 rounded text-center">犒劳全牛 (₩15w)</span>
+                </button>
+
+                <button
+                  onClick={handleGainerShake}
+                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-teal-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
+                >
+                  <div>
+                    <span className="text-[10px] font-bold text-teal-300 block">高卡碳水燕麦奶昔</span>
+                    <span className="text-[9px] text-slate-400 block mt-1 leading-tight">费用 ₩6万。体重 +0.8kg，体力 +20，科学干净地增重。</span>
+                  </div>
+                  <span className="text-[9px] text-teal-400 font-bold block bg-teal-950/20 py-0.5 rounded text-center">科学加餐 (₩6w)</span>
                 </button>
               </div>
             </div>

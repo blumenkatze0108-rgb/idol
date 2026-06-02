@@ -66,6 +66,7 @@ export interface IdolPersona {
   loverAge?: "same_age" | "older" | "younger";
   loverIdentity?: "non_celeb" | "celebrity";
   loverMood?: number; // 0-100: Relationship stability/mood.
+  romancePosition?: "left" | "right"; // "left" (左位/攻) or "right" (右位/受)
   
   
   // Fans Distribution (Slowly changing, OT vs Solo vs CP vs Anti)

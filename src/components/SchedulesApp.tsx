@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { IdolSchedule, IdolPersona, WeversePost, getCalendarPeriod } from "../types";
 import { SH_LIST } from "../mockData";
-import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame } from "lucide-react";
+import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame, AlertCircle } from "lucide-react";
 import { safeFetch, getSeoulWeather } from "./apiHelper";
 
 export function getFixedSkillSchedules(dayN: number): IdolSchedule[] {
@@ -52,6 +52,7 @@ export function getFixedSkillSchedules(dayN: number): IdolSchedule[] {
 
 interface SchedulesProps {
   persona: IdolPersona;
+  personas?: IdolPersona[];
   schedules: IdolSchedule[];
   weversePosts: WeversePost[];
   customApiKey: string;
@@ -73,6 +74,7 @@ interface SchedulesProps {
 
 export default function SchedulesApp({
   persona,
+  personas = [],
   schedules,
   weversePosts,
   customApiKey,
@@ -93,6 +95,20 @@ export default function SchedulesApp({
     newSchedules: IdolSchedule[];
     pUpdate: IdolPersona;
     proactiveMessage?: { senderId: string; senderName: string; text: string; time?: string } | null;
+  } | null>(null);
+
+  const [emergencyHarassment, setEmergencyHarassment] = useState<{
+    type: "big_fan" | "sasaeng";
+    sender: string;
+    message: string;
+    options: {
+      text: string;
+      moneyCost?: number;
+      debtIncrease?: number;
+      stressChange: number;
+      fansChange: number;
+      story: string;
+    }[];
   } | null>(null);
 
   // Perform a specific schedule item (Requirement 12)
@@ -456,11 +472,171 @@ export default function SchedulesApp({
       updatedWeverse = [newPost, ...updatedWeverse];
     }
 
+    // Intercept with sasaeng stalker or big fan harassment pop-up if fanbase is large (Requirement 6)
+    if (pUpdate.fansCount > 15000 && Math.random() < 0.6 && !emergencyHarassment) {
+      const scens = [
+        {
+          type: "sasaeng" as const,
+          sender: "🤐 匿名跟踪特务 '1314'",
+          message: `“姐姐，你刚才在练习室跳舞穿的灰色卫衣很配你哦...你新宿舍的安全门锁密码是 2038# 对不对？我昨晚深夜悄悄试了一下，门铃响了滴滴一声竟然开了耶... 放心，我只在床底板后面贴了一支小小的微型无线录音笔，绝对没有乱动你的别的贴身衣物噢~”`,
+          options: [
+            {
+              text: "👿【自费 ₩500w 连夜换锁扫频及强化安保】",
+              moneyCost: 500,
+              stressChange: -15,
+              fansChange: 0,
+              story: "你连夜花费账下五百万高薪雇人扫频，清扫出两枚微型窃听器并且更换了高难密码锁，重获安全感。"
+            },
+            {
+              text: "📜【通过官咖发布法务警告阻隔声明】",
+              stressChange: 15,
+              fansChange: -2000,
+              story: "你发布措施严厉的警告公告。私生饭气急败坏之下公开了你上周熬夜吃快餐的外卖私单，黑粉疯狂嘲讽你身材管理差，有些散粉脱粉。"
+            },
+            {
+              text: "🤐【强忍发抖拉黑账号，不作任何理会】",
+              stressChange: 35,
+              fansChange: -4500,
+              story: "你强装镇定置之不理。但一连数天你晚上睡觉都能隐约听到窗外闪光灯的咔嚓快门声，心力彻底严重透支崩盘。"
+            }
+          ]
+        },
+        {
+          type: "big_fan" as const,
+          sender: "🍒 联合集资核心站姐 'Min-姜恩熙'",
+          message: `“SUA，我们全网首战联合组这轮给你集资了500w韩元买了大屏神级宣传，可昨晚你的 W-Live 生日联合直播中，在念礼物名单时居然漏过了我们站子的自作曲的名字，还对旁边别家练习生眨眼！我们给一个不敬畏毒唯神坛的人砸大钱做数据是傻子吗？请在两个小时内上Weverse服软解释，否则今晚首站永久关站黑屏，并公开未经任何修图的面部浮肿原图！”`,
+          options: [
+            {
+              text: "🥺【立刻向该大粉道歉服软，并发去精挑细选的感谢自拍】",
+              stressChange: 12,
+              fansChange: 2000,
+              story: "你无奈之下私下回复诚恳安抚。大粉十分受用，表示‘美颜看哭了，站子继续集资控评为你撑腰！’"
+            },
+            {
+              text: "💼【转交经纪事务室作专业冷处理、拉黑法务威慑】",
+              debtIncrease: 300,
+              stressChange: -5,
+              fansChange: -1500,
+              story: "公司下场将该站姐拉黑退款，大粉愤怒关站退圈。但也导致了一批唯粉指控公司冷血，你账下记入公摊应付公关债 300w。"
+            },
+            {
+              text: "😡【毫不容忍，连夜发表长文Weverse痛斥过界行为】",
+              stressChange: -20,
+              fansChange: -8500,
+              story: "你写下‘粉丝和爱豆要保持理智界限’。大粉出离愤怒，公开发布了积攒了半年的下车崩眼丑照，韩网彻底吵上天，粉丝流失惨烈。"
+            }
+          ]
+        },
+        {
+          type: "sasaeng" as const,
+          sender: "📸 高倍长焦跟踪狂 'K-金勋'",
+          message: `“宝贝，刚刚看着保姆车载着你进地下室，你下车上扶梯时左脚踩高跟滑了一下，我看得心疼死了。今晚你要在十二点睡觉吧？靠南的窗子记得合实别拉帘，我租了对面酒店的高位天文望远长焦镜正对着你的枕头呢，我想知道你平时抱着什么入睡... 或者你等下在社交平台上发个向右上角看的心形小气泡对个暗号好吗？”`,
+          options: [
+            {
+              text: "📦【代表介入公关：由公司秘密全额 ₩1200w 买断其底片胶卷】",
+              debtIncrease: 1200,
+              stressChange: -20,
+              fansChange: 1500,
+              story: "李社长雇中介将对方强力约谈，并付钱买断了所有数位底图。你躲过一劫，但这 ₩1200w 被记在你的未结欠账里。"
+            },
+            {
+              text: "🚨【联手公司安保下套捕捉，连夜报警纠治送办】",
+              debtIncrease: 400,
+              stressChange: 10,
+              fansChange: -3000,
+              story: "经过缜密报案警方拘留了该名狂热骚扰偷窥犯。私域清白和安全感挽回。但由于惊动警署上了推特热门，组合风评承压有些老粉叹息退游。"
+            },
+            {
+              text: "🏡【心乱如麻，自费换租高门禁公馆宿舍】",
+              moneyCost: 450,
+              stressChange: 22,
+              fansChange: 0,
+              story: "你自掏腰包四百五十万转到严密宿舍，身心高度透支！每当拉窗子时还是禁不住心理毛骨悚然，心悸连连。"
+            }
+          ]
+        }
+      ];
+      const selectedScen = scens[Math.floor(Math.random() * scens.length)];
+      setEmergencyHarassment({
+        type: selectedScen.type,
+        sender: selectedScen.sender,
+        message: selectedScen.message,
+        options: selectedScen.options
+      });
+      return;
+    }
+
     onNextDayTransition(pUpdate, newSchedules, updatedWeverse, managerMessage, proactiveMessage);
     
     setTransitionResult(null);
     setIsProcessing(false);
-    onAddLog(`【次日清点结算绿灯】开启您全新生涯的第 ${pUpdate.dayNumber} 天。一早醒来，您昨天一整天的辛酸经营重新赢得了粉丝和制作团队的新点评！`);
+    onAddLog(`【次日清点结算绿灯】开启您全新生涯的第 ${pUpdate.dayNumber} 天。一早醒发，您昨天一整天的辛酸经营重新赢得了粉丝和制作团队的新点评！`);
+  };
+
+  const handleResolveHarassment = (option: {
+    text: string;
+    moneyCost?: number;
+    debtIncrease?: number;
+    stressChange: number;
+    fansChange: number;
+    story: string;
+  }) => {
+    if (!transitionResult) return;
+    const { pUpdate, newSchedules, weversePostContent, managerMessage, proactiveMessage } = transitionResult;
+
+    const finalUpdate = { ...pUpdate };
+    if (option.moneyCost) {
+      finalUpdate.money = Math.max(0, finalUpdate.money - option.moneyCost);
+    }
+    if (option.debtIncrease) {
+      finalUpdate.traineeDebt = (finalUpdate.traineeDebt || 0) + option.debtIncrease;
+    }
+    if (option.stressChange) {
+      finalUpdate.stress = Math.max(0, Math.min(100, finalUpdate.stress + option.stressChange));
+    }
+    if (option.fansChange) {
+      finalUpdate.fansCount = Math.max(0, finalUpdate.fansCount + option.fansChange);
+    }
+
+    let updatedWeverse = [...weversePosts];
+    if (weversePostContent) {
+      const newPost: WeversePost = {
+        id: `wev_post_gen_${Date.now()}`,
+        content: `【粉丝全网热烈声讨讨论组】\n${weversePostContent}`,
+        image: "",
+        likes: Math.floor(Math.random() * 2000) + 1000,
+        commentsCount: 2,
+        time: "刚刚",
+        comments: [
+          {
+            id: `wev_com_1_${Date.now()}`,
+            author: "NetizenKpop_88",
+            authorAvatar: "",
+            content: "对对对，昨天的舞台简直是不容错过的经典！爱豆本命觉醒！",
+            likes: 620,
+            time: "刚刚",
+            fanType: "OT_fan"
+          },
+          {
+            id: `wev_com_2_${Date.now()}`,
+            author: "HaterBlockerX",
+            authorAvatar: "",
+            content: "行了吧，天天炒作，还是赶快去练习室，音高准度能行吗？",
+            likes: 41,
+            time: "刚刚",
+            fanType: "anti"
+          }
+        ]
+      };
+      updatedWeverse = [newPost, ...updatedWeverse];
+    }
+
+    onNextDayTransition(finalUpdate, newSchedules, updatedWeverse, managerMessage, proactiveMessage);
+    setEmergencyHarassment(null);
+    setTransitionResult(null);
+    setIsProcessing(false);
+    onAddLog(`【危机公关抉择】${option.story}`);
+    onAddLog(`【次日清点结算绿灯】开启您全新生涯的第 ${finalUpdate.dayNumber} 天。`);
   };
 
   return (
@@ -577,10 +753,80 @@ export default function SchedulesApp({
             </div>
 
             {/* Physiological & Fan feedback narrative */}
-            <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/20 text-xs leading-relaxed animate-in fade-in duration-350">
               <h5 className="font-bold text-purple-300 mb-1.5 flex items-center gap-1">📊 夜间健康与韩网社交热议汇报</h5>
               <p className="text-slate-200">{transitionResult.narrative}</p>
             </div>
+
+            {/* Multi-member Team Business Sheet (Requirement: display stats for all members in we-opened mode) */}
+            {personas && personas.length > 1 && (
+              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-indigo-500/20 text-xs space-y-3 animate-in slide-in-from-bottom duration-300">
+                <h5 className="font-bold text-indigo-300 flex items-center gap-1.5 leading-none">
+                  👥 【{personas[0].groupName || "ECLIPSE"}】 联袂多开组合 - 全员次日清晨复盘综合账单
+                </h5>
+                
+                {/* Total Team Overview */}
+                <div className="grid grid-cols-3 gap-2 bg-indigo-950/15 p-2 rounded-lg border border-indigo-500/10 text-center">
+                  <div>
+                    <span className="text-[8px] text-slate-500 block mb-0.5">组合总死忠粉丝量</span>
+                    <span className="text-xs font-black text-indigo-200">
+                      {(personas.reduce((sum, p) => sum + (p.fansCount || 0), 0) + (persona === personas[0] ? 0 : 0)).toLocaleString()} 币
+                    </span>
+                  </div>
+                  <div className="border-x border-white/5">
+                    <span className="text-[8px] text-slate-500 block mb-0.5">团队公摊总负债余额</span>
+                    <span className="text-xs font-black text-rose-400">
+                      ₩{personas.reduce((sum, p) => sum + (p.traineeDebt || 0), 0).toLocaleString()}万
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[8px] text-slate-500 block mb-0.5">组合公摊盈余款</span>
+                    <span className="text-xs font-black text-yellow-400">
+                      ₩{personas.reduce((sum, p) => sum + (p.money || 0), 0).toLocaleString()}万
+                    </span>
+                  </div>
+                </div>
+
+                {/* Individual list cards */}
+                <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
+                  {personas.map((p, idx) => {
+                    const isCurrent = p.stageName === persona.stageName;
+                    // Overnight values corresponding to what happens during Day recovery transition
+                    return (
+                      <div key={idx} className={`p-2 rounded-lg border text-[11px] ${isCurrent ? 'bg-indigo-950/20 border-indigo-500/35' : 'bg-slate-900 border-white/5'}`}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-bold text-slate-200">
+                            👤 {p.name} ({p.stageName})
+                            {isCurrent && (
+                              <span className="ml-1.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[7px] px-1 rounded font-black font-sans">操控主角</span>
+                            )}
+                          </span>
+                          <span className="text-[9px] font-mono font-bold text-indigo-400">{p.roleInGroup || "元气团员"}</span>
+                        </div>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 text-[9px] leading-tight pt-1 border-t border-white/5">
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">能量恢复:</span>
+                            <span className="text-emerald-400 font-bold font-mono">+{isCurrent ? 50 : 50}⚡️</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">精神压力:</span>
+                            <span className="text-emerald-400 font-bold font-mono">-15📉</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">信件存箱:</span>
+                            <span className="text-blue-400 font-bold">1/旬</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">未结债务:</span>
+                            <span className="text-rose-400 font-black font-mono">₩{p.traineeDebt ?? 0}万</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* KakaoTalk received alert */}
             <div className="p-3.5 rounded-xl bg-slate-900 border border-[#edd8c4]/10 text-xs">
@@ -618,6 +864,64 @@ export default function SchedulesApp({
             </button>
           </div>
 
+        </div>
+      )}
+
+      {/* Emergency Fan Harassment / Stalker Alarm Modal (Requirement 6) */}
+      {emergencyHarassment && (
+        <div id="emergency-harassment-modal" className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[310] p-4 select-none">
+          <div className="bg-[#100c14] border-2 border-red-500/50 rounded-3xl max-w-lg w-full p-6 shadow-[0_0_60px_rgba(239,68,68,0.4)] relative overflow-y-auto max-h-[88vh] animate-in zoom-in-95 duration-200">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex items-center gap-3 border-b border-red-500/25 pb-4 mb-5">
+              <div className="bg-red-500/20 text-red-400 p-2.5 rounded-2xl animate-pulse">
+                <AlertCircle className="w-6 h-6 animate-bounce" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase font-mono tracking-widest text-red-500">
+                  ⚠️ WARNING: EMERGENCY SOCIAL DANGER
+                </span>
+                <h3 className="text-sm font-black text-slate-100">
+                  {emergencyHarassment.type === "sasaeng" ? "🚨 极度隐私侵犯：私生偏轨偷窥突袭" : "💬 唯粉圈崩紧：氪金大粉头公开决裂警告"}
+                </h3>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/80 border border-red-500/20 rounded-2xl p-4 mb-5">
+              <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-white/5">
+                <span className="text-[10px] bg-red-950/50 border border-red-500/25 text-red-400 px-2.5 py-0.5 rounded-full font-bold">
+                  {emergencyHarassment.type === "sasaeng" ? "【违规私生跟踪犯】" : "【百万元氪金毒粉站姐】"}
+                </span>
+                <span className="text-[10px] font-mono text-slate-400">发信通道: {emergencyHarassment.sender}</span>
+              </div>
+              <p className="text-xs text-red-200 leading-relaxed font-sans italic p-3 bg-black/50 rounded-xl border border-white/5">
+                {emergencyHarassment.message}
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <span className="block text-[10px] font-bold text-slate-400 uppercase font-mono tracking-wider">
+                💡 请主宰今晨的公关对策选择：
+              </span>
+              
+              {emergencyHarassment.options.map((opt, oIdx) => (
+                <button
+                  key={oIdx}
+                  onClick={() => handleResolveHarassment(opt)}
+                  className="w-full p-3.5 rounded-2xl border border-white/5 bg-slate-950/60 text-left text-xs text-slate-200 hover:bg-red-950/20 hover:border-red-500/35 transition-all cursor-pointer active:scale-98"
+                >
+                  <p className="font-bold text-slate-100 mb-1">{opt.text}</p>
+                  <p className="text-[10px] text-slate-400 leading-snug">
+                    {opt.moneyCost && `📉 扣减个人现金 ₩${opt.moneyCost}万。`}
+                    {opt.debtIncrease && `📈 连带追加公摊债务 ₩${opt.debtIncrease}万。`}
+                    {opt.stressChange !== 0 && `⚡ 压力变动 ${opt.stressChange > 0 ? '+' : ''}${opt.stressChange}%。`}
+                    {opt.fansChange !== 0 && `👥 核心死忠唯粉 ${opt.fansChange > 0 ? '+' : ''}${opt.fansChange}人。`}
+                  </p>
+                </button>
+              ))}
+            </div>
+            
+          </div>
         </div>
       )}
 
