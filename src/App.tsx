@@ -315,6 +315,20 @@ export default function App() {
   // App navigation state
   const [activeApp, setActiveApp] = useState<string>("schedule"); // "kakaotalk" | "weverse" | "bubble" | "analytics" | "schedule" | "settings"
   const [ipadWallpaper, setIpadWallpaper] = useState<string>("cosmic"); // "neon" | "peach" | "cosmic" | "aurora"
+  const [isInteractionBlocking, setIsInteractionBlocking] = useState<boolean>(false);
+
+  const handleSwitchApp = (appId: string) => {
+    if (isInteractionBlocking) {
+      triggerToast(
+        "⚠️ 企划决断未锁定",
+        "请先处理完当前的日程复盘结算或紧急粉丝危机事件，并关闭对应的弹窗，然后再切换其他应用！",
+        "warning"
+      );
+      return;
+    }
+    setActiveApp(appId);
+    setIsControlCenterOpen(false);
+  };
   
   // Custom Toast State
   interface ToastItem {
@@ -455,6 +469,7 @@ export default function App() {
 
   const [seoulTime, setSeoulTime] = useState<string>("12:00PM");
   const [isControlCenterOpen, setIsControlCenterOpen] = useState<boolean>(false);
+  const [isQuickSideMetersOpen, setIsQuickSideMetersOpen] = useState<boolean>(false);
 
   // New Save-Game Management Confirmation popup (Requirement 4)
   const [confirmAction, setConfirmAction] = useState<"new_game" | "delete_save" | null>(null);
@@ -793,9 +808,14 @@ ${contact.summary || "无"}`;
         mateMsg = msgs[Math.floor(Math.random() * msgs.length)];
       }
 
+      let displayRole = mate.role ? mate.role.split(" ")[0] : "";
+      if (displayRole && !displayRole.startsWith("队内")) {
+        displayRole = `队内${displayRole}`;
+      }
+
       contactList.push({
         id: mate.id,
-        name: `${mate.name} (队内${mate.role.split(" ")[0]})`,
+        name: `${mate.name} (${displayRole})`,
         avatar: mate.avatar,
         role: "member",
         mbti: mate.mbti,
@@ -1683,10 +1703,10 @@ ${contact.summary || "无"}`;
       {!hasStarted ? (
         <IdolProfileSetup onComplete={handleSetupComplete} />
       ) : (
-        <div id="ipad-shell-wrapper" className="w-full max-w-7xl relative mx-auto p-2 md:p-4 rounded-[40px] bg-[#1c1d25] border-t border-white/20 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_2px_rgba(255,255,255,0.06)] flex flex-col overflow-hidden">
+        <div id="ipad-shell-wrapper" className="w-full max-w-7xl h-auto min-h-[100dvh] landscape:h-screen landscape:min-h-0 md:h-[840px] md:max-h-[90vh] relative mx-auto p-0 md:p-4 rounded-none md:rounded-[40px] bg-slate-950 md:bg-[#1c1d25] border-none md:border-t md:border-white/20 shadow-none md:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_2px_rgba(255,255,255,0.06)] flex flex-col overflow-y-auto landscape:overflow-hidden md:overflow-hidden">
           
           {/* Main iPad Inner Screen Aspect ratio */}
-          <div className={`flex-1 w-full rounded-[28px] overflow-hidden flex flex-col relative border border-slate-950 transition-all duration-500 ${
+          <div className={`flex-1 w-full rounded-none md:rounded-[28px] overflow-visible landscape:overflow-hidden md:overflow-hidden flex flex-col relative border border-slate-950 transition-all duration-500 ${
             ipadWallpaper === "neon" ? "bg-gradient-to-b from-[#110c1c] to-[#090a10]" :
             ipadWallpaper === "peach" ? "bg-gradient-to-b from-[#1e1318] to-[#120f12]" :
             ipadWallpaper === "cosmic" ? "bg-gradient-to-b from-[#0e0e1c] to-[#060810]" :
@@ -1696,17 +1716,17 @@ ${contact.summary || "无"}`;
           }`}>
             
             {/* iPad Pro Header Status Bar */}
-            <div id="ipad-header-status" className="h-9 px-4 md:px-6 bg-slate-950/50 backdrop-blur-md flex items-center justify-between text-xs text-slate-300 font-medium select-none border-b border-white/5 relative z-40">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold">{seoulTime}</span>
-                <span className="text-[10px] text-slate-400 font-mono">Seoul KST</span>
+            <div id="ipad-header-status" className="h-9 px-2 sm:px-4 md:px-6 bg-slate-950/50 backdrop-blur-md flex items-center justify-between text-[11px] sm:text-xs text-slate-300 font-medium select-none border-b border-white/5 relative z-40">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="font-semibold text-[11px] sm:text-xs">{seoulTime}</span>
+                <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono hidden sm:inline">Seoul KST</span>
                 {/* Visual Watermark / Original Author Attribution Badge */}
-                <div className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/25 rounded text-[8px] font-bold text-rose-300 font-sans tracking-wide select-none" title="Original Creator: BlumenKatze & Free Playable">
+                <div className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 bg-rose-500/10 border border-rose-500/25 rounded text-[8px] font-bold text-rose-300 font-sans tracking-wide select-none" title="Original Creator: BlumenKatze & Free Playable">
                   <span>© 原创正版: BlumenKatze</span>
                 </div>
                 {/* Weather in Seoul Indicator */}
                 <div 
-                  className="inline-flex items-center gap-1 bg-purple-500/10 border border-purple-500/25 px-2 py-0.5 rounded-full text-[10px] text-purple-305 hover:bg-purple-500/20 active:scale-95 transition-all cursor-pointer"
+                  className="inline-flex items-center gap-1 bg-purple-500/10 border border-purple-500/25 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] text-purple-300 hover:bg-purple-500/20 active:scale-95 transition-all cursor-pointer"
                   title={getSeoulWeather(persona.dayNumber).impactText}
                   onClick={() => {
                     triggerToast(
@@ -1717,38 +1737,47 @@ ${contact.summary || "无"}`;
                   }}
                 >
                   <span className="animate-pulse">{getSeoulWeather(persona.dayNumber).icon}</span>
-                  <span className="font-bold text-indigo-200">{getSeoulWeather(persona.dayNumber).name}</span>
+                  <span className="font-bold text-indigo-200 hidden sm:inline">{getSeoulWeather(persona.dayNumber).name}</span>
                 </div>
                 {persona.startType === "trainee" ? (
-                  <span className="bg-red-500/15 text-red-400 border border-red-500/25 text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase animate-pulse">
-                    TRAIN DEBT: ${persona.traineeDebt}w
+                  <span className="bg-red-500/15 text-red-400 border border-red-500/25 text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded font-mono uppercase animate-pulse">
+                    <span className="hidden xs:inline">DEBT: </span>${persona.traineeDebt}w
                   </span>
                 ) : (
-                  <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase">
-                    ACTIVE IDOL
+                  <span className="bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded font-mono uppercase">
+                    IDOL
                   </span>
                 )}
               </div>
 
               {/* Dynamic Camera Notch Center */}
-              <div className="absolute left-1/2 -translate-x-1/2 top-1.5 w-24 h-4 bg-black rounded-full border border-white/5 flex items-center justify-center pointer-events-none">
+              <div className="absolute left-1/2 -translate-x-1/2 top-1.5 w-24 h-4 bg-black rounded-full border border-white/5 items-center justify-center pointer-events-none hidden md:flex">
                 <div className="w-1.5 h-1.5 rounded-full bg-slate-950 border border-purple-500/50 mr-1" />
                 <div className="w-1 h-1 rounded-full bg-slate-900" />
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-[9px] text-slate-400 hidden sm:inline-flex items-center gap-1 font-mono">
+              <div className="flex items-center gap-1.5 sm:gap-3">
+                <span className="text-[9px] text-slate-400 hidden lg:inline-flex items-center gap-1 font-mono">
                   <Signal className="w-3 h-3 text-indigo-400" />
                   {persona.company.split(" ")[0]}
                 </span>
-                <Wifi className="w-3.5 h-3.5" />
-                <div className="flex items-center gap-1 bg-white/5 px-2 py-0.5 rounded">
+                <Wifi className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-300" />
+                <div className="flex items-center gap-1 bg-white/5 px-1.5 sm:px-2 py-0.5 rounded">
                   <Battery className="w-3.5 h-3.5 text-purple-400" />
-                  <span className="font-mono text-[10px]">{persona.energy}%</span>
+                  <span className="font-mono text-[9px] sm:text-[10px]">{persona.energy}%</span>
                 </div>
 
-                {/* Quick Interactive Wallpaper Palette Dock */}
-                <div className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-2 py-0.5 rounded-lg border border-white/5 transition-all text-[10px]">
+                {/* Mobile stats drawer trigger */}
+                <button
+                  type="button"
+                  onClick={() => setIsQuickSideMetersOpen(!isQuickSideMetersOpen)}
+                  className="flex md:hidden items-center justify-center px-1.5 py-0.5 bg-purple-500/25 border border-purple-500/40 rounded text-[9px] text-purple-200 font-bold active:scale-90 hover:bg-purple-500/35 cursor-pointer transition-all shrink-0 animate-pulse"
+                >
+                  📊 属性
+                </button>
+
+                {/* Quick Interactive Wallpaper Palette Dock - Hidden on Mobile */}
+                <div className="hidden sm:flex items-center gap-1 bg-white/10 hover:bg-white/15 px-1.5 sm:px-2 py-0.5 rounded-lg border border-white/5 transition-all text-[10px]">
                   <button 
                     onClick={() => {
                       const walls = ["neon", "peach", "cosmic", "aurora", "cherry", "starlight"];
@@ -1820,6 +1849,14 @@ ${contact.summary || "无"}`;
                         key={idx}
                         type="button"
                         onClick={() => {
+                          if (isInteractionBlocking) {
+                            triggerToast(
+                              `⚠️ 企划决断未锁定`,
+                              `请先处理完当前成员 [${p.name}] 的次日晚间复盘报告或粉丝狂热危机事件，才能切换专线！`,
+                              "warning"
+                            );
+                            return;
+                          }
                           setActivePersonaIdx(idx);
                           triggerToast(
                             `🎮 组合双开环境切线`, 
@@ -1886,6 +1923,12 @@ ${contact.summary || "无"}`;
 
                   <div className="space-y-1.5 pt-1 border-t border-white/5">
                     <button
+                      onClick={() => { setShowUpdateModal(true); setIsControlCenterOpen(false); }}
+                      className="w-full py-1.5 px-2 bg-gradient-to-r from-purple-700/80 to-indigo-700/80 hover:from-purple-600 hover:to-indigo-600 text-purple-100 hover:text-white border border-purple-500/30 rounded-xl text-center transition-all cursor-pointer font-extrabold flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 animate-pulse" /> 🍲 查看企划社全量更新日志
+                    </button>
+                    <button
                       onClick={() => { setConfirmAction("new_game"); setIsControlCenterOpen(false); }}
                       className={`w-full py-1.5 px-2 ${activeTheme.accentBtn} rounded text-center transition-all cursor-pointer font-bold flex items-center justify-center gap-1.5`}
                     >
@@ -1893,7 +1936,7 @@ ${contact.summary || "无"}`;
                     </button>
                     <div className="flex gap-1.5">
                       <button
-                        onClick={() => { setActiveApp("settings"); setIsControlCenterOpen(false); }}
+                        onClick={() => { handleSwitchApp("settings"); }}
                         className="flex-1 py-1 px-1.5 bg-slate-800 hover:bg-slate-750 text-slate-300 rounded text-center text-[10px] transition-all cursor-pointer"
                       >
                         📊 数据备份 (Cloud)
@@ -1912,10 +1955,27 @@ ${contact.summary || "无"}`;
             )}
 
             {/* DUAL MAIN INTERACTIVE AREAS */}
-            <div id="ipad-main-screen" className="flex-1 flex flex-col md:flex-row overflow-hidden relative">
+            <div id="ipad-main-screen" className="flex-1 flex flex-col landscape:flex-row md:flex-row overflow-visible landscape:overflow-hidden md:overflow-hidden relative min-h-0">
               
               {/* STATUS BAR DRAWER METERS (Requirement 11, 12, 13) */}
-              <div id="quick-side-meters" className={`w-full md:w-[220px] ${activeTheme.sideBg} border-b md:border-b-0 md:border-r border-white/5 p-4 flex flex-col justify-between shrink-0 select-none overflow-y-auto transition-all duration-500`}>
+              <div 
+                id="quick-side-meters" 
+                className={`w-full landscape:w-[200px] md:w-[220px] ${activeTheme.sideBg} border-b landscape:border-b-0 md:border-b-0 landscape:border-r md:border-r border-white/5 p-4 flex-col justify-between shrink-0 select-none overflow-y-auto transition-all duration-500 ${
+                  isQuickSideMetersOpen 
+                    ? "absolute landscape:relative md:relative inset-x-0 top-0 h-[450px] landscape:h-auto md:h-auto z-40 bg-slate-950/98 landscape:bg-transparent shadow-2xl landscape:shadow-none flex" 
+                    : "hidden landscape:flex md:flex"
+                }`}
+              >
+                {/* Mobile Close Button for Quick Side Meters */}
+                <div className="md:hidden flex justify-between items-center border-b border-white/10 pb-2 mb-2">
+                  <span className="text-xs font-bold text-slate-350">📊 属性与状态参数</span>
+                  <button 
+                    onClick={() => setIsQuickSideMetersOpen(false)}
+                    className="px-2.5 py-1 bg-white/10 hover:bg-white/15 rounded-lg text-[10px] text-slate-300 font-bold active:scale-95 cursor-pointer"
+                  >
+                    收起 ✕
+                  </button>
+                </div>
                 <div className="space-y-4 flex-1">
                   
                   {/* Persona Bio Badge */}
@@ -2054,7 +2114,7 @@ ${contact.summary || "无"}`;
               <div className={`flex-1 flex flex-col justify-between min-w-0 ${activeTheme.activeAppContainerBg} relative transition-all duration-500`}>
                 
                 {/* Dynamic App content display canvases */}
-                <div className="flex-1 p-4 md:p-6 overflow-hidden">
+                <div className="flex-1 p-3 md:p-6 flex flex-col min-h-0 overflow-visible landscape:overflow-hidden md:overflow-hidden">
                   
                   {activeApp === "schedule" && (
                     <SchedulesApp
@@ -2412,6 +2472,7 @@ ${contact.summary || "无"}`;
                       }}
                       onTriggerRandomEvent={handleTriggerRandomEvent}
                       onAddLog={handleAddSystemLog}
+                      onBlockingChange={setIsInteractionBlocking}
                     />
                   )}
 
@@ -2676,7 +2737,7 @@ ${contact.summary || "无"}`;
                                   const updated = { ...persona };
                                   triggerAutoSave(updated);
                                 }}
-                                className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-xs font-bold text-yellow-300 focus:outline-none focus:border-purple-500 font-mono text-white"
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg p-2 text-xs font-bold text-yellow-300 focus:outline-none focus:border-purple-500 font-mono"
                               >
                                 {supportedModels.map((m) => (
                                   <option key={m.id} value={m.id} className="bg-slate-950 text-white font-mono">
@@ -2841,95 +2902,95 @@ ${contact.summary || "无"}`;
             </div>
 
             {/* DOCK BAR FOR IPAD APP SHORTCUTS (Aesthetic shortcuts to different Apps) */}
-            <div id="ipad-bottom-dock" className="h-16 px-2 md:px-12 bg-slate-950/50 border-t border-white/5 backdrop-blur-md flex items-center justify-center shrink-0 relative select-none z-30 w-full overflow-x-auto no-scrollbar">
+            <div id="ipad-bottom-dock" className="h-[46px] xs:h-[50px] sm:h-14 md:h-16 px-1 xs:px-2 md:px-12 bg-slate-950/50 border-t border-white/5 backdrop-blur-md flex items-center justify-center shrink-0 relative select-none z-30 w-full overflow-x-auto no-scrollbar">
               
-              <div className="px-2 sm:px-4 py-1.5 bg-white/5 rounded-2xl flex items-center gap-1 sm:gap-3 md:gap-5 shadow-lg border border-white/5 shrink-0 max-w-none">
+              <div className="px-1 xs:px-2 sm:px-4 py-0.5 xs:py-1 sm:py-1.5 bg-white/5 rounded-xl sm:rounded-2xl flex items-center gap-1 xs:gap-1.5 sm:gap-3 md:gap-5 shadow-lg border border-white/5 shrink-0 max-w-none">
                 {/* 1. Schedule Calendar */}
                 <button
-                  onClick={() => { setActiveApp("schedule"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "schedule" ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("schedule"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "schedule" ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-105" : "text-slate-400 hover:text-white"}`}
                   title="日常行列表"
                 >
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#f44e73] animate-ping" />
+                  <Calendar className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
+                  <span className="absolute -top-0.5 -right-0.5 w-1 h-1 sm:w-2 sm:h-2 rounded-full bg-[#f44e73] animate-ping" />
                 </button>
 
                 {/* 2. KakaoTalk */}
                 <button
-                  onClick={() => { setActiveApp("kakaotalk"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "kakaotalk" ? "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/10 scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("kakaotalk"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "kakaotalk" ? "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/10 scale-105" : "text-slate-400 hover:text-white"}`}
                   title="KakaoTalk 成员群聊"
                 >
-                  <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <MessageSquare className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 3. Weverse */}
                 <button
-                  onClick={() => { setActiveApp("weverse"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "weverse" ? "bg-teal-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("weverse"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "weverse" ? "bg-teal-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="Weverse 官咖讨论"
                 >
-                  <Heart className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Heart className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 4. Bubble */}
                 <button
-                  onClick={() => { setActiveApp("bubble"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "bubble" ? "bg-blue-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("bubble"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "bubble" ? "bg-blue-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="Bubble 粉丝订阅"
                 >
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Sparkles className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5. Health & Fandom metrics */}
                 <button
-                  onClick={() => { setActiveApp("analytics"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "analytics" ? "bg-indigo-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("analytics"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "analytics" ? "bg-indigo-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="数据与大健康分析"
                 >
-                  <Activity className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Activity className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5b. TikTok Short video Challenge */}
                 <button
-                  onClick={() => { setActiveApp("tiktok"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "tiktok" ? "bg-red-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("tiktok"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "tiktok" ? "bg-red-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="TikTok卡点短视频"
                 >
-                  <Film className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Film className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5c. XiaoHongShu Outfit */}
                 <button
-                  onClick={() => { setActiveApp("xiaohongshu"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "xiaohongshu" ? "bg-rose-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("xiaohongshu"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "xiaohongshu" ? "bg-rose-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="小红书好物穿搭"
                 >
-                  <Image className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Image className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* 5d. Fan Mail (手写来信) */}
                 <button
-                  onClick={() => { setActiveApp("fanmail"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "fanmail" ? "bg-pink-600 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("fanmail"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "fanmail" ? "bg-pink-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="粉丝实体来信物"
                 >
-                  <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Mail className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                   {fanLetters.some((l) => !l.isRead) && (
-                    <span className="absolute top-1 right-1 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#f44e73] animate-pulse border border-[#0e111a]" />
+                    <span className="absolute top-1 right-1 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#f44e73] animate-pulse border border-[#0e111a]" />
                   )}
                 </button>
 
                 {/* Divider */}
-                <div className="w-[1px] h-6 bg-white/10 shrink-0 self-center" />
+                <div className="w-[1px] h-5 sm:h-6 bg-white/10 shrink-0 self-center" />
 
                 {/* 6. Settings Key configuration */}
                 <button
-                  onClick={() => { setActiveApp("settings"); setIsControlCenterOpen(false); }}
-                  className={`p-1.5 sm:p-2.5 rounded-xl transition-all cursor-pointer outline-none shrink-0 ${activeApp === "settings" ? "bg-slate-700 text-white shadow-lg scale-105 sm:scale-110" : "text-slate-400 hover:text-white"}`}
+                  onClick={() => { handleSwitchApp("settings"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all cursor-pointer outline-none shrink-0 ${activeApp === "settings" ? "bg-slate-700 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="系统API/备份管理"
                 >
-                  <SettingsIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <SettingsIcon className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
@@ -3115,7 +3176,7 @@ ${contact.summary || "无"}`;
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed text-left bg-slate-950/30 p-4 border border-white/5 rounded-xl">
-              李社长冷着脸指出：“你的综合技能实力目前出去只会在开麦舞台上给厂牌抹黑。要么你加紧练习，在第二天跨进新日程时重新进行评测；要么只能由你承担额外 <strong>₩3,000万 韩元</strong> 运作公关手续费，强行打通关系包办贷款出道！”
+              李社长冷着脸指出：“你的综合技能实力目前出去只会在开麦舞台上给厂牌抹黑。要么你加紧练习，在第二天跨进新日程时重新进行评测；要么只能由您承担额外 <strong>₩3,000万 韩元</strong> 运作公关手续费，强行打通关系包办贷款出道！”
             </p>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
@@ -3151,6 +3212,130 @@ ${contact.summary || "无"}`;
                 className="py-3 bg-gradient-to-r from-red-650 to-pink-600 hover:from-red-600 hover:to-pink-500 text-white font-bold text-xs rounded-xl shadow-lg transition-all cursor-pointer active:scale-95 border border-red-500/20"
               >
                 💸 承受负债加重 +₩3,000w 强拍出道！
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update and Debug notification modal */}
+      {showUpdateModal && (
+        <div id="update-notification-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[250] p-4">
+          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-lg w-full shadow-[0_0_50px_rgba(147,51,234,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl font-sans"></div>
+            
+            <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4.5">
+              <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
+                <Sparkles className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
+                  🍲 企划社最新巨献公告 (深夜偷吃食堂、重名防护与健康理疗)
+                </h3>
+                <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
+                  SYSTEM VERSION 3.0 | INSTANT SNACKING SIMULATOR & COMPREHENSIVE FIXES
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+              
+              {/* Feature 8: Snacking Simulator (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-amber-950/40 to-indigo-950/40 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
+                  <span>🍲 8. [全新巨献] “深夜偷吃食堂” 偷吃特工作战趣味模拟</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  不再是单纯的数值点击！在【属性】数据版块下正式新增了极具代入感的互动加餐游戏系统：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🍱 <strong className="text-amber-200">六大特色深夜膳食</strong>：包括 🍗 宿舍深夜炸鸡、🥩 顶级炭火韩牛、🥤 高卡碳水燕麦奶昔、🍧 辛辣年糕雪冰、🥗 水煮鸡胸肉挣扎餐、🍜 便利店芝士拉面。各具特殊奇妙效果！</p>
+                  <p>👄 <strong className="text-amber-200">大口咀嚼物理反馈</strong>：伴随细腻生吞、大口大嚼叙事动画以及倒计时物理咀嚼条。可长嚼，亦可一键“快速三口闷完”！</p>
+                  <p>👀 <strong className="text-pink-300">突发事件一 [舍友撞破分食]</strong>：18% 的几率遭遇室友深夜贴脸抢食！被迫分一口，能量热量减半，但大幅增加与队友的集体好感度 (+7)！</p>
+                  <p>🚨 <strong className="text-red-400">突发事件二 [闵室长查寝]</strong>：10% 几率听到门外高跟鞋咚咚逼近！塞进床底下仓促过关，饱食度暴损，心理压力巨额飙升 (+15)！</p>
+                  <p>🎒 <strong className="text-emerald-300">特殊健康补偿反馈</strong>：吃干瘪鸡胸肉甚至能由于身体轻灵无水肿负担，直接爆出永久 <strong className="text-emerald-300">声乐/舞蹈技能 +2 点 </strong> 的练习回报！而高端韩牛更能极速滋养被压力受损干枯暴痘的疲惫肌，恢复红润面色！但在深夜暴食大辛大辣拉面年糕则有高达 30% 晨起满面油脂、脸部极度浮肿的毁容风险哦！</p>
+                </div>
+              </div>
+
+              {/* Feature 1: Name Duplicate filtering */}
+              <div className="bg-purple-950/20 border border-purple-500/20 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>🛡️ 1. 爱豆重名/冲突规避校验系统</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为了从底层彻底切断重名引起的通信乱流：自建多槽位间限制重合本名或艺名，更自动屏蔽了经纪人、董事会NPC及宿命队友（智雅、香橙、樱子等）等同名撞车。
+                </p>
+              </div>
+
+              {/* Feature 2: BMI and health */}
+              <div className="bg-emerald-950/20 border border-emerald-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
+                  <span>📏 2. 体重/身高联动 BMI 与黄金调理机制</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  重构了身体质量指数（BMI）物理学公式，由设定的身高与体重科学共算。彻底推倒了“任何时刻都无理贬斥极其消瘦”的单调舆论——当您打理营养使BMI恢复健康区间时，饭圈论坛将会爆发全网最高赞的吹捧，让爱豆越养越美！
+                </p>
+              </div>
+
+              {/* Feature 3: Stamina restore */}
+              <div className="bg-blue-950/20 border border-blue-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
+                  <span>🔋 3. 清晨复盘结算体力延迟读取修正</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  纠正了AI次日结算流程中，对能量体力更新滞后一天的时序Bug。清晨复盘评价中会实时采用最健康的早间饱满回复精力数据，让AI再也不会毫无缘由地唠叨你极其劳累。
+                </p>
+              </div>
+
+              {/* Feature 4: bubble names alignment */}
+              <div className="bg-sky-950/20 border border-sky-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-sky-300 font-bold text-[12.5px]">
+                  <span>💬 4. 泡泡 (Bubble) 评论真实队友精准连线</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  优化泡泡营业生成，杜绝了系统偶尔无脑编造英文与虚构队友回复。前排营业最后一贴凡是出现队友打趣时，均100%连线至真实的组合名册（包含您的多槽卡和队内既定担当）。
+                </p>
+              </div>
+
+              {/* Feature 5: Trainee Romance */}
+              <div className="bg-rose-950/20 border border-rose-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
+                  <span>💖 5. 练习生暗线恋爱启动与姓名补全</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  练习生时期全面接入情感选项，空白时会周全自动配置极赞的伴侣名字（如 韩熙珍/宋承泽）并解锁温存的短信交流，练习生再不是毫无爱情互动的枯槁旅途！
+                </p>
+              </div>
+
+              {/* Feature 6: Responsive scroll container */}
+              <div className="bg-amber-950/20 border border-amber-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
+                  <span>📺 6. PC浏览器自适应 iPad 窗体与纵向滚动</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  修缮了平板外壳外框高度，设定 dynamic 限高，强制溢出时内部容器自适应，允许全域独立双向滚动！杜绝了PC电脑浏览器下底部控制栏、侧边栏溢出导致无法点击的问题。
+                </p>
+              </div>
+
+              {/* Feature 7: Lockdown */}
+              <div className="bg-red-950/20 border border-red-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-red-300 font-bold text-[12.5px]">
+                  <span>🔒 7. 重大危机/复盘选项强制切线锁定</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  重修了切线逃脱决策惩罚的空子：在早结算复牌、私生饭骚扰大考等事件处于活动态时，左上角成员切线通道、底部快捷 Dock 都会被牢牢物理遮罩锁定，直至您智勇了结！
+                </p>
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-2.5 text-xs mt-6 pt-3.5 border-t border-white/10">
+              <button 
+                onClick={() => setShowUpdateModal(false)}
+                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
+              >
+                开始健康调理，进入爱豆计划
               </button>
             </div>
           </div>
@@ -3329,57 +3514,104 @@ ${contact.summary || "无"}`;
             
             <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4.5">
               <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
-                <Sparkles className="w-5 h-5" />
+                <Sparkles className="w-5 h-5 animate-pulse" />
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  🍲 企划社最新巨献公告 (爱豆重名防护与健康增重)
+                  🍲 企划社最新巨献公告 (深夜偷吃食堂、重名防护与健康理疗)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM UPDATE STATUS | NAME SHIELDING & GAINER MODULES INSTALLED
+                  SYSTEM VERSION 3.0 | INSTANT SNACKING SIMULATOR & COMPREHENSIVE FIXES
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
               
+              {/* Feature 8: Snacking Simulator (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-amber-950/40 to-indigo-950/40 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
+                  <span>🍲 8. [全新巨献] “深夜偷吃食堂” 偷吃特工作战趣味模拟</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  不再是单纯的数值点击！在【属性】数据版块下正式新增了极具代入感的互动加餐游戏系统：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🍱 <strong className="text-amber-200">六大特色深夜膳食</strong>：包括 🍗 宿舍深夜炸鸡、🥩 顶级炭火韩牛、🥤 高卡碳水燕麦奶昔、🍧 辛辣年糕雪冰、🥗 水煮鸡胸肉挣扎餐、🍜 便利店芝士拉面。各具特殊奇妙效果！</p>
+                  <p>👄 <strong className="text-amber-200">大口咀嚼物理反馈</strong>：伴随细腻生吞、大口大嚼叙事动画以及倒计时物理咀嚼条。可长嚼，亦可一键“快速三口闷完”！</p>
+                  <p>👀 <strong className="text-pink-300">突发事件一 [舍友撞破分食]</strong>：18% 的几率遭遇室友深夜贴脸抢食！被迫分一口，能量热量减半，但大幅增加与队友的集体好感度 (+7)！</p>
+                  <p>🚨 <strong className="text-red-400">突发事件二 [闵室长查寝]</strong>：10% 几率听到门外高跟鞋咚咚逼近！塞进床底下仓促过关，饱食度暴损，心理压力巨额飙升 (+15)！</p>
+                  <p>🎒 <strong className="text-emerald-300">特殊健康补偿反馈</strong>：吃干瘪鸡胸肉甚至能由于身体轻灵无水肿负担，直接爆出永久 <strong className="text-emerald-300">声乐/舞蹈技能 +2 点 </strong> 的练习回报！而高端韩牛更能极速滋养被压力受损干枯暴痘的疲惫肌，恢复红润面色！但在深夜暴食大辛大辣拉面年糕则有高达 30% 晨起满面油脂、脸部极度浮肿的毁容风险哦！</p>
+                </div>
+              </div>
+
               {/* Feature 1: Name Duplicate filtering */}
               <div className="bg-purple-950/20 border border-purple-500/20 p-3.5 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>🛡️ 爱豆重名/冲突规避校验系统上线</span>
+                  <span>🛡️ 1. 爱豆重名/冲突规避校验系统</span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了规避在多人企划（双人/三人模式）以及单开模式下突发的重名通信乱序问题，系统全新升级了姓名检测防御壁垒：
+                  为了从底层彻底切断重名引起的通信乱流：自建多槽位间限制重合本名或艺名，更自动屏蔽了经纪人、董事会NPC及宿命队友（智雅、香橙、樱子等）等同名撞车。
                 </p>
-                <ul className="list-disc pl-4 space-y-1 text-[10.5px] text-slate-400">
-                  <li><strong>自建成员间防撞</strong>：多开槽位中不允许设置相同的本名（不分大小写/空格）和舞台艺名（Stage Name）。</li>
-                  <li><strong>NPC人物避免重名</strong>：防止自建姓名或艺名与经纪人（严相勋/闵相勋）、董事代表（李秉旭）以及同台竞争对手（张秀彬/崔镇浩）冲突。</li>
-                  <li><strong>防止与默认队友重名</strong>：限制在单人组合模式中与系统默认生成的宿怨队友（智雅、智恩、香橙、樱子等）使用一模一样的姓名或艺名，确保消息归档及长期记忆树的绝对唯一与精确隔离。</li>
-                </ul>
               </div>
 
-              {/* Feature 2: High Energy Diet Weight Gainer */}
-              <div className="bg-amber-950/10 border border-amber-500/20 p-3.5 rounded-xl space-y-2">
+              {/* Feature 2: BMI and health */}
+              <div className="bg-emerald-950/20 border border-emerald-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
+                  <span>📏 2. 体重/身高联动 BMI 与黄金调理机制</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  重构了身体质量指数（BMI）物理学公式，由设定的身高与体重科学共算。彻底推倒了“任何时刻都无理贬斥极其消瘦”的单调舆论——当您打理营养使BMI恢复健康区间时，饭圈论坛将会爆发全网最高赞的吹捧，让爱豆越养越美！
+                </p>
+              </div>
+
+              {/* Feature 3: Stamina restore */}
+              <div className="bg-blue-950/20 border border-blue-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
+                  <span>🔋 3. 清晨复盘结算体力延迟读取修正</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  纠正了AI次日结算流程中，对能量体力更新滞后一天的时序Bug。清晨复盘评价中会实时采用最健康的早间饱满回复精力数据，让AI再也不会毫无缘由地唠叨你极其劳累。
+                </p>
+              </div>
+
+              {/* Feature 4: bubble names alignment */}
+              <div className="bg-sky-950/20 border border-sky-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-sky-300 font-bold text-[12.5px]">
+                  <span>💬 4. 泡泡 (Bubble) 评论真实队友精准连线</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  优化泡泡营业生成，杜绝了系统偶尔无脑编造英文与虚构队友回复。前排营业最后一贴凡是出现队友打趣时，均100%连线至真实的组合名册（包含您的多槽卡和队内既定担当）。
+                </p>
+              </div>
+
+              {/* Feature 5: Trainee Romance */}
+              <div className="bg-rose-950/20 border border-rose-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
+                  <span>💖 5. 练习生暗线恋爱启动与姓名补全</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  练习生时期全面接入情感选项，空白时会周全自动配置极赞的伴侣名字（如 韩熙珍/宋承泽）并解锁温存的短信交流，练习生再不是毫无爱情互动的枯槁旅途！
+                </p>
+              </div>
+
+              {/* Feature 6: Responsive scroll container */}
+              <div className="bg-amber-950/20 border border-amber-500/20 p-3.5 rounded-xl space-y-1.5">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>⚖️ 爱豆健康增重补给系统 (理疗沙龙大增幅)</span>
+                  <span>📺 6. PC浏览器自适应 iPad 窗体与纵向滚动</span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  针对长期极饿有氧或打歌而过度消瘦的爱豆，我们在【粉丝声量与自我增值 / 理疗沙龙】中增加了三大深夜奢享补给单品：
+                  修缮了平板外壳外框高度，设定 dynamic 限高，强制溢出时内部容器自适应，允许全域独立双向滚动！杜绝了PC电脑浏览器下底部控制栏、侧边栏溢出导致无法点击的问题。
                 </p>
-                <div className="space-y-2 pl-1 mt-1 text-[10.5px]">
-                  <p>🍗 <strong>深夜宿舍炸鸡宵夜</strong>：花费 ₩3万，体重增加 <strong>+0.5kg</strong>，快速补充体力 <strong>+30</strong>，释压 <strong>-15</strong>。</p>
-                  <p>🥩 <strong>高端炭火烤韩牛大餐</strong>：花费 ₩15万，体重增长 <strong>+0.3kg</strong>，极限狂飙体力 <strong>+55</strong>，大幅释压 <strong>-25</strong>，胶原蛋白可直接<strong>治愈因压力引起的受损暗淡痘肌</strong>！</p>
-                  <p>🥤 <strong>干净能量高卡碳水燕麦糊</strong>：花费 ₩6万，规律增肌增加 <strong>+0.8kg</strong>，增肌恢复两不误。</p>
-                </div>
               </div>
 
-              {/* Feature 3: LLM Memory Compression */}
-              <div className="bg-slate-900/45 border border-white/5 p-3 rounded-xl space-y-1">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12px]">
-                  <span>🧠 长期对话 LLM 记忆大纲归档系统</span>
+              {/* Feature 7: Lockdown */}
+              <div className="bg-red-950/20 border border-red-500/20 p-3.5 rounded-xl space-y-1.5">
+                <div className="flex items-center gap-2 text-red-300 font-bold text-[12.5px]">
+                  <span>🔒 7. 重大危机/复盘选项强制切线锁定</span>
                 </div>
-                <p className="text-[10.5px] text-slate-400 leading-relaxed">
-                  当与成员、恋人或关系人的 KakaoTalk/Bubble 回复行数超过临界值时，AI 将自主启动长效记忆总结提炼，用 120 字微芯片大纲封存好感里程碑，<strong>永久节省 80%+ 的上下文消耗</strong>，杜绝由于代币高发引起的掉档或回复断头现象。
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  重修了切线逃脱决策惩罚的空子：在早结算复牌、私生饭骚扰大考等事件处于活动态时，左上角成员切线通道、底部快捷 Dock 都会被牢牢物理遮罩锁定，直至您智勇了结！
                 </p>
               </div>
 

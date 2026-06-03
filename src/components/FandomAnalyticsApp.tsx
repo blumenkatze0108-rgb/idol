@@ -29,6 +29,117 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+const FOOD_ITEMS = [
+  {
+    id: "chicken",
+    name: "宿舍深夜炸鸡宵夜",
+    emoji: "🍗",
+    cost: 3,
+    weightGain: 0.5,
+    energyRecover: 30,
+    stressRelief: 15,
+    desc: "深夜偷偷点的一份韩式香脆炸鸡外卖。酥脆爆汁，香气溢出整个被窝！",
+    chews: 4,
+    spicy: false,
+    funNotes: [
+      "打开饭盒，金黄酥脆的炸鸡香气直冲脑门！",
+      "咔嚓！偷偷咬了一口，外皮丝丝酥脆，肉汁在舌尖爆开！",
+      "咕嘟咕嘟灌了一口冰汽水，整个人爽飞到外太空！",
+      "吸吮指尖最后一点香甜酱汁，这一刻罪恶与极致的幸福共存！"
+    ]
+  },
+  {
+    id: "hanwoo",
+    name: "炭火顶级韩牛大餐",
+    emoji: "🥩",
+    cost: 15,
+    weightGain: 0.3,
+    energyRecover: 55,
+    stressRelief: 25,
+    desc: "特级炭火烤韩牛，优质纯蛋白能修补疲惫毛孔，大幅提亮肤质！",
+    chews: 5,
+    spicy: false,
+    skinImprove: true,
+    funNotes: [
+      "大理石纹雪花牛肉在炽热的炭火上滋滋冒油，香味铺鼻！",
+      "入口即化！浓浓的油脂香和质感简直在给灵魂做按摩！",
+      "裹上一层咸香芝麻盐，这一口的鲜甜让舌头激动得要起舞！",
+      "充沛氨基酸注入体内，感觉熬夜带来的泛黄干瘪正在消退！",
+      "喝上一大口暖胃牛肉清汤，温厚而又结实的元气瞬间满血复活！"
+    ]
+  },
+  {
+    id: "gainer",
+    name: "高卡碳水燕麦奶昔",
+    emoji: "🥤",
+    cost: 6,
+    weightGain: 0.8,
+    energyRecover: 22,
+    stressRelief: 5,
+    desc: "纯粹、科学的无盐卡路里干涉代餐。健康高效率增重，完全不带来皮肤或水肿负担。",
+    chews: 3,
+    spicy: false,
+    funNotes: [
+      "吨吨吨！一大口稠密、微温的浓密纯麦流食缓缓灌下去...",
+      "没啥花哨的味道，但热量和温饱安全感在实打实注入胃袋！",
+      "咽下最后一口。绝对健康的卡路里，给虚胖绝缘，安全稳定长肉。"
+    ]
+  },
+  {
+    id: "tteokbokki",
+    name: "辛辣年糕雪冰大满足",
+    emoji: "🍧",
+    cost: 4.5,
+    weightGain: 0.6,
+    energyRecover: 40,
+    stressRelief: 22,
+    desc: "重辣芝士年糕拼香甜双倍芒果雪冰！极致冰火淬炼，狂飙多巴胺！",
+    chews: 4,
+    spicy: true,
+    funNotes: [
+      "天哪，红油酱汁也太辣了！嚼着黏糯滚烫的年糕爽得头发发麻！",
+      "火急火燎之下舀一大勺雪冰吞下！冷热碰撞在嘴里激起璀璨烟花！",
+      "冰与火疯狂揉搓！极致辣度把近期积攒的所有压抑焦虑彻底燃烧一空！",
+      "呼哧呼哧舔完勺底。虽然嘴巴像着了火，但是畅快得无与伦比！"
+    ]
+  },
+  {
+    id: "breast",
+    name: "水煮鸡胸肉挣扎代餐",
+    emoji: "🥗",
+    cost: 1,
+    weightGain: -0.2,
+    energyRecover: 12,
+    stressRelief: -5,
+    desc: "水煮冷冻鸡胸肉配冰地瓜。高饱腹、零油脂防肿，甚至微弱提高声、舞基本功！",
+    chews: 3,
+    spicy: false,
+    isDiet: true,
+    funNotes: [
+      "干瘪无味的肉丝仿佛在锯你的喉咙... 留下小爱豆挣扎屈辱的眼泪！",
+      "默默嚼着高饱腹的微甜冰红薯。虽然寡淡，但腹部线条似乎更有安全感了！",
+      "干完最后一块木屑般的肉。身材无负荷，体内元气格外清朗通透！"
+    ]
+  },
+  {
+    id: "ramen2",
+    name: "便利店芝士拉面双人拌",
+    emoji: "🍜",
+    cost: 1.5,
+    weightGain: 0.4,
+    energyRecover: 22,
+    stressRelief: 12,
+    desc: "热辣拉面里融化一整张黄芝士！巨香浓，但20%宿醉或明晨起床水肿的危险。",
+    chews: 3,
+    spicy: true,
+    funNotes: [
+      "大口吸溜挂满咸香爆浆芝士的热辣拉面，顺滑浓郁得简直是犯罪！",
+      "吸溜吸溜~ 这是什么旷世奇面！吃一口，连面带芝士让人飘飘欲仙！",
+      "连面带汤干干净净！满足得想打滚，只是心底已经拉响了明日肿脸警报..."
+    ]
+  }
+];
+
 export default function FandomAnalyticsApp({
   persona,
   teammates,
@@ -39,6 +150,13 @@ export default function FandomAnalyticsApp({
   onAddLog
 }: FandomAnalyticsProps) {
   const [activeSubTab, setActiveSubTab] = useState<"fandom" | "body" | "dermatology">("fandom");
+
+  // --- New Food Simulator states ---
+  const [activeEatingFood, setActiveEatingFood] = useState<any | null>(null);
+  const [chewsRemaining, setChewsRemaining] = useState<number>(0);
+  const [eatingLogs, setEatingLogs] = useState<string[]>([]);
+  const [hasSharedWithTeammate, setHasSharedWithTeammate] = useState<string | null>(null);
+  const [isBustedByManager, setIsBustedByManager] = useState<boolean>(false);
 
   // Calculate BMI
   const mSquare = (persona.height / 100) * (persona.height / 100);
@@ -155,55 +273,191 @@ export default function FandomAnalyticsApp({
     onUpdatePersona(p);
   };
 
-  const handleFriedChicken = () => {
-    const cost = 3;
+  const startEating = (food: any) => {
     const p = { ...persona };
-    if (p.money < cost && p.startType === "idol") {
-      onAddLog("资金不足！深夜炸鸡宵夜需要 ₩3万。");
+    if (p.money < food.cost && p.startType === "idol") {
+      onAddLog(`资金不足！【${food.name}】需要 ₩${food.cost}万。`);
       return;
     }
-    p.money = Math.max(0, p.money - cost);
-    p.weight = Math.min(80, p.weight + 0.5);
-    p.energy = Math.min(100, p.energy + 30);
-    p.stress = Math.max(0, p.stress - 15);
-    onAddLog("【宿舍炸鸡宵夜】宿舍熄灯后偷偷点了一份韩式香脆炸鸡外卖。幸福满满，压力全消，体重健康增加 0.5kg！");
-    onUpdatePersona(p);
-  };
-
-  const handleHanwoo = () => {
-    const cost = 15;
-    const p = { ...persona };
-    if (p.money < cost && p.startType === "idol") {
-      onAddLog("资金不足！特级炭火韩牛大餐需要 ₩15万。");
-      return;
-    }
-    p.money = Math.max(0, p.money - cost);
-    p.weight = Math.min(80, p.weight + 0.3);
-    p.energy = Math.min(100, p.energy + 55);
-    p.stress = Math.max(0, p.stress - 25);
     
-    // Improve skin because of top tier collagen & protein
-    if (p.skinCondition === "exhausted") p.skinCondition = "troubled";
-    else if (p.skinCondition === "breakout") p.skinCondition = "troubled";
-    else if (p.skinCondition === "troubled") p.skinCondition = "glowing";
-    else if (p.skinCondition === "glowing" || p.skinCondition === "perfect") p.skinCondition = "perfect";
-
-    onAddLog("【顶级烤韩牛】一顿滋滋作响的高级炭火大韩牛！优质蛋白充足恢复，精神焕发，压力狂降，皮肤甚至透亮了起来，体重健康增长 0.3kg！");
+    // Deduct cost immediately
+    p.money = Math.max(0, p.money - food.cost);
     onUpdatePersona(p);
+
+    setActiveEatingFood(food);
+    setChewsRemaining(food.chews);
+    setHasSharedWithTeammate(null);
+    setIsBustedByManager(false);
+    setEatingLogs([`🎒 [开始深夜密谋作战] ${persona.name} 悄悄把一盒【${food.name}】塞进衣兜钻进床褥...`]);
   };
 
-  const handleGainerShake = () => {
-    const cost = 6;
-    const p = { ...persona };
-    if (p.money < cost && p.startType === "idol") {
-      onAddLog("资金不足！专业高能碳水增肌奶昔需要 ₩6万。");
-      return;
+  const chewFood = () => {
+    if (!activeEatingFood || chewsRemaining <= 0) return;
+    
+    const newChews = chewsRemaining - 1;
+    setChewsRemaining(newChews);
+    
+    const currentChewIndex = activeEatingFood.chews - chewsRemaining;
+    const note = activeEatingFood.funNotes[currentChewIndex] || "大口吞下美食...";
+    let logs = [...eatingLogs, `😋 [嚼] ${note}`];
+
+    // Trigger surprise events midway (after 1st chew, if there are chews left)
+    let triggeredMate = hasSharedWithTeammate;
+    let triggeredManager = isBustedByManager;
+
+    if (newChews > 0 && !hasSharedWithTeammate && !isBustedByManager) {
+      const roll = Math.random();
+      if (roll < 0.18 && teammates && teammates.length > 0) {
+        const randMate = teammates[Math.floor(Math.random() * teammates.length)];
+        triggeredMate = randMate.name;
+        setHasSharedWithTeammate(randMate.name);
+        logs.push(`👀 [舍友分食] 门缝开了，队友 ${randMate.name} 贼眉鼠眼地钻进来，捂着嘴惊叫：“大发！是【${activeEatingFood.name}】！分我一口！！我会保密的！” 看来这顿美味要被迫分享了。`);
+      } else if (roll >= 0.18 && roll < 0.28 && persona.startType === "idol") {
+        triggeredManager = true;
+        setIsBustedByManager(true);
+        logs.push(`🚨 [危机降临] 完蛋！地板传来闵经纪人标志性冰冷的高跟鞋叩地声正迅速逼近！你冷汗直冒，必须手忙脚乱地把餐盒捂进被罩里...`);
+      }
     }
-    p.money = Math.max(0, p.money - cost);
-    p.weight = Math.min(80, p.weight + 0.8);
-    p.energy = Math.min(100, p.energy + 20);
-    p.stress = Math.max(0, p.stress - 5);
-    onAddLog("【清洁高卡碳水糊】饮用专业营养师配制的饱满干净增重燕麦燕麦糊。能量稳健，干净且规律地增重 0.8kg！");
+
+    // Swallowed!
+    if (newChews === 0) {
+      const p = { ...persona };
+      const food = activeEatingFood;
+      
+      let finalW = food.weightGain;
+      let finalE = food.energyRecover;
+      let finalS = food.stressRelief;
+      let resultMsg = "";
+
+      if (triggeredManager) {
+        finalW = 0;
+        finalE = Math.round(food.energyRecover * 0.25);
+        p.stress = Math.min(100, p.stress + 15);
+        p.energy = Math.min(100, p.energy + finalE);
+        
+        resultMsg = `😭 [落荒而逃] 门开启瞬间你快速将餐盒踢进床底！没饱成还被一通劈头训斥，压力狂飙 (+15)，体力恢复微弱 (+${finalE})。`;
+      } else if (triggeredMate) {
+        finalW = parseFloat((food.weightGain / 2).toFixed(2));
+        finalE = Math.round(food.energyRecover * 0.55);
+        finalS = Math.round(food.stressRelief * 1.25);
+        
+        // update global teammate favorability in persona state
+        p.teammatesFavorability = Math.min(100, (p.teammatesFavorability ?? 50) + 7);
+        p.weight = parseFloat(Math.min(80, Math.max(38, p.weight + finalW)).toFixed(2));
+        p.energy = Math.min(100, p.energy + finalE);
+        p.stress = Math.max(0, p.stress - finalS);
+        
+        resultMsg = `💖 [战友情深] 你和 【${triggeredMate}】 挤在衣帽间干光了！TA投来无比感动的眼神！热量自动减半 (+${finalW}kg)，饱足感恢复 (+${finalE})，你和队友的集体好感大幅上升 (+7)！`;
+      } else {
+        // Perfect single eat
+        p.weight = parseFloat(Math.min(80, Math.max(38, p.weight + finalW)).toFixed(2));
+        p.energy = Math.min(100, p.energy + finalE);
+        p.stress = Math.max(0, p.stress - finalS);
+
+        if (food.spicy && Math.random() < 0.3) {
+          if (p.skinCondition === "perfect") p.skinCondition = "glowing";
+          else if (p.skinCondition === "glowing") p.skinCondition = "troubled";
+          else p.skinCondition = "breakout";
+          resultMsg = `🌶️ [热辣反弹] 完美独享！但重辣刺激让你满面大汗，体力恢复 (+${finalE})，压力得解，只是明日极易引发水肿与额头闷痘！`;
+        } else if (food.skinImprove) {
+          if (p.skinCondition === "exhausted" || p.skinCondition === "breakout") p.skinCondition = "troubled";
+          else if (p.skinCondition === "troubled") p.skinCondition = "glowing";
+          else p.skinCondition = "perfect";
+          resultMsg = `✨ [美颜护体] 特级韩牛的丰富高分子蛋白极速修补了你泛黄粗糙的肌肤，体力大幅度回血 (+${finalE})，连皮肤都被治愈提亮了！`;
+        } else if (food.isDiet) {
+          const isVocal = Math.random() < 0.5;
+          if (isVocal) {
+            p.vocalSkill = Math.min(100, p.vocalSkill + 2);
+            resultMsg = `🥗 [丹田提气] 默默咽下了寡淡的水煮鸡胸。虽然吃得痛苦，但轻盈的身体让你的声部核心发音格外顺畅 (声乐水平 +2)！`;
+          } else {
+            p.danceSkill = Math.min(100, p.danceSkill + 2);
+            resultMsg = `🥗 [轻盈舞姿] 吃完了水煮减脂餐。身体完全没有任何多余的水肿负荷，下午排齐舞动作时感觉轻若飞燕 (舞蹈技巧 +2)！`;
+          }
+        } else {
+          resultMsg = `🏆 [完美偷吃] 宵夜特工作战圆满成功！无惊无险吃个精光，香气吞进肚，体力恢复 (+${finalE})，元气暴涨精神大放松！`;
+        }
+      }
+
+      onAddLog(`【干饭日志】 ${persona.name} 享用了【${food.name}】。${resultMsg}`);
+      logs.push(`🏁 ${resultMsg}`);
+      
+      onUpdatePersona(p);
+    }
+
+    setEatingLogs(logs);
+  };
+
+  const handleQuickEat = () => {
+    if (!activeEatingFood || chewsRemaining <= 0) return;
+
+    const p = { ...persona };
+    const food = activeEatingFood;
+    
+    // Simulate events based on probability
+    const roll = Math.random();
+    let finalW = food.weightGain;
+    let finalE = food.energyRecover;
+    let finalS = food.stressRelief;
+    let resultMsg = "";
+    
+    const logs = [...eatingLogs];
+    
+    food.funNotes.forEach((n: string) => {
+      logs.push(`😋 [快速大嚼] ${n}`);
+    });
+
+    if (roll < 0.15 && teammates && teammates.length > 0) {
+      const randMate = teammates[Math.floor(Math.random() * teammates.length)];
+      finalW = parseFloat((food.weightGain / 2).toFixed(2));
+      finalE = Math.round(food.energyRecover * 0.55);
+      
+      p.teammatesFavorability = Math.min(100, (p.teammatesFavorability ?? 50) + 7);
+      p.weight = parseFloat(Math.min(80, Math.max(38, p.weight + finalW)).toFixed(2));
+      p.energy = Math.min(100, p.energy + finalE);
+      p.stress = Math.max(0, p.stress - finalS);
+      
+      resultMsg = `💖 [战友情深] 快速大嚼中队友 ${randMate.name} 钻进来吵着要分一口，你叹了一口水分了TA一大半！体重增量减半 (+${finalW}kg)，体力恢复 (+${finalE})，你和队友的集体好感上升 (+7)！`;
+    } else if (roll >= 0.15 && roll < 0.25 && persona.startType === "idol") {
+      finalW = 0;
+      finalE = Math.round(food.energyRecover * 0.25);
+      p.stress = Math.min(100, p.stress + 15);
+      p.energy = Math.min(100, p.energy + finalE);
+      
+      resultMsg = `😭 [落荒而逃] 正当飞速狼吞虎咽时，闵经纪人突然推门查寝！你大惊失色之下把餐盒踢进床底，没饱成，精神压力狂飙 (+15)，体力仅微弱感应恢复 (+${finalE})。`;
+    } else {
+      p.weight = parseFloat(Math.min(80, Math.max(38, p.weight + finalW)).toFixed(2));
+      p.energy = Math.min(100, p.energy + finalE);
+      p.stress = Math.max(0, p.stress - finalS);
+
+      if (food.spicy && Math.random() < 0.3) {
+        if (p.skinCondition === "perfect") p.skinCondition = "glowing";
+        else if (p.skinCondition === "glowing") p.skinCondition = "troubled";
+        else p.skinCondition = "breakout";
+        resultMsg = `🌶️ [热辣反弹] 几大口迅速吸完了大餐！肚皮饱满有力，体力恢复 (+${finalE})，但面部极易引发泛红和晨起水肿。`;
+      } else if (food.skinImprove) {
+        if (p.skinCondition === "exhausted" || p.skinCondition === "breakout") p.skinCondition = "troubled";
+        else if (p.skinCondition === "troubled") p.skinCondition = "glowing";
+        else p.skinCondition = "perfect";
+        resultMsg = `✨ [美颜护体] 光速完成了高档烤肉！优质油脂与氨基酸瞬间温补了你疲惫的底子，体力全部回血 (+${finalE})，连面部光泽都得到了提亮修复！`;
+      } else if (food.isDiet) {
+        const isVocal = Math.random() < 0.5;
+        if (isVocal) {
+          p.vocalSkill = Math.min(100, p.vocalSkill + 2);
+          resultMsg = `🥗 [丹田提气] 几口咽干了无味鸡胸肉。身体格外清朗无水肿负担，下午排麦课提气中丹田更具爆合张力 (声乐水平 +2)！`;
+        } else {
+          p.danceSkill = Math.min(100, p.danceSkill + 2);
+          resultMsg = `🥗 [轻盈舞姿] 极速解决掉了水煮代餐，胃部空灵轻巧。下午跟拍核心排练时肢体异常灵巧 (舞蹈技巧 +2)！`;
+        }
+      } else {
+        resultMsg = `🏆 [完美偷吃] 速度极快，干净利落地吞嚼吃光了！拍拍肚子没有被经纪人撞见，香气全入肚子。体力回复 (+${finalE})，压力解压！`;
+      }
+    }
+
+    logs.push(`🏁 ${resultMsg}`);
+    onAddLog(`【干饭日志】 ${persona.name} 快速吞食了【${food.name}】。${resultMsg}`);
+    
+    setChewsRemaining(0);
+    setEatingLogs(logs);
     onUpdatePersona(p);
   };
 
@@ -243,7 +497,7 @@ export default function FandomAnalyticsApp({
       </div>
 
       {/* Main Content Areas */}
-      <div className="flex-1 p-4 overflow-y-auto max-h-[340px] md:max-h-[380px]">
+      <div className="flex-1 p-4 overflow-y-auto md:max-h-[380px]">
         
         {activeSubTab === "fandom" && (
           <div className="space-y-4">
@@ -595,43 +849,151 @@ export default function FandomAnalyticsApp({
 
             {/* Nutritious Diet & Weight Gain */}
             <div className="bg-slate-900/60 rounded-2xl p-4 border border-white/5 space-y-2">
-              <span className="text-xs font-bold text-amber-400">🍲 爱豆高能营养膳食与健康增重补给</span>
-              <p className="text-[10px] text-slate-400">提供高热量加餐。可在因过度节食或锻炼而体重偏轻、虚弱时进行健康增重增肌与压力释放。</p>
+              <span className="text-xs font-bold text-amber-400 flex items-center justify-between">
+                <span className="flex items-center gap-1.5 font-sans">🍲 宿舍与深夜偷吃食堂 (The Secret Midnight Kitchen)</span>
+                {activeEatingFood && (
+                  <span className="text-[9px] tracking-wider bg-red-600/90 border border-red-500/40 text-white px-2 py-0.5 rounded-full animate-pulse font-mono uppercase font-bold">
+                    [偷吃突击中]
+                  </span>
+                )}
+              </span>
+              <p className="text-[10px] text-slate-400">
+                提供6种不同的高/低热量爱豆加餐与挣扎减脂餐。深夜偷吃极易遭遇闵督察查寝危机或队友撞破分食，大口咀嚼体会偶像在极度高敏环境下的爆趣大快朵颐！
+              </p>
 
-              <div className="grid grid-cols-3 gap-2.5 text-center mt-2.5">
-                <button
-                  onClick={handleFriedChicken}
-                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-amber-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-amber-300 block">宿舍深夜炸鸡宵夜</span>
-                    <span className="text-[9px] text-slate-400 block mt-1 leading-tight">费用 ₩3万。体重 +0.5kg，体力恢复 +30，压力舒缓 -15。</span>
+              {activeEatingFood ? (
+                /* --- ACTIVE INTERACTIVE EATING DASHBOARD --- */
+                <div className="bg-slate-950 rounded-xl p-4 border border-indigo-500/30 font-sans relative overflow-hidden animate-fadeIn my-2">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none select-none text-8xl font-bold">
+                    {activeEatingFood.emoji}
                   </div>
-                  <span className="text-[9px] text-amber-500 font-bold block bg-amber-950/20 py-0.5 rounded text-center">点外卖 (₩3w)</span>
-                </button>
+                  
+                  <div className="flex flex-col md:flex-row gap-4 relative z-10">
+                    {/* Visual Dish & Chewing status */}
+                    <div className="w-full md:w-2/5 flex flex-col items-center justify-center p-3.5 rounded-xl bg-slate-900/60 border border-white/5 text-center">
+                      <div className="relative text-5xl mb-2 animate-bounce">
+                        {activeEatingFood.emoji}
+                        {chewsRemaining > 0 && (
+                          <span className="absolute -top-1 -right-1 text-xs bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center font-bold font-mono shadow">
+                            {chewsRemaining}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs font-bold text-slate-100">{activeEatingFood.name}</span>
+                      
+                      {/* Chews Progress Bar */}
+                      <div className="w-full mt-3.5 space-y-1">
+                        <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+                          <span>剩余大口份数</span>
+                          <span className="font-bold text-indigo-400">{chewsRemaining} / {activeEatingFood.chews} 份</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div 
+                            className="bg-indigo-500 h-full transition-all duration-300"
+                            style={{ width: `${(chewsRemaining / activeEatingFood.chews) * 100}%` }}
+                          />
+                        </div>
+                      </div>
 
-                <button
-                  onClick={handleHanwoo}
-                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-pink-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-pink-300 block">炭火顶级韩牛大餐</span>
-                    <span className="text-[9px] text-slate-400 block mt-1 leading-tight">费用 ₩15万。体重 +0.3kg，体力 +55，压力 -25，明显改善肤质。</span>
-                  </div>
-                  <span className="text-[9px] text-pink-400 font-bold block bg-pink-950/20 py-0.5 rounded text-center">犒劳全牛 (₩15w)</span>
-                </button>
+                      {chewsRemaining > 0 ? (
+                        <button
+                          onClick={chewFood}
+                          className="w-full mt-3.5 py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white text-[10px] font-bold rounded-lg transition-all transform active:scale-95 flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          👄 咬下一大口 ({chewsRemaining}口)
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => setActiveEatingFood(null)}
+                          className="w-full mt-3.5 py-1.5 px-3 bg-slate-800 hover:bg-slate-755 text-slate-100 text-[10px] font-bold rounded-lg transition-all cursor-pointer"
+                        >
+                          收起餐具 (寻找下一顿) ✕
+                        </button>
+                      )}
+                    </div>
 
-                <button
-                  onClick={handleGainerShake}
-                  className="bg-slate-950 p-2 rounded-xl border border-white/5 hover:border-teal-500/20 transition-all text-left flex flex-col justify-between h-[105px] cursor-pointer"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold text-teal-300 block">高卡碳水燕麦奶昔</span>
-                    <span className="text-[9px] text-slate-400 block mt-1 leading-tight">费用 ₩6万。体重 +0.8kg，体力 +20，科学干净地增重。</span>
+                    {/* Live feeding narrative and events log */}
+                    <div className="flex-1 flex flex-col justify-between min-h-0">
+                      <div>
+                        <span className="text-[10px] text-indigo-300 font-bold block mb-1">📋 干饭动态与事件记录:</span>
+                        <div className="bg-[#090d16] border border-slate-800 rounded-xl p-3 h-[115px] overflow-y-auto space-y-1.5 pr-1.5">
+                          {eatingLogs.map((log, idx) => (
+                            <p 
+                              key={idx} 
+                              className={`text-[10px] leading-relaxed font-mono ${
+                                log.startsWith("🚨") || log.startsWith("⚠️") || log.startsWith("😭") ? "text-red-400 font-semibold" :
+                                log.startsWith("👀") || log.startsWith("💖") ? "text-pink-400 font-medium" :
+                                log.startsWith("🏁") ? "text-emerald-400 font-bold mt-1.5 border-t border-slate-800/80 pt-1.5" :
+                                "text-slate-350"
+                              }`}
+                            >
+                              {log}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2.5">
+                        <span className="text-[9px] text-slate-500 font-mono">
+                          * 嚼咽间可能引来舍友或惊动闵经纪人突围！
+                        </span>
+                        {chewsRemaining > 0 && (
+                          <button
+                            onClick={handleQuickEat}
+                            className="text-[9px] text-indigo-400 hover:text-indigo-300 underline font-semibold cursor-pointer"
+                          >
+                            快速三口闷完 ➔
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-[9px] text-teal-400 font-bold block bg-teal-950/20 py-0.5 rounded text-center">科学加餐 (₩6w)</span>
-                </button>
-              </div>
+
+                </div>
+              ) : (
+                /* --- SIX SHINY INTERACTIVE FOODS SELECTOR --- */
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2.5">
+                  {FOOD_ITEMS.map((item) => {
+                    const tooExpensive = persona.money < item.cost && persona.startType === "idol";
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => startEating(item)}
+                        disabled={tooExpensive}
+                        className={`bg-slate-950 p-2.5 rounded-xl border border-white/5 hover:border-amber-500/25 transition-all text-left flex flex-col justify-between min-h-[125px] cursor-pointer relative group ${tooExpensive ? "opacity-45 cursor-not-allowed hover:border-transparent" : ""}`}
+                      >
+                        <div>
+                          <div className="flex justify-between items-center w-full">
+                            <span className="text-[10px] font-bold text-slate-200 group-hover:text-amber-300 transition-colors flex items-center gap-1.5 min-w-0">
+                              <span className="text-sm shrink-0">{item.emoji}</span>
+                              <span className="truncate">{item.name}</span>
+                            </span>
+                            <span className="text-[9px] font-bold text-yellow-400 font-mono shrink-0 ml-1">
+                              ₩{item.cost}万
+                            </span>
+                          </div>
+                          <span className="text-[9px] text-slate-400 block mt-1.5 leading-snug">
+                            {item.desc}
+                          </span>
+                        </div>
+
+                        <div className="w-full mt-2 pt-1.5 border-t border-white/5 flex justify-between items-center text-[9px] font-mono">
+                          <span className={`${item.weightGain >= 0 ? "text-rose-400" : "text-emerald-400"} font-bold`}>
+                            体重 {item.weightGain >= 0 ? `+${item.weightGain}` : item.weightGain}kg
+                          </span>
+                          <span className="text-slate-500">
+                            {item.chews}口嚼
+                          </span>
+                          <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${tooExpensive ? "bg-slate-800 text-slate-600" : "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20"}`}>
+                            {tooExpensive ? "资金不够" : "开吃"}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

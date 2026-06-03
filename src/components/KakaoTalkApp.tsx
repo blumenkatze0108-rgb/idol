@@ -31,6 +31,7 @@ export default function KakaoTalkApp({
   personas
 }: KakaoTalkProp) {
   const [selectedContactId, setSelectedContactId] = useState<string>("manager");
+  const [activeMobileView, setActiveMobileView] = useState<"contacts" | "chat">("contacts");
   const [inputText, setInputText] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loverError, setLoverError] = useState<string | null>(null);
@@ -361,28 +362,31 @@ ${groupDesc}
   };
 
   return (
-    <div id="kakaotalk-app" className="flex flex-col md:flex-row h-full rounded-2xl overflow-hidden border border-amber-900/10 bg-[#ffeee0]/45 glass-panel text-slate-800">
+    <div id="kakaotalk-app" className="flex flex-col landscape:flex-row md:flex-row h-full rounded-2xl overflow-hidden border border-amber-900/10 bg-[#ffeee0]/45 glass-panel text-slate-800 min-h-0">
       
       {/* Left Chat list */}
-      <div className="w-full md:w-[260px] bg-white/70 border-r border-[#edd8c4] flex flex-col justify-between p-3 shrink-0">
-        <div>
-          <div className="flex items-center justify-between border-b border-[#edd8c4] pb-2 mb-2">
+      <div className={`w-full landscape:w-[200px] md:w-[260px] bg-white/70 border-r border-[#edd8c4] flex flex-col justify-between p-2.5 sm:p-3 shrink-0 ${activeMobileView === "contacts" ? "flex" : "hidden landscape:flex md:flex"}`}>
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex items-center justify-between border-b border-[#edd8c4] pb-2 mb-2 shrink-0">
             <span className="text-sm font-bold text-amber-950 flex items-center gap-1.5">
               <MessageSquare className="w-4 h-4 text-yellow-600" />
               KakaoTalk (练习互聊)
             </span>
             <span className="bg-amber-900/10 text-[10px] text-amber-900 px-2 py-0.5 rounded-full font-mono">
-              {chatContacts.length} 个联系人
+              {chatContacts.length} 个
             </span>
           </div>
 
-          <div className="space-y-1 overflow-y-auto max-h-[300px] md:max-h-[380px] pr-1">
+          <div className="space-y-1 overflow-y-auto flex-1 pr-1 min-h-0">
             {chatContacts.map((c) => {
               const hasQueued = (chatHistories[c.id] || []).some((m) => m.sender === "idol" && m.queueOnly);
               return (
                 <button
                   key={c.id}
-                  onClick={() => setSelectedContactId(c.id)}
+                  onClick={() => {
+                    setSelectedContactId(c.id);
+                    setActiveMobileView("chat");
+                  }}
                   className={`w-full text-left p-2 rounded-xl flex items-center gap-2.5 transition-all ${selectedContactId === c.id ? "bg-yellow-500/15 border border-yellow-500/20" : "hover:bg-slate-100/60"}`}
                 >
                   {c.avatar ? (
@@ -430,46 +434,54 @@ ${groupDesc}
       </div>
 
       {/* Right chat screen */}
-      <div className="flex-1 bg-[#b2c7da] flex flex-col justify-between min-h-[320px] relative">
+      <div className={`flex-1 bg-[#b2c7da] flex flex-col justify-between min-h-0 relative ${activeMobileView === "chat" ? "flex" : "hidden landscape:flex md:flex"}`}>
         
         {/* Chat topbar */}
-        <div className="bg-white/90 px-4 py-2.5 border-b border-slate-250 flex items-center justify-between shrink-0 shadow-sm">
-          <div className="flex items-center gap-2.5">
+        <div className="bg-white/90 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
+          <div className="flex items-center gap-2 min-w-0">
+            {/* Back button on mobile */}
+            <button
+              onClick={() => setActiveMobileView("contacts")}
+              className="md:hidden landscape:hidden p-1 px-2.5 bg-yellow-400 hover:bg-yellow-350 text-slate-900 font-bold text-[10px] rounded-lg transition-transform active:scale-95 cursor-pointer flex items-center gap-1 shrink-0"
+            >
+              ◀ <span>列表</span>
+            </button>
+
             {selectedContact.avatar ? (
-              <img src={selectedContact.avatar} alt="avatar" className="w-9 h-9 rounded-full object-cover border border-slate-200" referrerPolicy="no-referrer" />
+              <img src={selectedContact.avatar} alt="avatar" className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0" referrerPolicy="no-referrer" />
             ) : (
               <div className="w-9 h-9 rounded-full bg-yellow-500 text-slate-900 font-extrabold text-xs flex items-center justify-center border border-yellow-300 shrink-0">
                 {selectedContact.name.substring(0, 1)}
               </div>
             )}
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-800">{selectedContact.name}</span>
-                <span className="text-[9px] bg-slate-250 font-mono px-1.5 py-0.5 rounded text-slate-600">{selectedContact.mbti}</span>
+                <span className="text-xs font-bold text-slate-800 truncate">{selectedContact.name}</span>
+                <span className="text-[9px] bg-slate-250 font-mono px-1.5 py-0.5 rounded text-slate-600 shrink-0">{selectedContact.mbti}</span>
               </div>
-              <p className="text-[9px] text-slate-500 flex items-center gap-1.5">
+              <p className="text-[9px] text-slate-500 flex items-center gap-1.5 truncate">
                 {selectedContact.id === "lover" ? (
                   <>
-                    地下恋爱维系值: <strong className="text-pink-600 font-semibold">{persona.loverMood ?? 80}/100</strong>
-                    <span className="text-[10px] rounded px-1.5 py-0.2 bg-pink-100 text-pink-700 font-bold ml-1">
-                      {persona.relationshipStatus === "broken_up" ? "💔 已分手" : "🤫 暗恋厮守中"}
+                    <span className="shrink-0">地下恋爱:</span> <strong className="text-pink-600 font-semibold shrink-0">{persona.loverMood ?? 80}/100</strong>
+                    <span className="text-[10px] rounded px-1.5 py-0.2 bg-pink-100 text-pink-700 font-bold truncate">
+                      {persona.relationshipStatus === "broken_up" ? "💔已分手" : "🤫秘恋"}
                     </span>
                   </>
                 ) : (
                   <>
-                    关系好感值: <strong className="text-purple-600">{selectedContact.favorability ?? 50}/100</strong> {(selectedContact.favorability ?? 50) < 35 && " (态度极其冷淡/容易搞小动作)"}
+                    <span className="shrink-0">好感:</span> <strong className="text-purple-600 shrink-0">{selectedContact.favorability ?? 50}/100</strong> {(selectedContact.favorability ?? 50) < 35 && " (态度极其冷淡)"}
                   </>
                 )}
               </p>
             </div>
           </div>
-          <div className="text-[10px] text-slate-500 font-mono flex items-center gap-1">
+          <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1 shrink-0">
             <User className="w-3 h-3" /> KakaoTalk™
           </div>
         </div>
 
         {/* Chat body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[240px] md:max-h-[300px]">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {/* ROMANCE RECONCILE AND MAINTENANCE ACTION PANEL (Requirement 13) */}
           {selectedContact.id === "lover" && persona.hasLover && (
             <div className="bg-pink-50/95 border border-pink-200 rounded-2xl p-3.5 text-xs text-pink-950 flex flex-col gap-2 shadow-sm mb-2 animate-fadeIn">

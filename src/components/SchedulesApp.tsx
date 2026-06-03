@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IdolSchedule, IdolPersona, WeversePost, getCalendarPeriod } from "../types";
 import { SH_LIST } from "../mockData";
 import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame, AlertCircle } from "lucide-react";
@@ -70,6 +70,7 @@ interface SchedulesProps {
   ) => void;
   onTriggerRandomEvent: () => void;
   onAddLog: (log: string) => void;
+  onBlockingChange?: (blocking: boolean) => void;
 }
 
 export default function SchedulesApp({
@@ -85,7 +86,8 @@ export default function SchedulesApp({
   onUpdateWeversePosts,
   onNextDayTransition,
   onTriggerRandomEvent,
-  onAddLog
+  onAddLog,
+  onBlockingChange
 }: SchedulesProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [transitionResult, setTransitionResult] = useState<{
@@ -110,6 +112,12 @@ export default function SchedulesApp({
       story: string;
     }[];
   } | null>(null);
+
+  useEffect(() => {
+    if (onBlockingChange) {
+      onBlockingChange(isProcessing || transitionResult !== null || emergencyHarassment !== null);
+    }
+  }, [isProcessing, transitionResult, emergencyHarassment, onBlockingChange]);
 
   // Perform a specific schedule item (Requirement 12)
   const handlePerformSchedule = (schId: string) => {
@@ -259,18 +267,34 @@ export default function SchedulesApp({
       }
     }
 
-    // 2. Draft the API request
+    // 2. Draft the API request with scientific BMI calculation from tomorrow's metrics
+    const heightM = (pUpdateObj.height / 100);
+    const calcBmi = (pUpdateObj.weight / (heightM * heightM)).toFixed(1);
+    let bmiEvaluation = "";
+    const bmiVal = parseFloat(calcBmi);
+    if (bmiVal < 16.0) {
+      bmiEvaluation = "骨感极度偏瘦型 (危及生体，部分粉丝或唯粉会公开心疼、怒骂公司压榨，也有黑粉嘲讽『病态骷髅骨相』)";
+    } else if (bmiVal < 17.5) {
+      bmiEvaluation = "上镜完美爱豆标准型 (完美符合南韩神颜偶像的高冷标准，粉丝狂赞『神颜九头身、上镜绝美慵懒猫系冷脸纸片人』，但可能有路人、父母粉心疼觉得太瘦)";
+    } else if (bmiVal < 18.5) {
+      bmiEvaluation = "轻度偏瘦型 (粉丝普遍觉得挺好，但在极苛刻的高清打歌视频镜头下，部分挑剔黑粉和唯粉可能会评价肚子略微有肉)";
+    } else if (bmiVal < 22.0) {
+      bmiEvaluation = "健康正常状态 (普通人健全健康标准，但在苛刻畸形的韩娱饭圈，部分刻薄黑粉和激进毒唯会恶评攻击『上镜脸圆、发面馒头、不敬业、身材管理灾难偷吃零食』，而真爱粉则会出面努力反击黑子并呼吁健康)";
+    } else {
+      bmiEvaluation = "微胖偏重型 (已大幅超出南韩爱豆严酷出道红线，会遭到大范围脱粉，黑粉疯狂嘲讽『面如盆大、背影如熊、不务正业偷吃油腻汉堡炸鸡、男/女德大面积滑坡、职业道德彻底崩溃』)";
+    }
+
     const prompt = `玩家昨日完成了以下团队与个人行程：[${completedText}]。
 主角设定：
 - 专属名字/艺名：${persona.name} / ${persona.stageName}
 - 初始成长模式：${persona.startType === "trainee" ? "处于三大厂高压下的练习期债务生" : "刚发布专辑的正式打歌主唱爱豆"}
 - 组合模式：${persona.groupName} (${persona.style})
-- 当前体能指标：体力: ${persona.energy}/100, 精神压力值: ${persona.stress}/100, 体重: ${persona.weight.toFixed(1)}kg, 皮肤等级: ${persona.skinCondition}.
-- 粉丝圈人气：${persona.fansCount} 位死忠, 美誉等级: ${persona.reputation}/100.
-根据玩家昨天的行为以及个人身体指标，请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】，并全新计算【明日全新的三个量身定制行程】。
-还要为高冷、好感度仅有 ${persona.managerFavorability}/100 的闵经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
+- 当前体能指标（已安享一夜睡眠恢复后的明日真实体力）：体力值: ${pUpdateObj.energy}/100（提示：主角已经通过第二天的恢复机制得到了充足的精力充盈，不要再一味责备TA感到过度劳累和很虚弱了！）, 精神压力值: ${pUpdateObj.stress}/100, 身高: ${pUpdateObj.height}cm, 体重: ${pUpdateObj.weight.toFixed(1)}kg, 人体身体BMI值: ${calcBmi}, 胖瘦评估状态: ${bmiEvaluation}, 皮肤状况: ${pUpdateObj.skinCondition}.
+- 粉丝圈人气：${pUpdateObj.fansCount} 位死忠, 美誉等级: ${pUpdateObj.reputation}/100.
+根据玩家昨天的行为以及明日结算的身高、体重、BMI数值和胖瘦类型，请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】（请围绕上述具体BMI身材类型，让粉丝或黑粉在评论中激烈辩驳起来，使黑粉、唯粉和各路路人粉的激辩极其饱满、尖锐、贴合Kpop现实！）。并全新计算【明日全新的三个量身定制行程】。
+还要为高冷、好感度仅有 ${pUpdateObj.managerFavorability}/100 的闵经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
 
-此外，请生成一条清晨时分除闵经理人之外的其他角色（社长 'ceo'（好感值: ${persona.ceoFavorability}/100）、竞品大势艺人/对头 'rival'、或任一练习生队内队友例如组合主舞/主唱等）主动找主角发来的私聊消息（几率：75%）。
+此外，请生成一条清晨时分除闵经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'、或任一练习生队内队友例如组合主舞/主唱等）主动找主角发来的私聊消息（几率：75%）。
 
 请严格仅返回以下标准合法的纯 JSON 格式数据（注意：不要将其包裹在 markdown 代码块中，仅返回纯JSON）：
 {
@@ -354,8 +378,8 @@ export default function SchedulesApp({
 
     // High fidelity fallback if API fails or is not set up
     if (!parsedResult) {
-      const isFatigued = persona.energy < 40;
-      const isStressed = persona.stress > 65;
+      const isFatigued = pUpdateObj.energy < 40;
+      const isStressed = pUpdateObj.stress > 65;
       
       let narrative = `昨夜结束了今天的业务。由于清晨体重微微有起伏，黑粉立刻在论坛带节奏『看来爱豆根本没有容貌和自尊觉醒，上镜水肿成发面馒头了』。团粉与唯粉在论坛高能对线，你夜里顶着失眠的风险进行了消肿护理，肌肉有些僵硬。新的一天伴随着练习室空调的轰鸣拉开了血色帷幕……`;
       if (isFatigued) {
@@ -640,9 +664,9 @@ export default function SchedulesApp({
   };
 
   return (
-    <div id="schedules-app" className="rounded-2xl overflow-hidden bg-[#11131c] border border-slate-800 text-white p-4 flex flex-col justify-between h-full relative glass-panel">
+    <div id="schedules-app" className="rounded-2xl overflow-y-auto bg-[#11131c] border border-slate-800 text-white p-4 flex flex-col justify-between h-full min-h-0 relative glass-panel">
       
-      <div>
+      <div className="flex-1 flex flex-col min-h-0">
         <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-3">
           <div className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-purple-400" />
@@ -654,14 +678,14 @@ export default function SchedulesApp({
 
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Stamina Badge */}
-            <div className="bg-amber-950/45 border border-amber-500/25 rounded-full px-2.5 py-1 text-[10px] text-amber-300 font-mono flex items-center gap-1 shadow-sm">
+            <div className="bg-amber-950/45 border border-amber-500/25 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-amber-300 font-mono flex items-center gap-1 shadow-sm">
               <span className="animate-pulse">⚡️</span>
               <span>体力: <strong>{persona.energy}</strong>/100</span>
             </div>
 
-            <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2.5 py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
-              <span className="font-sans font-bold text-indigo-300 mr-1">📅 {getCalendarPeriod(persona.dayNumber).text}</span>
-              <span>第 <strong>{persona.dayNumber}</strong>/36 天</span>
+            <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
+              <span className="font-sans font-bold text-indigo-300 mr-1 hidden xs:inline">📅 {getCalendarPeriod(persona.dayNumber).text}</span>
+              <span><strong>{persona.dayNumber}</strong>/36天</span>
             </div>
           </div>
         </div>
@@ -683,14 +707,14 @@ export default function SchedulesApp({
         )}
 
         {/* Schedules list scrollable */}
-        <div className="space-y-1.5 overflow-y-auto max-h-[220px] pr-1">
+        <div className="space-y-1.5 overflow-y-auto max-h-[160px] xs:max-h-[200px] sm:max-h-[220px] md:max-h-[220px] pr-1 flex-1 min-h-0">
           {schedules.map((sch) => (
             <div
               key={sch.id}
               className={`p-3 rounded-xl border flex items-center justify-between transition-all ${sch.completed ? 'bg-slate-900/40 border-slate-800 text-slate-500' : 'bg-slate-950/80 border-white/5 hover:border-purple-500/20'}`}
             >
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5">
+              <div className="min-w-0 pr-2">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono font-bold uppercase ${sch.completed ? 'bg-slate-800 text-slate-500' : 'bg-purple-900/30 text-purple-300 border border-purple-500/10'}`}>
                     {sch.category}
                   </span>
@@ -699,17 +723,17 @@ export default function SchedulesApp({
                 <p className={`text-xs font-semibold mt-1 truncate ${sch.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
                   {sch.title}
                 </p>
-                <div className="flex gap-2 items-center text-[9px] text-slate-450 mt-1 font-mono text-slate-450">
+                <div className="flex gap-2 items-center text-[9px] text-slate-450 mt-1 font-mono text-slate-450 flex-wrap">
                   <span className="text-teal-400">魅力: +{sch.rewardPopularity}</span>
                   <span className="text-indigo-400">名气: +{sch.rewardReputation}</span>
-                  <span className="text-amber-400">消耗: {sch.energyCost}⚡️</span>
+                  <span className="text-amber-405">消耗: {sch.energyCost}⚡️</span>
                 </div>
               </div>
 
               <button
                 onClick={() => handlePerformSchedule(sch.id)}
                 disabled={sch.completed}
-                className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-0.5 ${sch.completed ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white cursor-pointer active:scale-95 shadow-sm'}`}
+                className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-0.5 shrink-0 ${sch.completed ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white cursor-pointer active:scale-95 shadow-sm'}`}
               >
                 {sch.completed ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />

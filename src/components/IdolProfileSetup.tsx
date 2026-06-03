@@ -842,15 +842,15 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           albumSales: startAlbumSales,
           money: startMoney,
           dayNumber: 1,
-          hasLover: isTrainee ? false : m.hasLover,
-          loverName: isTrainee ? "" : (m.hasLover ? m.loverName : ""),
-          relationshipStatus: isTrainee ? "single" : (m.hasLover ? "dating" : "single"),
-          scandalPrejudice: isTrainee ? 5 : (m.hasLover ? 35 : 8),
-          loverGender: isTrainee ? undefined : (m.hasLover ? m.loverGender : undefined),
-          loverAge: isTrainee ? undefined : (m.hasLover ? m.loverAge : undefined),
-          loverIdentity: isTrainee ? undefined : (m.hasLover ? m.loverIdentity : undefined),
-          loverMood: isTrainee ? undefined : (m.hasLover ? 85 : undefined),
-          romancePosition: isTrainee ? undefined : (m.hasLover ? (m.romancePosition || "right") : undefined),
+          hasLover: m.hasLover,
+          loverName: m.hasLover ? (m.loverName?.trim() || (m.loverGender === "female" ? "韩熙珍" : "宋承泽")) : "",
+          relationshipStatus: m.hasLover ? "dating" : "single",
+          scandalPrejudice: m.hasLover ? (isTrainee ? 45 : 35) : 8,
+          loverGender: m.hasLover ? m.loverGender : undefined,
+          loverAge: m.hasLover ? m.loverAge : undefined,
+          loverIdentity: m.hasLover ? m.loverIdentity : undefined,
+          loverMood: m.hasLover ? 85 : undefined,
+          romancePosition: m.hasLover ? (m.romancePosition || "right") : undefined,
           fansDistribution: isTrainee ? {
             otFans: 70,
             soloFans: 15,
@@ -876,10 +876,27 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       // If single and group: generate companions (4 companions to make 5 total). If duo/trio, keep 0 companion teammates as K-pop has 2-3 member group debuts.
       const numCompanionsNeeded = playMode === "single" ? (style === "group" ? 4 : 0) : 0;
       let companions = numCompanionsNeeded > 0 ? generateRandomTeammates(gender, numCompanionsNeeded) : [];
-      companions = companions.map(t => ({
-        ...t,
-        favorability: isTrainee ? 10 : 42
-      }));
+      
+      if (numCompanionsNeeded === 4 && companions.length === 4 && finalPersonas.length > 0) {
+        const playerRole = finalPersonas[0].roleInGroup;
+        const allRoles = rolesOptionsByGender[gender] || [];
+        // Extract 4 companion roles separate from the chosen player's role
+        const companionAvailableRoles = allRoles.filter(r => r !== playerRole);
+        
+        companions = companions.map((t, idx) => {
+          const assignedRole = companionAvailableRoles[idx] || t.role;
+          return {
+            ...t,
+            role: assignedRole,
+            favorability: isTrainee ? 10 : 42
+          };
+        });
+      } else {
+        companions = companions.map(t => ({
+          ...t,
+          favorability: isTrainee ? 10 : 42
+        }));
+      }
 
       onComplete(finalPersonas, companions);
     }

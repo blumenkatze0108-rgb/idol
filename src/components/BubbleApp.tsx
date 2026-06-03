@@ -81,16 +81,29 @@ export default function BubbleApp({
         systemPrompt = `You are simulated Kpop forum netizens and a funny teammate named "${randMate.name}". MBTI "${randMate.mbti}", role "${randMate.role}". Player Gender: "${persona.gender}". Since the player is ${persona.gender === 'female' ? 'female' : 'male'}, they must be addressed correctly by teammates and fans. Teammates must call a female player "欧尼" or "姐姐" or "她", or call a male player "哥" or "他/家伙". Make ${randMate.name} reply to the idol's Bubble to tease or support them, and fans going crazy with correct addressing terms!`;
       }
 
+      // Construct a pristine layout of teammates and playable members to prevent AI hallucinations (Requirement 14 & 15)
+      const teammateNamesString = teammates && teammates.length > 0
+        ? teammates.map(t => `${t.name} (艺名: ${t.stageName || t.name})`).join(", ")
+        : "暂无";
+      const selfNamesString = personas.map(p => `${p.name} (艺名: ${p.stageName})`).join(", ");
+
+      systemPrompt += `\n\n【极其重要：真实自创组合名册与禁止伪造队友名字】
+当前自创组合 "${persona.groupName}" 内的真实成员名册为：
+- 玩家操控的合法成员: [${selfNamesString}]
+- 生成的系统搭档队友: [${teammateNamesString}]
+
+任何模拟粉丝评论、热搜回帖或队友连线回复讨论时，如果涉及到主角队内的其他成员的名字，你【绝对且必须】只能使用上方名册里列出的真实队友艺名或姓名！
+【CRITICAL SAFETY RULE】: DO NOT HALLUCNATE OR INVENT ANY PERSON RECONSTRUCTION NAME! 如果玩家或粉丝提及队内成员，你只能从上方名册中挑选真实定义过的队员进行打趣互动。绝对禁止任何自创、捏造或虚构未在系统上登记的韩文/中文等随机队友名字。有且仅有这些队员存在，这能使你的反馈绝对忠实于用户的设定！`;
+
       if (personas && personas.length > 1) {
         const groupDesc = personas.map((p, pIdx) => {
           return `- 成员 ${pIdx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}, MBTI: ${p.mbti}`;
         }).join("\n");
-        systemPrompt += `\n\n【极其重要：多角色成员交互背景】
+        systemPrompt += `\n\n【多角色成员交互背景（多开控制）】
 这个 Bubble 属于组合团体 "${persona.groupName}"，所属经纪公司为 "${persona.company}"。
-玩家当前可切换控制的多名数自创艺名偶像为：
+玩家当前可切换控制的多名自创偶像为：
 ${groupDesc}
-任何成员（如 randMate 即其中其他队员）以及粉丝说话时，务必完全尊重并认知该自创组合阵容！当配角交互与粉丝热聊时，可以随时带上、讨论、或者公开秀恩爱拉踩这些同组合成员，以极高沉浸式体现亲密合伙情谊与戏谑竞技！
-极其重要限制：本组合仅由上述 [${personas.map(p => p.stageName).join(", ")}] 成员构成，绝对禁止脑补出任何其他虚构姓名、假队友！所有人只应谈论这些自创组合成员。`;
+当进行配角发言或粉丝激辩时，可以带上、讨论、拉踩、或者多向秀这些组合成员，展现真实的队友戏谑和合体营业质感！`;
       }
 
       const response = await safeFetch("/api/gemini/generate", {
@@ -175,7 +188,7 @@ ${groupDesc}
       </div>
 
       {/* Bubble interactive chat stream */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[300px] md:max-h-[360px]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 md:max-h-[360px]">
         {bubbleMessages.map((msg) => {
           const isIdol = msg.sender === "idol";
           return (
