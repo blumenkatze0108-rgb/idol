@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { ChatContact, ChatMessage, IdolPersona, SimulatedTeammate } from "../types";
+import { ChatContact, ChatMessage, IdolPersona, SimulatedTeammate, getCurrentAge } from "../types";
 import { MessageSquare, Send, Zap, User, AlertCircle, Smile } from "lucide-react";
 import { safeFetch } from "./apiHelper";
 
@@ -39,6 +39,33 @@ export default function KakaoTalkApp({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const selectedContact = chatContacts.find((c) => c.id === selectedContactId) || chatContacts[0];
+
+  const getContactAge = (contactId: string): number => {
+    const yearsPassed = Math.floor((persona.dayNumber - 1) / 36);
+    if (contactId === "manager") return 32 + yearsPassed;
+    if (contactId === "ceo") return 48 + yearsPassed;
+    if (contactId === "rival") return 19 + yearsPassed;
+    if (contactId === "lover") {
+      const playerStartAge = persona.age ?? 18;
+      if (persona.loverAge === "older") return playerStartAge + 2 + yearsPassed;
+      if (persona.loverAge === "younger") return Math.max(15, playerStartAge - 2) + yearsPassed;
+      return playerStartAge + yearsPassed;
+    }
+    // For teammates, find them in the teammates list
+    const foundMate = teammates.find(t => t.id === contactId);
+    if (foundMate) {
+      return (foundMate.age ?? 18) + yearsPassed;
+    }
+    // Also check if it's one of the playable twins!
+    if (contactId.startsWith("player_mate_")) {
+      const otherIdx = parseInt(contactId.replace("player_mate_", ""), 10);
+      const otherP = personas?.[otherIdx];
+      if (otherP) {
+        return (otherP.age ?? 18) + yearsPassed;
+      }
+    }
+    return 18 + yearsPassed; // Fallback
+  };
 
   const handleLoverAction = (actionType: "date" | "gift" | "letter" | "reconcile") => {
     if (!persona.hasLover || !onUpdatePersona) return;
@@ -210,6 +237,40 @@ export default function KakaoTalkApp({
     onAddLog(`[暂存于待发队列] 已成功向【${selectedContact.name}】投递了一条暂存消息。您可以切换到其他成员继续留言，留言完毕后点击左下角的「一键拉取所有角色回复」统一呼叫 AI 抓取回复！`);
   };
 
+  // Check Character-based Jaccard similarity to filter out semantic duplicates
+  const isSemanticDuplicate = (text1: string, text2: string): boolean => {
+    if (!text1 || !text2) return false;
+    const clean1 = text1.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"' \n\s；：，。！？、“”（）]/g, "");
+    const clean2 = text2.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?"' \n\s；：，。！？、“”（）]/g, "");
+    if (clean1 === clean2) return true;
+    
+    // If one is highly inclusive of the other and they are of generic length
+    if (clean1.includes(clean2) || clean2.includes(clean1)) {
+      if (Math.min(clean1.length, clean2.length) > 8) {
+        return true;
+      }
+    }
+    
+    // Calculate character bigrams
+    const set1 = new Set<string>();
+    for (let i = 0; i < clean1.length - 1; i++) {
+      set1.add(clean1.substring(i, i + 2));
+    }
+    const set2 = new Set<string>();
+    for (let i = 0; i < clean2.length - 1; i++) {
+      set2.add(clean2.substring(i, i + 2));
+    }
+    
+    if (set1.size === 0 || set2.size === 0) return false;
+    let intersection = 0;
+    set1.forEach(val => {
+      if (set2.has(val)) intersection++;
+    });
+    
+    const similarity = intersection / Math.max(set1.size, set2.size);
+    return similarity > 0.65; // Highly similar expressions get deduplicated (65% bigram match)
+  };
+
   // Central trigger to process all queued messages in parallel (Requirement 9)
   const handleBatchProcessReplies = async () => {
     const queuedCount = getQueuedCount();
@@ -220,6 +281,7 @@ export default function KakaoTalkApp({
 
     const newHistories = { ...chatHistories };
     const updatedContacts = [...chatContacts];
+    const newlyGeneratedReplies: string[] = [];
 
     // Identify contacts with queued messages
     const contactsToProcess = chatContacts.filter((c) => 
@@ -234,6 +296,16 @@ export default function KakaoTalkApp({
       // Combine messages to understand user intent
       const userFullQuery = queuedIdolMsgs.map((m) => m.text).join(" 同时还有: ");
       
+      // Get the last 3 messages as history context (excluding system or current queue messages)
+      const recentHistoryMsgs = msgs
+        .filter((m) => m.sender !== "system" && !m.queueOnly)
+        .slice(-3);
+      
+      const historyContext = recentHistoryMsgs.length > 0
+        ? `\n【当前对话最近上文历史（请以此作为最近沟通背景，绝对禁止复读或使用其中已说过的相同语气词、核心句式或类似想法，保持回复的连续性与新颖度）：】\n` + 
+          recentHistoryMsgs.map(m => `${m.sender === "idol" ? "我" : contact.name}: "${m.text}"`).join("\n")
+        : "";
+
       // Create character instruction context (Requirement 13 & 15)
       let customSystemPrompt = `You are a character in Korea's Entertainment world replying via KakaoTalk. Do not break character. Keep it in Chinese.
       Your Name: "${contact.name}"
@@ -258,7 +330,14 @@ export default function KakaoTalkApp({
       
       Player is a ${persona.startType === 'trainee' ? '训练生' : '出道人气爱豆'} named "${persona.name}" (Stage name: ${persona.stageName}), who is of ${persona.nationality === 'korean' ? '韩国本土' : '外籍绿卡员'} nationality. 
       Note: Korean entertainment companies may show subtle bias against green-card members. Use this background if favorability is low or nationality is foreign green card.
+      Current Artist Ageing Factor: ${persona.ageing_factor || 0} out of a long-term contract career tracking scale (0 = newbie, 1 = steady maturing, 2 = veteran senior, 3+ = legendary star).
+      Tone adaptation rules based on Ageing Factor:
+      - If ageing_factor is 0: Treat them with basic guidance or standard trainee/rookie strict instructions.
+      - If ageing_factor is 1: Be slightly more respectful or subtle in acknowledging their growth.
+      - If ageing_factor >= 2: Speak to them in a more mature, refined, professional colleague-to-colleague tone rather than random yelling, showing respect for their established seniority, veteran experience and veteran patience.
       If favorability is < 30 (for non-lovers), be cold, formal, and micro-aggressive. If favorability is > 70, be very friendly, tease, or speak warmly. Include authentic Kpop slang (like "Fighting", "Wink", "美容室", "主打歌", "出圈").`;
+
+      customSystemPrompt += historyContext;
 
       if (personas && personas.length > 1) {
         const groupDesc = personas.map((p, pIdx) => {
@@ -298,12 +377,68 @@ ${groupDesc}
           throw new Error("Unable to parse server API response as JSON.");
         }
         
-        // Remove queue labels and add reply
+        let replyText = data.text || "呀，收到你的消息啦。练习室见！";
+
+        // Remove queue labels
         const cleanedMsgs = msgs.map(m => ({ ...m, queueOnly: false }));
+
+        // Check duplication against both previous history and other replies generated in this batch
+        const recentHistoryTexts = msgs
+          .filter(m => m.sender !== "system" && !m.queueOnly)
+          .slice(-4)
+          .map(m => m.text);
+
+        let isDup = false;
+        for (const prevText of [...recentHistoryTexts, ...newlyGeneratedReplies]) {
+          if (isSemanticDuplicate(replyText, prevText)) {
+            isDup = true;
+            break;
+          }
+        }
+
+        if (isDup) {
+          // Change/Fallback the reply to something completely different and customized
+          let fallbackPool: string[] = [];
+          
+          if (contact.id === "lover") {
+            fallbackPool = [
+              "好啦，听你的，等结束了我们悄悄联络，千万要保护好自己喔。😘",
+              "傻瓜，知道你压力大。等晚上我跑腿去买消肿美式，咱们晚点偷偷见面！🤫",
+              "收到啦！刚才差点被拍到在看手机，晚点回宿舍我给你发照片，加油！",
+              "明白啦！我也在想你，刚才跳完舞蹈全身都湿透了，晚上洗完澡我们再详细聊哦。✨"
+            ];
+          } else if (contact.role === "manager" || contact.id === "manager") {
+            fallbackPool = [
+              "行了，废话少说。今天的称重测评和考勤抓紧时间，表现不好下张专辑资源直接推后！",
+              "收到你的进度汇报了，下午两点在公司会议室，代表在等你的声乐考核，机灵点！",
+              "今天美容室的行程已经核准了。记住，在媒体面前情绪管理第一，千万别说不该说的话。"
+            ];
+          } else if (contact.role === "member" || contact.id === "ceo") {
+            fallbackPool = [
+              "哈哈，收到啦！等会儿去排练室我们单独对一下那段主打曲的副歌，Fighting！",
+              "收到！中午在宿舍等我，我们一起用那个新的低卡油醋汁拌点轻食鸡胸肉沙拉！🥣",
+              "明白明白！那我先把闹钟调好。昨晚你在Weverse上被热搜安利了，超级厉害啊！✨",
+              "刚才看舞台走位回放，你昨天的直拍效果极好，简直是Killing part的神！今天也要加油啊！"
+            ];
+          } else {
+            fallbackPool = [
+              "原来如此！你的小窗留言我收到啦，这真是帮了大忙了，一起加油吧！",
+              "哈哈，收到你的小窗消息啦。我们美容室/练习室见，今天也要元气满满地努力哦！",
+              "呀，了解你的想法啦！那我们继续按照既定行程正常推进，千万不要感冒了！"
+            ];
+          }
+          
+          const randIdx = Math.floor(Math.random() * fallbackPool.length);
+          replyText = fallbackPool[randIdx];
+        }
+
+        // Record this reply content to prevent other contacts from sending a duplicate in the same batch
+        newlyGeneratedReplies.push(replyText);
+
         cleanedMsgs.push({
           id: `reply_${Date.now()}_${contact.id}`,
           sender: "other",
-          text: data.text || "呀，收到你的消息啦。练习室见！",
+          text: replyText,
           time: "刚刚",
           queueOnly: false
         });
@@ -345,7 +480,7 @@ ${groupDesc}
         if (idx !== -1) {
           updatedContacts[idx] = {
             ...updatedContacts[idx],
-            lastMessage: data.text ? data.text.substring(0, 30) + "..." : "收到你的消息了，谢谢！",
+            lastMessage: replyText.substring(0, 30) + (replyText.length > 30 ? "..." : ""),
             unread: true,
             time: "刚刚"
           };
@@ -398,7 +533,10 @@ ${groupDesc}
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-800 truncate">{c.name}</span>
+                      <div className="flex items-center min-w-0">
+                        <span className="text-xs font-bold text-slate-800 truncate">{c.name}</span>
+                        <span className="text-[8px] text-amber-800 bg-amber-500/10 font-mono px-1 rounded ml-1 font-bold shrink-0">{getContactAge(c.id)}岁</span>
+                      </div>
                       <span className="text-[9px] text-slate-400 font-mono shrink-0">{c.time}</span>
                     </div>
                     <p className="text-[10px] text-slate-500 truncate mt-0.5">
@@ -455,9 +593,10 @@ ${groupDesc}
               </div>
             )}
             <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 animate-fadeIn">
                 <span className="text-xs font-bold text-slate-800 truncate">{selectedContact.name}</span>
                 <span className="text-[9px] bg-slate-250 font-mono px-1.5 py-0.5 rounded text-slate-600 shrink-0">{selectedContact.mbti}</span>
+                <span className="text-[9px] bg-amber-500/10 font-mono px-1.5 py-0.5 rounded text-amber-700 font-extrabold shrink-0">{getContactAge(selectedContact.id)}岁</span>
               </div>
               <p className="text-[9px] text-slate-500 flex items-center gap-1.5 truncate">
                 {selectedContact.id === "lover" ? (

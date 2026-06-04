@@ -56,6 +56,7 @@ export interface IdolPersona {
   albumSales: number; // Cumulative physical album sales
   money: number; // Cash asset (₩ ten thousand, payout only after debt cleared)
   dayNumber: number; // Current simulation day
+  ageing_factor?: number; // Career age multiple of 36 days index
   
   // Romance Option - Requirement & Custom Option
   hasLover?: boolean;
@@ -89,6 +90,7 @@ export interface SimulatedTeammate {
   favorability: number; // 0-100
   trait: string; // e.g. "Arrogant genius", "Clumsy vocal", "Quiet listener"
   avatar: string;
+  age?: number;
 }
 
 export interface ChatContact {
@@ -255,4 +257,10 @@ export function getBirthdayPeriod(bdayStr: string): { month: number; period: "ea
     period,
     text: `${month}月${periodText}`
   };
+}
+
+export function getCurrentAge(initialAge: number | undefined, dayNumber: number, fallbackDefault = 18): number {
+  const base = initialAge ?? fallbackDefault;
+  const yearsPassed = Math.floor((dayNumber - 1) / 36);
+  return base + yearsPassed;
 }

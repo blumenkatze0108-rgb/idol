@@ -224,6 +224,8 @@ export default function SchedulesApp({
     // 1. Prepare secondary stats calculated client-side as base update
     const pUpdateObj = { ...persona };
     pUpdateObj.dayNumber = pUpdateObj.dayNumber + 1;
+    const ageing_factor = Math.floor((pUpdateObj.dayNumber - 1) / 36);
+    pUpdateObj.ageing_factor = ageing_factor;
     pUpdateObj.energy = Math.min(100, pUpdateObj.energy + 50); // rest Overnight
     pUpdateObj.stress = Math.max(0, pUpdateObj.stress - 15);
     
@@ -289,9 +291,16 @@ export default function SchedulesApp({
 - 专属名字/艺名：${persona.name} / ${persona.stageName}
 - 初始成长模式：${persona.startType === "trainee" ? "处于三大厂高压下的练习期债务生" : "刚发布专辑的正式打歌主唱爱豆"}
 - 组合模式：${persona.groupName} (${persona.style})
-- 当前体能指标（已安享一夜睡眠恢复后的明日真实体力）：体力值: ${pUpdateObj.energy}/100（提示：主角已经通过第二天的恢复机制得到了充足的精力充盈，不要再一味责备TA感到过度劳累和很虚弱了！）, 精神压力值: ${pUpdateObj.stress}/100, 身高: ${pUpdateObj.height}cm, 体重: ${pUpdateObj.weight.toFixed(1)}kg, 人体身体BMI值: ${calcBmi}, 胖瘦评估状态: ${bmiEvaluation}, 皮肤状况: ${pUpdateObj.skinCondition}.
+- 当前体能指标（已安享一夜睡眠恢复后的明日真实体力）：体力值: ${pUpdateObj.energy}/100（提示：主角已经通过第二天的恢复机制得到了充足的精力充盈，不要再一味责备TA感到过度劳累 and 很虚弱了！）, 精神压力值: ${pUpdateObj.stress}/100, 身高: ${pUpdateObj.height}cm, 体重: ${pUpdateObj.weight.toFixed(1)}kg, 人体身体BMI值: ${calcBmi}, 胖瘦评估状态: ${bmiEvaluation}, 皮肤状况: ${pUpdateObj.skinCondition}.
 - 粉丝圈人气：${pUpdateObj.fansCount} 位死忠, 美誉等级: ${pUpdateObj.reputation}/100.
-根据玩家昨天的行为以及明日结算的身高、体重、BMI数值和胖瘦类型，请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】（请围绕上述具体BMI身材类型，让粉丝或黑粉在评论中激烈辩驳起来，使黑粉、唯粉和各路路人粉的激辩极其饱满、尖锐、贴合Kpop现实！）。并全新计算【明日全新的三个量身定制行程】。
+- 职业资历与衰老成熟指数：ageing_factor: ${pUpdateObj.ageing_factor || 0}（说明：每36天为一个合约年。0 = 青涩活泼的新手练习生期；1 = 沉淀磨砺出的成熟过渡阶段；2 = 资深、练达、自持的K-Pop大前辈阶段；3+ = 殿堂级成熟前辈顶峰阶段，能自如控制情绪并宠辱不惊）。
+
+请根据上述的 ageing_factor 资历指标，精准微调 AI 生成的角色对话语气（包括闵经理人发来的 managerMessage 消息以及主动找主角的 proactiveMessage.text 未读信息）：
+- 如果 ageing_factor 为 0：角色言谈表现得非常直率、对新人严格，指导或嘱咐多带有教训和指点口吻。
+- 如果 ageing_factor 为 1：由于艺人积累了一年多的行当沉淀，配角说话能微露出对你业务和心理成熟度的认可与尊重，不再一味怒骂。
+- 如果 ageing_factor >= 2：语气转向极其稳重、妥帖、饱经世故的资深对话口吻，少了一些毛躁的呵斥敲打，多了一些对待行业资深老手、成熟老艺人的成熟理解，甚至会有更多的商务关切、顶层演艺方向寄语与稳重自持的信任嘱托。
+
+请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】（请围绕上述具体BMI身材类型，让粉丝或黑粉在评论中激烈辩驳起来，使黑粉、唯粉和各路路人粉的激辩极其饱满、尖锐、贴合Kpop现实！）。并全新计算【明日全新的三个量身定制行程】。
 还要为高冷、好感度仅有 ${pUpdateObj.managerFavorability}/100 的闵经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
 
 此外，请生成一条清晨时分除闵经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'、或任一练习生队内队友例如组合主舞/主唱等）主动找主角发来的私聊消息（几率：75%）。
@@ -299,7 +308,7 @@ export default function SchedulesApp({
 请严格仅返回以下标准合法的纯 JSON 格式数据（注意：不要将其包裹在 markdown 代码块中，仅返回纯JSON）：
 {
   "narrative": "中文。昨晚到今天清晨的粉丝评论/爆料，以及主角的各项健康指数、皮肤细节变迁反馈，限120~180字。",
-  "managerMessage": "闵经理人发来的实时KakaoTalk未读信息文本。性格要求对新人和外籍略带刻薄，若昨日偷懒则极其严厉，若昨日努力则要求高压再干。",
+  "managerMessage": "根据 ageing_factor 特点撰写。闵经理人发来的实时KakaoTalk未读信息文本。性格要求对新人和外籍略带刻薄（在 ageing_factor = 0 时尤甚），若 ageing_factor 较高、昨日努力或好感度高则转为更专业稳健的工作探讨语调。",
   "schedules": [
     {
       "id": "new_sch_a",
@@ -333,7 +342,7 @@ export default function SchedulesApp({
   "proactiveMessage": {
     "senderId": "选填，可以是 'ceo', 'rival'，或者组合队内队友的名字，若概率不触发则设为 null。若是队内队友，设为组合内任一个人的ID或英文拼写",
     "senderName": "具体显示的名字（例如 '社长李代表', '大势爱豆敏太' 等）",
-    "text": "主动给主角发来的私聊未读消息（限80字以内，符合人设性格MBTI，如果是ceo好感低则敲打，队友则关心或者吐槽，rival则假意祝福或者竞争约话）"
+    "text": "根据 ageing_factor 调优口吻。主动给主角发来的私聊未读消息（限80字以内，符合人设性格MBTI，如果是ceo好感低则敲打，队友则关心或者吐槽，rival则假意祝福或者竞争约话）"
   }
 }`;
 
@@ -388,11 +397,33 @@ export default function SchedulesApp({
         narrative = `由于昨夜你极度透支的精神压力，回到宿舍后，你的下巴附近爆发了几颗红肿的痘痘，韩网站姐的新直拍连夜流传开，粉卷里都在关心你的皮肤红肿状况。代表更是在清晨晨会上敲了敲桌子叹了口气。今天不得不重新规划极其残忍的皮肤科与特训。`;
       }
 
+      let managerMessage = persona.managerFavorability < 35 
+        ? "【KakaoTalk - 闵室长】\n呀！昨晚的演出你那个转身动作是不是慢了半拍？高价买来的编舞概念全被你给糟蹋了！今天的极饿体脂对抗你最好动作快一点，再让我看到上镜有赘肉，年末C位直接让给智敏！" 
+        : "【KakaoTalk - 闵室长】\n表现得还算凑合，继续保持。今天的行程依旧满档，我帮你准备的高能消肿水一已经寄到清潭洞皮肤科前台里了，做完护理立马回公司声乐室加练！";
+
+      const factor = pUpdateObj.ageing_factor || 0;
+      if (factor === 1) {
+        managerMessage = "【KakaoTalk - 闵室长】\n你已经度过了第一年的新手期，如今举手投足成熟沉稳了许多。今天的业务行程我发你了，放手去做，团队需要你拿出资深爱豆的担当和沉淀气质来，继续保持高标准运营！";
+      } else if (factor >= 2) {
+        managerMessage = "【KakaoTalk - 闵室长】\n作为厂牌的资深元老和大前辈，咱们之间就不用那些客套教训了。刚才和PD、李社长开会重点提了你接下来的长期演艺身价定位，希望今天你也能展现最巅峰和完美练达的舞台风范。";
+      }
+
+      let proactiveMsgObj = null;
+      if (factor > 0) {
+        const senderText = factor === 1 
+          ? "【KakaoTalk - 社长李代表】\n不错，经过这一年的磨练你的行事说话是稳重成熟了不少。未来厂牌和新人的风向标还得看你的表现，加油吧。"
+          : "【KakaoTalk - 社长李代表】\n刚才听闵经纪人说你在决策和应答方面大显沉稳练达的大前辈风采。我很欣慰能在这个顶峰期见证你心智的蜕变成熟，厂牌很看好你的高阶表现。";
+        proactiveMsgObj = {
+          senderId: "ceo",
+          senderName: "厂牌代表李秉旭",
+          text: senderText
+        };
+      }
+
       parsedResult = {
         narrative: narrative,
-        managerMessage: persona.managerFavorability < 35 
-          ? "【KakaoTalk - 闵室长】\n呀！昨晚的演出你那个转身动作是不是慢了半拍？高价买来的编舞概念全被你给糟蹋了！今天的极饿体脂对抗你最好动作快一点，再让我看到上镜有赘肉，年末C位直接让给智敏！" 
-          : "【KakaoTalk - 闵室长】\n表现得还算凑合，继续保持。今天的行程依旧满档，我帮你准备的高能消肿水一已经寄到清潭洞皮肤科前台里了，做完护理立马回公司声乐室加练！",
+        managerMessage: managerMessage,
+        proactiveMessage: proactiveMsgObj,
         schedules: [
           {
             id: `sch_g_${Date.now()}_1`,

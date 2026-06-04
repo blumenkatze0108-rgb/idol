@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { IdolPersona, SimulatedTeammate } from "../types";
-import { TrendingUp, User, ShieldAlert, Heart, Calendar, Activity, Zap, Coins, Sliders, Play } from "lucide-react";
+import { TrendingUp, User, ShieldAlert, Heart, Calendar, Activity, Zap, Coins, Sliders, Play, Brain, Sparkles, Smile, MessageSquare } from "lucide-react";
 import { RadialBarChart, RadialBar, Tooltip, ResponsiveContainer } from "recharts";
+import { safeFetch } from "./apiHelper";
 
 interface FandomAnalyticsProps {
   persona: IdolPersona;
@@ -149,7 +150,13 @@ export default function FandomAnalyticsApp({
   onUpdatePersona,
   onAddLog
 }: FandomAnalyticsProps) {
-  const [activeSubTab, setActiveSubTab] = useState<"fandom" | "body" | "dermatology">("fandom");
+  const [activeSubTab, setActiveSubTab] = useState<"fandom" | "body" | "dermatology" | "therapy">("fandom");
+
+  // --- AI Psychologist states ---
+  const [therapyInput, setTherapyInput] = useState("");
+  const [therapyResult, setTherapyResult] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [stressDelta, setStressDelta] = useState<number | null>(null);
 
   // --- New Food Simulator states ---
   const [activeEatingFood, setActiveEatingFood] = useState<any | null>(null);
@@ -461,6 +468,98 @@ export default function FandomAnalyticsApp({
     onUpdatePersona(p);
   };
 
+  const handleTherapySubmit = async () => {
+    if (!therapyInput.trim()) return;
+    setIsAnalyzing(true);
+    setTherapyResult(null);
+    setStressDelta(null);
+
+    try {
+      const customSystemPrompt = `You are Dr. Kim, a highly specialized entertainment-industry clinical psychologist working for the agency's mental care division. Your job is to listen carefully to the idol (the player), analyze their current situation (fandom anxiety, physical exhaustion, group relationships, sasaeng stalker stress), and offer a profound, warm, empathetic, and actionable medical/psychological advice.
+      Because you are a professional, you must assess the pressure change quantitatively. You must output a stress delta (stress change) between -35 (extremely relieving) and +5 (very stressful or sobering advice).
+      At the very end of your reply, write EXACTLY: [STRESS_CHANGE: -15] (replace -15 with your assessed stress change, which must be an integer, e.g., -20, -10, etc., depending on how comforting and effective your analysis is).
+      Keep your advice warm and structured, in professional clinical counselor tone, in Chinese, about 3-4 paragraphs. Use encouraging and warm advice.`;
+
+      const promptContext = `
+      Idol Profile:
+      - Name: "${persona.name}" (Stage Name: "${persona.stageName || "无"}")
+      - Group: "${persona.groupName}"
+      - Gender: "${persona.gender === "female" ? "女" : "男"}"
+      - MBTI: "${persona.mbti}"
+      - Current Physical and Mental Stats:
+        - Stress Level: ${persona.stress} / 100
+        - Energy Level: ${persona.energy} / 100
+        - Weight: ${persona.weight.toFixed(1)} kg, Height: ${persona.height} cm
+        - Skin Condition: "${persona.skinCondition}"
+      - Fandom Landscape:
+        - OT deadhard fans count: ${persona.fansCount} (${otFandom}%)
+        - CP Shippers: ${cpShipper}%
+        - Malicious Antifans & Sasaengs: ${antiFans + sasaengStalker}%
+      
+      User's Currently Confessed Feeling / Problem:
+      "${therapyInput}"
+      
+      Dr. Kim, please analyze and reply warmly. Don't forget the required [STRESS_CHANGE: <integer>] tag.
+      `;
+
+      const response = await safeFetch("/api/gemini/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: promptContext,
+          systemInstruction: customSystemPrompt,
+          customApiKey,
+          customModel,
+          customApiEndpoint
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error("接口返回状态异常");
+      }
+
+      const data = await response.json();
+      const rawText = data.text || "在这条光芒万丈的路上，你已经做得很好了。放松呼吸，Kim医生一直在这里支持你。 [STRESS_CHANGE: -12]";
+      
+      // Parse stress level change
+      let parsedDelta = -12; // Default fallback
+      const deltaMatch = rawText.match(/\[STRESS_CHANGE:\s*(-?\d+)\]/);
+      if (deltaMatch) {
+        parsedDelta = parseInt(deltaMatch[1], 10);
+      }
+
+      // Clean the tag out of the visible text so it looks seamless and pristine
+      const cleanedText = rawText.replace(/\[STRESS_CHANGE:\s*-?\d+\]/gi, "").trim();
+
+      const p = { ...persona };
+      const oldStress = p.stress;
+      const newStress = Math.min(100, Math.max(0, oldStress + parsedDelta));
+      p.stress = newStress;
+
+      setTherapyResult(cleanedText);
+      setStressDelta(parsedDelta);
+      onUpdatePersona(p);
+
+      const sign = parsedDelta >= 0 ? "+" : "";
+      onAddLog(`【AI 心理诊疗】Dr. Kim 医生完成深度倾诉分析。压力变动：${sign}${parsedDelta}%（降至 ${newStress}%）。`);
+    } catch (error) {
+      console.error("AI 心理咨询大模型调用失败:", error);
+      onAddLog("【心理诊疗异常】呼叫 Dr. Kim 医生失败，原因由于特训高压或接口不可达，系统自动由助理进行基础心理安慰。");
+      
+      const fallbackDelta = -12;
+      const p = { ...persona };
+      const oldStress = p.stress;
+      const newStress = Math.min(100, Math.max(0, oldStress + fallbackDelta));
+      p.stress = newStress;
+
+      setTherapyResult(`（助理温馨慰问 fallback）\n孩子，演艺圈的压力确实很重。不论黑粉恶意恶评如何中伤你，也别忘了那些手举灯牌、在台下撕心裂肺喊你名字的团粉。在保姆车里喝杯热红豆排水汤，睡一觉吧。Kim 医生下一次特诊一定会准时到达。`);
+      setStressDelta(fallbackDelta);
+      onUpdatePersona(p);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   return (
     <div id="fandom-analytics-app" className="flex flex-col h-full rounded-2xl overflow-hidden bg-[#0d111a] border border-slate-800 text-white glass-panel">
       
@@ -492,6 +591,12 @@ export default function FandomAnalyticsApp({
             className={`px-3 py-1 text-[10px] rounded-lg transition-all ${activeSubTab === "dermatology" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
           >
             江南美容/塑形
+          </button>
+          <button
+            onClick={() => setActiveSubTab("therapy")}
+            className={`px-3 py-1 text-[10px] rounded-lg transition-all ${activeSubTab === "therapy" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
+          >
+            🧠 AI心理医生
           </button>
         </div>
       </div>
@@ -994,6 +1099,166 @@ export default function FandomAnalyticsApp({
                   })}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {activeSubTab === "therapy" && (
+          <div className="space-y-4 animate-fadeIn">
+            <div className="bg-gradient-to-r from-purple-900/40 to-indigo-900/30 border border-indigo-500/25 rounded-2xl p-4 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
+              <div className="space-y-1">
+                <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest block font-mono">🌟 AETHER LABEL EXCLUSIVE MENTAL CARE</span>
+                <h4 className="text-sm font-bold text-slate-100 flex items-center gap-1.5 font-sans">
+                  <Brain className="w-4 h-4 text-indigo-400" />
+                  公司专属 AI 心理诊疗室 (Clinical AI Psychologist)
+                </h4>
+                <p className="text-[10px] text-slate-400 max-w-xl">
+                  身为高曝光偶像或训练生，高强度竞争和负面舆论常会导致严重的精神紧崩。Kim 医生能深切共情网络恶意暴民、控卡目标、极度疲累和私生粉骚扰为您带来的精神痛苦，为您量身定制临床心里关怀并即刻调养您的<b>精神压力值(Stress)</b>。
+                </p>
+              </div>
+
+              {/* Stress indicators badge */}
+              <div className="bg-[#121824] p-3 rounded-xl border border-white/5 shrink-0 flex items-center gap-3">
+                <div className="text-center">
+                  <span className="text-[9px] text-slate-400 block font-mono">当前压力级别</span>
+                  <span className="text-base font-extrabold font-mono text-rose-400">{persona.stress}%</span>
+                </div>
+                <div className="h-8 w-[1px] bg-slate-800" />
+                <div className="w-24">
+                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-gradient-to-r from-indigo-500 to-rose-500 h-full" style={{ width: `${persona.stress}%` }} />
+                  </div>
+                  <span className="text-[9px] text-slate-500 mt-1 block text-right font-mono">
+                    {persona.stress < 30 ? "😀 心态舒畅" : persona.stress < 75 ? "⚠️ 焦虑积压" : "🥀 精神崩溃边缘"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Interactive Form Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+              
+              {/* Left Form column (3 cols) */}
+              <div className="lg:col-span-3 bg-slate-900/60 rounded-2xl p-4 border border-white/5 space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="therapy-feeling-input" className="text-xs font-bold text-purple-300 block flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5 text-purple-400" />
+                    请向 Kim 医生描述您近期的痛苦遭遇或心里感受：
+                  </label>
+                  <textarea
+                    id="therapy-feeling-input"
+                    value={therapyInput}
+                    onChange={(e) => setTherapyInput(e.target.value)}
+                    placeholder="例：最近感觉练习室跳得再好，闵经纪人依旧冷言嘲讽。网上还有黑粉散布恶意爆料，私生饭也频繁发送骚扰短信，卡路里控重在严重困扰我，非常空虚焦虑..."
+                    className="w-full h-[110px] bg-slate-950 border border-slate-800 focus:border-indigo-600 rounded-xl p-3 text-xs text-slate-200 outline-none resize-none transition-all placeholder:text-slate-600 focus:ring-1 focus:ring-indigo-500/25"
+                  />
+                </div>
+
+                {/* Preset Suggestions Quick-click buttons */}
+                <div className="space-y-1.5">
+                  <span className="text-[9px] font-mono text-slate-400 block">💡 快捷选择近期困扰（快速加载情境模板）：</span>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {[
+                      {
+                        label: "🤐 极具不适的私生饭电话与短信骚扰",
+                        text: "昨天下午新住宅的安全密码门锁，竟然被私生粉丝高价买通不法渠道获取，半夜还收到了他们拍我宿舍大门包装袋的恐吓短信，整夜后背发凉、安全感到达谷底，现在一听到手机震动就心惊肉跳..."
+                      },
+                      {
+                        label: "🥊 网上饭圈恶意P图与抹黑谣言",
+                        text: "最近在网络吃瓜论坛 and Weverse上，有黑子恶意截取我在镜头前早晨浮肿的未修丑图大肆造谣整形，甚至买高赞辱骂我和队友抢占Center资源。真的好压抑、好寒心，明明我每天都练到大汗淋漓啊..."
+                      },
+                      {
+                        label: "🥗 严酷至极的身材控重与绝食压力",
+                        text: "闵室长命令我今天必须把体重秤重压到41kg，哪怕高卡路里深夜偷吃一小勺雪冰，也会拉响极度严厉的查寝黑脸警告。全身酸痛却每天只准啃水煮鸡胸，我觉得脑部多巴胺干涸，好想放声大哭..."
+                      },
+                      {
+                        label: "🎤 月度考核及打歌大盘恐慌情绪",
+                        text: "马上就要进行本月的打歌代表及PD月度声乐高音考核了。我很怕在一分半的Killing Part音色破音被指控为划水爱豆，昨晚做了一整夜在电视台后台跌落的噩梦，神经绷得紧紧的，完全无法入睡..."
+                      }
+                    ].map((item, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setTherapyInput(item.text)}
+                        className="px-2 py-1 text-[9px] bg-[#121824] border border-slate-800 hover:border-indigo-500/35 hover:bg-slate-850 rounded text-slate-300 transition-all text-left truncate max-w-full cursor-pointer"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2 border-t border-slate-805">
+                  <p className="text-[9px] text-[#20e9d6] animate-pulse flex items-center gap-1 font-mono">
+                    <Sparkles className="w-3 h-3" />
+                    Kim 医生时刻在线，聆听你的倾诉
+                  </p>
+                  <button
+                    onClick={handleTherapySubmit}
+                    disabled={isAnalyzing || !therapyInput.trim()}
+                    className={`px-5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isAnalyzing || !therapyInput.trim()
+                        ? "bg-slate-800 text-slate-500 cursor-not-allowed border border-transparent"
+                        : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-lg active:scale-95 border border-indigo-500/10"
+                    }`}
+                  >
+                    {isAnalyzing ? (
+                      <>
+                        <span className="w-3 h-3 border-2 border-slate-300 border-t-white rounded-full animate-spin inline-block mr-1" />
+                        分析神情诊断中...
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-4 h-4 text-purple-300" />
+                        开始心里医学疏导
+                      </>
+                    )}
+                  </button>
+                </div>
+
+              </div>
+
+              {/* Right Result/Feedback column (2 cols) */}
+              <div className="lg:col-span-2 bg-[#0d121f] rounded-2xl p-4 border border-white/5 flex flex-col justify-between min-h-[220px]">
+                <div>
+                  <div className="flex justify-between items-center mb-2.5">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1">
+                      <Smile className="w-4 h-4 text-emerald-400" />
+                      Dr. Kim 的诊疗答复与心理药方
+                    </span>
+                    {stressDelta !== null && (
+                      <span className={`px-2 py-px rounded-full text-[9px] font-extrabold font-mono uppercase ${
+                        stressDelta <= 0 ? "bg-emerald-950 text-emerald-300 border border-emerald-500/35" : "bg-red-950 text-red-300 border border-red-500/30"
+                      }`}>
+                        Stress {stressDelta >= 0 ? "+" : ""}{stressDelta}%
+                      </span>
+                    )}
+                  </div>
+
+                  {therapyResult ? (
+                    <div className="bg-[#060912] border border-slate-850 p-3 rounded-xl max-h-[190px] overflow-y-auto pr-1">
+                      <div className="text-[11px] text-slate-300 leading-relaxed space-y-2 whitespace-pre-wrap font-sans">
+                        {therapyResult}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-[140px] border border-dashed border-slate-800/80 rounded-xl text-center p-4">
+                      <Brain className="w-8 h-8 text-slate-700 mb-2 animate-pulse" />
+                      <p className="text-[10px] text-slate-500">
+                        目前诊疗室药柜空空如也。
+                      </p>
+                      <p className="text-[9px] text-slate-600 mt-1 max-w-[170px]">
+                        请在左侧写下倾诉痛点或心事，随后由 Dr. Kim 为您解压开药。
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-3 pt-2.5 border-t border-slate-800/40 text-[9px] text-slate-500 font-mono text-right leading-none">
+                  * 每次心里疏导后，都将实时更新您的全局属性参数
+                </div>
+              </div>
+
             </div>
           </div>
         )}

@@ -9,7 +9,8 @@ import {
   SimulatedTeammate,
   BackupData,
   getCalendarPeriod,
-  getBirthdayPeriod
+  getBirthdayPeriod,
+  getCurrentAge
 } from "./types";
 import { 
   generateCoreStaff,
@@ -124,6 +125,9 @@ export default function App() {
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(true);
   const [showBirthdayEvent, setShowBirthdayEvent] = useState<boolean>(false);
+  const [activeEnding, setActiveEnding] = useState<any | null>(null);
+  const [aiEndingMessage, setAiEndingMessage] = useState<string>("");
+  const [isGeneratingAiEnding, setIsGeneratingAiEnding] = useState<boolean>(false);
   const [birthdayPersonaIndices, setBirthdayPersonaIndices] = useState<number[]>([]);
   const [showCover, setShowCover] = useState<boolean>(true);
   // Parallel storage lists of multi-member data for the "组合双人/三人模式, 应用双开" mechanics
@@ -787,7 +791,7 @@ ${contact.summary || "无"}`;
     ];
 
     // Include generated group members chatter
-    tm.forEach((mate) => {
+    tm.forEach((mate, mateIdx) => {
       const greeting = p.gender === "female" ? "欧尼" : "哥";
       const isExtrovert = mate.mbti && mate.mbti.startsWith("E");
       let mateMsg = `${greeting}！今晚称重评测放水求同盟呗！`;
@@ -796,16 +800,24 @@ ${contact.summary || "无"}`;
         const msgs = [
           `${greeting}！刚才舞蹈集训完，我偷偷买了两杯清潭洞清晨限定冰美式，在新宿舍门口呢，等会儿匀你一杯！别让闵室长发现喔！☕️🤫`,
           `嘿嘿！听说昨晚代表在代表室夸起你的声乐咬字了，看来下张专辑你的 killing part 要拿满了！下午美容室等我，一起点鸡胸肉沙拉！🥑`,
-          `${greeting}！刚才看到有人在Weverse给你专门写小长文安利了，超级治愈！今天也要元气满满地把练习室炸掉，Fighting！💃`
+          `${greeting}！刚才看到有人在Weverse给你专门写小长文安利了，超级治愈！今天也要元气满满地把练习室炸掉，Fighting！💃`,
+          `哈哈，昨天录音PD甚至夸我唱歌有进步咧！今晚一起在宿舍吃无盐轻食拌沙拉吧，我学了新的拌酱！🥣`,
+          `${greeting}听说明天电视台预录的时间提早了，我们千万别迟到，今晚记得调五个闹钟！⏰`,
+          `${greeting}！今晚我打算去排练室拍个翻跳短视频，你愿意当我的特约摄影师嘛？拍完请你喝零糖冰美式！🍦`
         ];
-        mateMsg = msgs[Math.floor(Math.random() * msgs.length)];
+        // Select message by index to prevent identical greetings for different members
+        mateMsg = msgs[mateIdx % msgs.length];
       } else {
         const msgs = [
           `${greeting}... 那个，这次主打歌中段的走位，我有一小段总是慢半拍，晚上练习完可以单独加练，能不能麻烦你提点一下我... 🥺`,
           `在客厅桌上留了消肿大麦茶和维他命，出门练习前记得带上。今天称重考核，我们一定能全员通过的，加油。`,
-          `刚刚听说隔壁公司的竞品要推迟回归期了，我们的打歌夺冠机会突然变大了，哈哈。希望新主打能早点空降一位...`
+          `刚刚听说隔壁公司的竞品要推迟回归期了，我们的打歌夺冠机会突然变大了，哈哈。希望新主打能早点空降一位...`,
+          `宿舍的冰箱里我放了半个西柚，上面贴了你的名字，练习累了记得回去吃掉哦，可以迅速补充水分。🍊`,
+          `${greeting}，昨天看你有些疲惫，要注意休息。桌上放了蒸汽眼罩，睡前敷一个会舒服很多。🌙`,
+          `关于下次主打曲的副歌和声部分，我觉得我们的声音叠在一起效果特别温润，有空我们在琴房合一下音怎么样？🎹`
         ];
-        mateMsg = msgs[Math.floor(Math.random() * msgs.length)];
+        // Select message by index to prevent identical greetings for different members
+        mateMsg = msgs[mateIdx % msgs.length];
       }
 
       let displayRole = mate.role ? mate.role.split(" ")[0] : "";
@@ -876,55 +888,8 @@ ${contact.summary || "无"}`;
     return contactList;
   };
 
-  // Dynamic Sasaeng Stalker KakaoTalk trigger on day transition
-  useEffect(() => {
-    if (!hasStarted) return;
-    if (persona.dayNumber > 1) {
-      const stalkerId = `sasaeng_${persona.dayNumber}`;
-      const containsTodayStalker = chatContacts.some(c => c.id === stalkerId);
-      
-      // 55% chance of stalker harassment on day transition
-      if (!containsTodayStalker && Math.random() < 0.55) {
-        const creepyMsgs = [
-          "姐姐，你刚才在练习室里跳舞穿的灰色卫衣很配你哦... 嘻嘻。你猜我是趴在天花板的空调管道，还是在对面公寓的顶楼举着望远镜看你呢？",
-          "宝贝，我搞到了你明天要去的那家江南美容室做私域面部护理的水乳配方哦... 喜欢我寄到你宿舍大门的爱心包裹吗？",
-          "千万不要拉黑我的Kakaotalk，不然我明天就把你那张没修过的浮肿丑图连夜大喇叭到各个吃瓜论坛上去！",
-          "姐姐，你新宿舍的安全门锁密码是 2038# 对不对？我昨晚深夜试了一下，锁开了报备耶... 放心，我只在你床底下留了一支微型录音笔噢~"
-        ];
-        const chosenCreepy = creepyMsgs[Math.floor(Math.random() * creepyMsgs.length)];
-        const stalkerContact: ChatContact = {
-          id: stalkerId,
-          name: `🤐 匿名未知私域来电 [私生粉丝]`,
-          mbti: "XXXX型人格",
-          avatar: "",
-          role: "fan",
-          lastMessage: chosenCreepy,
-          unread: true,
-          time: "刚刚",
-          favorability: -99
-        };
-
-        setChatContacts(prev => [stalkerContact, ...prev]);
-        setChatHistories(prev => {
-          const updatedHist: Record<string, ChatMessage[]> = {
-            ...prev,
-            [stalkerId]: [
-              {
-                id: `creepy_init_${Date.now()}`,
-                sender: "other",
-                text: chosenCreepy,
-                time: "刚刚"
-              }
-            ]
-          };
-          triggerAutoSave(persona, teammates, updatedHist);
-          return updatedHist;
-        });
-
-        handleAddSystemLog(`【🔴 KAKAOTALK 安全警报】极其有害！发现有私生粉高价买通不法渠道获取了您的私密 Kakaotalk 账号并向您投送私域骚扰监视言论，请在通讯软件中极其理智地小心回复处置！`);
-      }
-    }
-  }, [persona.dayNumber]);
+  // Removed sasaeng trigger from useEffect to prevent re-rolls on page reload.
+  // It is now rolled safely or calculated on next-day transit.
 
   // Trigger auto save to local storage
   const triggerAutoSave = (
@@ -1121,6 +1086,111 @@ ${contact.summary || "无"}`;
     link.click();
     URL.revokeObjectURL(url);
     handleAddSystemLog("成功导出多开联动组合全套存档文件！");
+  };
+
+  const handleTriggerEnding = (overrideP?: IdolPersona) => {
+    const p = overrideP || persona;
+    
+    // Determine stats
+    const totalTalent = p.vocalSkill + p.danceSkill + p.rapSkill + p.varietySkill;
+    const isSolo = p.style === "solo";
+    const hasPaidDebt = p.traineeDebt <= 0;
+    const isDating = p.relationshipStatus === "dating";
+    const hasGoodSkin = p.skinCondition === "perfect";
+    const highStress = p.stress >= 78;
+    const highAntis = (p.fansDistribution?.antiFans ?? 10) >= 15;
+    
+    let endingTitle = "平凡的打工人・人生新篇章";
+    let endingRating = "C";
+    let endingDesc = "你完成了一场平稳、踏实且无愧于心的演艺大考。虽然没有大起大落，也未曾站在极巅，但在无数个起早贪黑的行程日历里，你与同伴留下了真切的欢笑。退役后，你回到了阔别已久的大学校园，修完了心理学或数字媒体的学位，成为了一个幸福可爱的自由职业者。那些留在阁楼里的打歌直拍录像带，成为了偶尔家庭聚会时，你指给孩子们看的‘我当年也是超级耀眼的爱豆哦’的珍贵宝藏。";
+    
+    if (p.popularity >= 85 && p.reputation >= 80 && p.fansCount >= 2500000 && hasPaidDebt && p.money >= 4000) {
+      endingTitle = "传奇绝代巨星・宇宙级天王天后";
+      endingRating = "SSS";
+      endingDesc = "在漫长而璀璨的聚光灯生涯中，你成为了整个 K-POP 行业公认的最高图腾。你带领你的队伍横扫全球各大榜单，从江南奥林匹克竞技馆一路唱到了格莱美中心。不仅还清了所有初始企划债务，银行卡里更流淌着八位数令人眼红的纯利提成。你退役时，甚至连首尔塔都通宵为你亮起了应援色的霓虹。你的名字，成了不朽的代名词。";
+    } else if (isDating && (p.loverMood ?? 80) >= 82 && p.money >= 1200) {
+      endingTitle = "落跑星侣・隐世密恋的甜润乐章";
+      endingRating = "S";
+      endingDesc = "在耀眼的霓虹灯最盛大的那一刻，你向世界展露了一个恶作剧般的灿烂微笑，随后摘下沉重的无线麦克风，牵起那个一直躲在后台阴影里的 Ta 的手。你们在众目睽睽之下飞奔出待机室，登上了飞往冰岛的深夜航班。虽然离开了闪光灯，但你们用积累下来的丰厚资金在安静的海边小镇开了一间小花店。每当潮水涨落，Ta 总是会为你轻轻哼唱你当年的成名曲。这是只属于你们两人的纯白童话。";
+    } else if (isSolo && p.vocalSkill >= 45 && p.popularity >= 60) {
+      endingTitle = "单飞主宰・无冕之Core传奇唱作天王/歌姬";
+      endingRating = "S";
+      endingDesc = "你彻底摆脱了群雄割据的分摊束缚，成为绝对掌控舞台的女王/歌神。退役之后，你正式被大众奉为‘音源终结者’和‘声音的骄傲’。无论什么平淡俗套的编曲，一经你的声带润色，均能在三秒内引爆空降各大榜单第一。你退役后转为核心音乐制作人与评委，你亲手谱写的副歌配曲甚至能买下一整栋清潭洞大楼。你是无冕、且永远无需向任何人低头的绝对声浪领主。";
+    } else if (hasGoodSkin && p.fansCount >= 1000000 && p.varietySkill >= 40) {
+      endingTitle = "江南美容奢装大亨・时尚秀场绝对C位";
+      endingRating = "A";
+      endingDesc = "比起日日在阴寒排练室留下的血汗污渍，你优雅地发现了真正属于自己的战场——时尚、顶级医美、与国际奢侈大牌的秀场前排。你凭借‘毫无破绽的绝光莹润初恋皮’和满分的镜头综艺感，横扫了所有高端女性垂直代言圈。退役后，你直接拿下了江南清潭洞知名连锁皮肤管理科的合伙人资格。你现在常驻巴黎和纽约，成为了掌控全网美丽奥秘的幕后奢装大亨。";
+    } else if (highStress && highAntis) {
+      endingTitle = "饭圈修罗场的挣扎离场者・退热咖啡屋";
+      endingRating = "B";
+      endingDesc = "这台庞大且残酷的娱乐机器让你留下了难以名状的内部创伤。每天早晨醒来，都是社交网络上关于你身材、眼神抑或私下举止的恶毒解读与狙击。在经历了数次待机室内的过度换气和掩面痛哭后，你决定在合约结束的那一天头也不回地离场。你在首尔郊区开了一家极其静谧的阳光咖啡馆，养了三只流浪猫，屏蔽了所有社交媒体的推送。虽然霓虹灯暗淡了，但你终于找回了那个久违的、会因吹拂微风而真心微笑的自己。";
+    } else if (p.traineeDebt >= 12000 && p.popularity < 45) {
+      endingTitle = "终身负债・地下挣扎翻跳社畜组员";
+      endingRating = "D";
+      endingDesc = "由于初始企划的巨额公关宣发债务像雪球一样越滚越大，你和队友在出道多年后依然拿不到半块钱的结算提成。你们被迫常年奔波于各种荒僻郡县的小型乡村商演、开业剪彩台，或者在不通暖气的地下练习室里为不知名品牌录制翻跳短视频。即使精疲力竭、膝盖积水，韩主管也只会对你翻一个冷酷的白眼。你最终宣告隐退，回归为平凡的写字楼文员，每月领薪水时看着存折，依然会叹息那场仿佛耗尽了一生力气的泡沫幻梦。";
+    } else if (p.reputation >= 70 && (p.vocalSkill >= 40 || p.danceSkill >= 40)) {
+      endingTitle = "传奇声望・业界宗师艺术舞台总监";
+      endingRating = "A";
+      endingDesc = "你在大众和业界同伴中赢得了如潮的尊崇与极其完美的纯净口碑。退役后，你迅速接到了厂牌代表的诚挚返聘，聘用你为 Aether Label 的首席舞台艺术总监与终身声望总监。你亲自考核着那些如饥似渴、骨相精致的年轻练习生，你随便一句温和的指点，都是孩子们梦寐以求的圣经。即使你不再亲自登台，各大国级大赏颁奖礼永远将最尊贵的正中席位为你预留。";
+    }
+
+    setActiveEnding({
+      title: endingTitle,
+      rating: endingRating,
+      desc: endingDesc,
+      daysNumber: p.dayNumber,
+      totalFans: p.fansCount,
+      money: p.money,
+      debt: p.traineeDebt,
+      skills: totalTalent,
+      highestSkill: Math.max(p.vocalSkill, p.danceSkill, p.rapSkill, p.varietySkill),
+      age: getCurrentAge(p.age, p.dayNumber)
+    });
+    setAiEndingMessage(""); // Clear any previous AI generation
+  };
+
+  const handleGenerateAiEnding = async () => {
+    if (!activeEnding) return;
+    setIsGeneratingAiEnding(true);
+    setAiEndingMessage("");
+    
+    const partnerStr = persona.hasLover ? `地下眷侣 ${persona.loverName} (关系: ${persona.relationshipStatus === "dating" ? "执手相伴中" : "遗憾分手"})` : "单身无偶";
+    const teammatesStr = persona.style === "group" ? `与队友合力奋斗，队内人缘好感 ${persona.teammatesFavorability}` : "个人Solo路线";
+    const skillsStr = `声乐 ${persona.vocalSkill}, 舞蹈 ${persona.danceSkill}, 说唱 ${persona.rapSkill}, 综艺 ${persona.varietySkill}`;
+    const debtStr = activeEnding.debt > 0 ? `仍欠债务 ₩ ${activeEnding.debt} 万` : "无任何债务，完全财务自由";
+
+    const prompt = `你现在是 K-POP 殿堂级娱乐大厂 Aether Label 的‘首席生涯记录者与灵魂写手’。请基于以下最终退役结算数据，为艺人“${persona.name} (艺名: ${persona.stageName})”撰写一封充满温度、细节交融、略带韩系叙事色彩的 350 字‘终身殿堂荣誉生涯纪念长信’：
+- 职业名称/最终成就: ${activeEnding.title} (等级评级: ${activeEnding.rating})
+- 通告活跃天数: ${activeEnding.daysNumber} 天
+- 最终角色年龄: ${activeEnding.age} 岁
+- 最终粉丝量: ₩ ${activeEnding.totalFans.toLocaleString()} 人
+- 最终所得现金及利润分红: ₩ ${activeEnding.money} 万
+- 最终账务核算: ${debtStr}
+- 当期伴侣状况: ${partnerStr}
+- 队友情况: ${teammatesStr}
+- 最终声乐/舞蹈/说唱/综艺均值: ${skillsStr}
+- 主管闵室长最终态度: 好感 ${persona.managerFavorability}
+
+写作要求：
+1. 语言极其动人温柔，既有聚光灯下汗水与舞台呼吸的真实感，又有尘埃落定后对岁月的温柔释怀。
+2. 提及宿命年龄的递增（如从新秀阶段走向 ${activeEnding.age} 岁退役的实际感悟）。
+3. 融入具体的队友、闵主管或眷侣的动态反馈。
+4. 绝对不要出现任何 AI 模版僵硬的废话或套话。直接输出信件正文。`;
+
+    try {
+      const response = await safeFetch({
+        prompt,
+        systemInstruction: "你是一个最擅长撰写韩娱、追星纪实文学与感人散文的小说家和心理医生。文字必须触动心灵，极具文学张力，不要任何废话前置或引言，直入正文。",
+        apiKey: customApiKey,
+        model: customModel,
+        endpoint: customApiEndpoint
+      });
+      setAiEndingMessage(response || "（AI 撰信遭遇信号波动，代表将此手扎珍藏于保险箱内）");
+    } catch (err) {
+      setAiEndingMessage("信件撰写失败，网络信号穿行首尔美容通告大楼时产生了回声干扰。您可以阅读上述纯真模版结局。");
+    } finally {
+      setIsGeneratingAiEnding(false);
+    }
   };
 
   // Import JSON progress
@@ -1578,25 +1648,25 @@ ${contact.summary || "无"}`;
               <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
                 <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text flex items-center gap-2 mb-3">
                   <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
-                  🚀 重大迭代：V2.5 系统版本更新内容 (Changelog)
+                  🚀 重大迭代：V3.1 职业资历与动态智能语调系统更新 (Changelog)
                 </h2>
                 <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
-                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。核心新增特性清单如下：</p>
+                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。最新核心版本新增特性清单如下：</p>
                   <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
                     <li>
-                      <strong className="text-slate-200">☀️ 首尔动态天气监测组件：</strong>由于韩国特有的沙尘和温湿度异常，天气会对爱豆娇嫩皮肤造成巨大压力。我们在 iPad Pro 顶部标尺栏全量新增了温湿度实时预警。
+                      <strong className="text-slate-200">👑 演艺资历判定 Ageing Factor：</strong>深度接入职业衰老与成熟期模型，以 36 天为一个合约周期。你的主角将自此拥有独特的行业资历层次（0 = 青涩练习生/新人期；1 = 成熟期爱豆；2+ = 殿堂大前辈）。
                     </li>
                     <li>
-                      <strong className="text-slate-200">⚡ 体力与高敏爆豆计算因子：</strong>行程界面加载了爱豆残余体力指示，干燥/寒潮/梅雨湿气各增加 15% - 25% 皮肤爆痘概率；温和低气压下有 20% 自我修复概率。
+                      <strong className="text-slate-200">💬 动态 AI 语气自适应语调系统：</strong>大模型的语气对谈将根据你的 Ageing Factor 指数进行毫厘级适配！新人阶段的严打狠训、熟手阶段的同事认可、大前辈时期的绝对体面和老到，全部打通至 KakaoTalk 与次日过夜结算。
                     </li>
                     <li>
-                      <strong className="text-slate-200">📣 全自动静音滚动电台跑马灯：</strong>页面极底端新增了电台行进广播风格的无缝跑马灯（Marquee Track），多条系统消息、江南医美折扣、练习事件通知不再堆叠阻塞，一目了然！
+                      <strong className="text-slate-200">🍲 深夜食堂偷吃加餐对抗：</strong>属性看板加装新式深夜偷吃模拟，可嚼、可长按、可一键快速闷完，更有室友分食、闵经纪人反侦察查寝等多种爆笑突发事件！
                     </li>
                     <li>
-                      <strong className="text-slate-200">📱 响应式平板 Dock 排板重构：</strong>对小屏幕手机不友好引起的越界和隐藏选项问题进行了全面侧向滑动（Side-scroll no-scrollbar）支持，小屏幕设备亦能顺滑单手操控！
+                      <strong className="text-slate-200">☀️ 首尔动态天气监测阻尼：</strong>气温与湿度全天候演化，对爱豆的敏感爆痘和干燥度引发多因子联动，加持江南美医、皮秒超声波及饥饿膳食等高级调理闭环。
                     </li>
                     <li>
-                      <strong className="text-slate-200">✍️ 错别字彻底清除行动：</strong>已对所有用户触发的文字反馈完成语义校对（修正了如出生命格面板的“最终确人”和升级操作处的“确人，继续”为标准的“确认”字样）。
+                      <strong className="text-slate-200">📱 底置 Dock 平板与跑马灯重设：</strong>修护了移动端视窗撑破和重名规避的安全微操，页面底端由平滑运行的字幕信息电台包揽。
                     </li>
                   </ul>
                 </div>
@@ -2005,7 +2075,7 @@ ${contact.summary || "无"}`;
                       <div>
                         <span className="text-[8px] text-slate-500">生辰星盘: </span>
                         <span className="text-slate-200 font-mono text-[9px]">
-                          {persona.birthday || "2006-01-08"} ({persona.zodiac || "魔羯座"}){persona.age ? ` | ${persona.age}岁` : ""}
+                          {persona.birthday || "2006-01-08"} ({persona.zodiac || "魔羯座"}) | {getCurrentAge(persona.age, persona.dayNumber)}岁
                         </span>
                       </div>
                       <div>
@@ -2107,6 +2177,25 @@ ${contact.summary || "无"}`;
                       </p>
                     )}
                   </div>
+
+                  {/* Retire & View Ending Action */}
+                  <div className="pt-2 border-t border-white/5 space-y-1.5">
+                    <button
+                      type="button"
+                      id="apply-retirement-btn"
+                      onClick={() => {
+                        if (confirm("👑 您确定要在这一刻交付所有的功勋徽章并正式申请退役结算以开启生涯大结局吗？")) {
+                          handleTriggerEnding();
+                        }
+                      }}
+                      className="w-full py-2 bg-gradient-to-r from-teal-500/20 via-emerald-500/20 to-teal-500/20 hover:from-teal-600 hover:to-emerald-600 text-teal-300 hover:text-white border border-teal-500/30 rounded-xl text-[10px] font-black tracking-wider transition-all duration-300 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer shadow-sm shadow-emerald-900/10"
+                    >
+                      🏆 申请退役与生涯结局 (Ending)
+                    </button>
+                    <p className="text-[7.5px] text-center text-slate-400 leading-normal font-sans">
+                      完成 3 年合约后（即第 109 天）将自动收官，也可点击上方提前开启多达 8 种宿命结局！
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -2138,6 +2227,12 @@ ${contact.summary || "无"}`;
                         triggerAutoSave(persona, teammates, chatHistories, posts, bubbleMessages, schedules);
                       }}
                       onNextDayTransition={(newPersona, newSchedules, newWeversePosts, newManagerMsg, proactiveMessage) => {
+                        // Check for global contract expiration automatic career ending (Day 109+)
+                        if (newPersona.dayNumber >= 109) {
+                          handleTriggerEnding(newPersona);
+                          return;
+                        }
+
                         // 3. Random slowly shifting fan base distribution based on active day actions
                         let updatedFansDist = { ...(newPersona.fansDistribution || { otFans: 50, soloFans: 25, cpFans: 15, antiFans: 10 }) };
                         // Randomly shift 1-2 points from antiFans to otFans/soloFans if reputation is high, otherwise increase anti-fans!
@@ -2363,21 +2458,56 @@ ${contact.summary || "无"}`;
                           setWeversePosts(newWeversePosts);
                         }
                         
+                        let stalkerAdded = false;
+                        const stalkerId = `sasaeng_${newPersona.dayNumber}`;
+                        let stalkerCreepyText = "";
+                        let stalkerContact: ChatContact | null = null;
+                        
+                        // 55% chance of stalker harassment exactly once on day transition
+                        if (newPersona.dayNumber > 1 && Math.random() < 0.55) {
+                          const creepyMsgs = [
+                            "姐姐，你刚才在练习室里跳舞穿的灰色卫衣很配你哦... 嘻嘻。你猜我是趴在天花板的空调管道，还是在对面公寓的顶楼举着望远镜看你呢？",
+                            "宝贝，我搞到了你明天要去的那家江南美容室做私域面部护理的水乳配方哦... 喜欢我寄到你宿舍大门的爱心包裹吗？",
+                            "千万不要拉黑我的Kakaotalk，不然我明天就把你那张没修过的浮肿丑图连夜大喇叭到各个吃瓜论坛上去！",
+                            "姐姐，你新宿舍的安全门锁密码是 2038# 对不对？我昨晚深夜试了一下，锁开了报备耶... 放心，我只在你床底下留了一支微型录音笔噢~"
+                          ];
+                          stalkerCreepyText = creepyMsgs[Math.floor(Math.random() * creepyMsgs.length)];
+                          stalkerContact = {
+                            id: stalkerId,
+                            name: `🤐 匿名未知私域来电 [私生粉丝]`,
+                            mbti: "XXXX型人格",
+                            avatar: "",
+                            role: "fan",
+                            lastMessage: stalkerCreepyText,
+                            unread: true,
+                            time: "刚刚",
+                            favorability: -99
+                          };
+                          stalkerAdded = true;
+                        }
+
+                        if (stalkerAdded) {
+                          handleAddSystemLog(`【🔴 KAKAOTALK 安全警报】极其有害！发现有私生粉高价买通不法渠道获取了您的私密 Kakaotalk 账号并向您投送私域骚扰监视言论，请在通讯软件中极其理智地小心回复处置！`);
+                        }
+
                         setChatHistories(prev => {
                           let nextHists = { ...prev };
                           
                           // 1. Add manager message if present
                           if (newManagerMsg) {
                             const mgrHist = nextHists["manager"] || [];
-                            nextHists["manager"] = [
-                              ...mgrHist,
-                              {
-                                id: `mgr_trans_${Date.now()}`,
-                                sender: "other",
-                                text: newManagerMsg,
-                                time: "上午 08:30"
-                              }
-                            ];
+                            const isDuplicate = mgrHist.some(msg => msg.text === newManagerMsg);
+                            if (!isDuplicate) {
+                              nextHists["manager"] = [
+                                ...mgrHist,
+                                {
+                                  id: `mgr_trans_${Date.now()}`,
+                                  sender: "other",
+                                  text: newManagerMsg,
+                                  time: "上午 08:30"
+                                }
+                              ];
+                            }
                           }
 
                           // 2. Add proactive message if present
@@ -2396,37 +2526,64 @@ ${contact.summary || "无"}`;
                             
                             triggeredSenderId = finalSenderId;
                             const hist = nextHists[finalSenderId] || [];
-                            nextHists[finalSenderId] = [
-                              ...hist,
-                              {
-                                id: `proactive_trans_${Date.now()}`,
-                                sender: "other",
-                                text: proactiveMessage.text,
-                                time: proactiveMessage.time || "上午 09:15"
-                              }
-                            ];
+                            const isDuplicate = hist.some(msg => msg.text === proactiveMessage.text);
+                            if (!isDuplicate) {
+                              nextHists[finalSenderId] = [
+                                ...hist,
+                                {
+                                  id: `proactive_trans_${Date.now()}`,
+                                  sender: "other",
+                                  text: proactiveMessage.text,
+                                  time: proactiveMessage.time || "上午 09:15"
+                                }
+                              ];
+                            }
                           }
 
-                          // 3. Update contact list state
-                          setChatContacts(conts => conts.map(c => {
-                            if (c.id === "manager" && newManagerMsg) {
-                              return {
-                                ...c,
-                                lastMessage: newManagerMsg.substring(0, 30) + (newManagerMsg.length > 30 ? "..." : ""),
-                                unread: true,
-                                time: "上午 08:30"
-                              };
+                          // 3. Add stalker message in transition if generated
+                          if (stalkerAdded && stalkerContact) {
+                            if (!nextHists[stalkerId]) {
+                              nextHists[stalkerId] = [
+                                {
+                                  id: `creepy_init_${Date.now()}`,
+                                  sender: "other",
+                                  text: stalkerCreepyText,
+                                  time: "刚刚"
+                                }
+                              ];
                             }
-                            if (triggeredSenderId && c.id === triggeredSenderId && proactiveMessage) {
-                              return {
-                                ...c,
-                                lastMessage: proactiveMessage.text.substring(0, 30) + (proactiveMessage.text.length > 30 ? "..." : ""),
-                                unread: true,
-                                time: proactiveMessage.time || "上午 09:15"
-                              };
+                          }
+
+                          // 4. Update contact list state (including stalker injection)
+                          setChatContacts(conts => {
+                            let updatedConts = conts.map(c => {
+                              if (c.id === "manager" && newManagerMsg) {
+                                return {
+                                  ...c,
+                                  lastMessage: newManagerMsg.substring(0, 30) + (newManagerMsg.length > 30 ? "..." : ""),
+                                  unread: true,
+                                  time: "上午 08:30"
+                                };
+                              }
+                              if (triggeredSenderId && c.id === triggeredSenderId && proactiveMessage) {
+                                return {
+                                  ...c,
+                                  lastMessage: proactiveMessage.text.substring(0, 30) + (proactiveMessage.text.length > 30 ? "..." : ""),
+                                  unread: true,
+                                  time: proactiveMessage.time || "上午 09:15"
+                                };
+                              }
+                              return c;
+                            });
+
+                            if (stalkerAdded && stalkerContact) {
+                              const stalkerExists = updatedConts.some(c => c.id === stalkerId);
+                              if (!stalkerExists) {
+                                updatedConts = [stalkerContact, ...updatedConts];
+                              }
                             }
-                            return c;
-                          }));
+                            return updatedConts;
+                          });
                           
                            // Check if new day date is the user's Birthday! (Group/Coordinated exact birthday checking)
                           const isBday = (bdayStr: string, dayN: number): boolean => {
@@ -3231,16 +3388,35 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  🍲 企划社最新巨献公告 (深夜偷吃食堂、重名防护与健康理疗)
+                  👑 企划社最新巨献公告 (演艺资历演化、动态语气自适应)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.0 | INSTANT SNACKING SIMULATOR & COMPREHENSIVE FIXES
+                  SYSTEM VERSION 3.1 | CAREER MATURITY & SMART ADAPTIVE TONE LOGIC
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
               
+              {/* Feature 9: K-Pop Ageing Factor (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-purple-950/40 to-pink-950/40 border border-purple-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>👑 9. [首发巨献] K-Pop 演艺资历 (Ageing Factor) 与 AI 动态语气自适应语调</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  打破成见！合约周期性演进深刻改变你与配角（经纪人、对头、队友、社长）的长期交际态势与叙事：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>📅 <strong className="text-purple-200">行当资历分层</strong>：以 36 天为一个合约周期，资历属性由 <strong>Ageing Factor</strong> 实时折算（0 新人，1 一周年熟手，2+ 资深大前辈，顶峰大势）。</p>
+                  <p>🗣️ <strong className="text-pink-350">AI 智能语气千人千面蜕变</strong>：
+                    <br />• <strong>Ageing Factor = 0 时</strong>：配角对你严格敲打，闵纪人更是高频吩咐点拨、言谈稍带挑剔刻薄；
+                    <br />• <strong>Ageing Factor = 1 时</strong>：经过积累蜕变，闵经理人、社长对你的专业成熟表现出真正的职业赏识，关照并认可你为成熟中坚；
+                    <br />• <strong>Ageing Factor &ge; 2 时</strong>：话语完全过渡到与同行大前辈/合伙人平视的体面、老到、沉稳和高端商务嘱托，告别毛躁。
+                  </p>
+                  <p>📱 <strong className="text-cyan-300">深度交融私聊与次日结算</strong>：本规则已全面写合 KakaoTalk 私聊引擎、次日过夜深度 AI 行程决策（且无 Key 地下高保真本地 fallback 中也获得一致支持）！</p>
+                </div>
+              </div>
+
               {/* Feature 8: Snacking Simulator (BRAND NEW) */}
               <div className="bg-gradient-to-r from-amber-950/40 to-indigo-950/40 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
@@ -3518,16 +3694,35 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  🍲 企划社最新巨献公告 (深夜偷吃食堂、重名防护与健康理疗)
+                  👑 企划社最新巨献公告 (演艺资历演化、动态语气自适应)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.0 | INSTANT SNACKING SIMULATOR & COMPREHENSIVE FIXES
+                  SYSTEM VERSION 3.1 | CAREER MATURITY & SMART ADAPTIVE TONE LOGIC
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
               
+              {/* Feature 9: K-Pop Ageing Factor (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-purple-950/40 to-pink-950/40 border border-purple-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>👑 9. [首发巨献] K-Pop 演艺资历 (Ageing Factor) 与 AI 动态语气自适应语调</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  打破成见！合约周期性演进深刻改变你与配角（经纪人、对头、队友、社长）的长期交际态势与叙事：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>📅 <strong className="text-purple-200">行当资历分层</strong>：以 36 天为一个合约周期，资历属性由 <strong>Ageing Factor</strong> 实时折算（0 新人，1 一周年熟手，2+ 资深大前辈，顶峰大势）。</p>
+                  <p>🗣️ <strong className="text-pink-350">AI 智能语气千人千面蜕变</strong>：
+                    <br />• <strong>Ageing Factor = 0 时</strong>：配角对你严格敲打，闵纪人更是高频吩咐点拨、言谈稍带挑剔刻薄；
+                    <br />• <strong>Ageing Factor = 1 时</strong>：经过积累蜕变，闵经理人、社长对你的专业成熟表现出真正的职业赏识，关照并认可你为成熟中坚；
+                    <br />• <strong>Ageing Factor &ge; 2 时</strong>：话语完全过渡到与同行大前辈/合伙人平视的体面、老到、沉稳和高端商务嘱托，告别毛躁。
+                  </p>
+                  <p>📱 <strong className="text-cyan-300">深度交融私聊与次日结算</strong>：本规则已全面写合 KakaoTalk 私聊引擎、次日过夜深度 AI 行程决策（且无 Key 地下高保真本地 fallback 中也获得一致支持）！</p>
+                </div>
+              </div>
+
               {/* Feature 8: Snacking Simulator (BRAND NEW) */}
               <div className="bg-gradient-to-r from-amber-950/40 to-indigo-950/40 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
@@ -3625,6 +3820,134 @@ ${contact.summary || "无"}`;
                 开始健康调理，进入爱豆计划
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* 8-Ending Narrative System Overlay Modal */}
+      {activeEnding && (
+        <div className="fixed inset-0 z-[300] bg-slate-950/98 backdrop-blur-2xl flex items-center justify-center p-3 md:p-6 overflow-y-auto font-sans select-none">
+          <div className="w-full max-w-2xl bg-gradient-to-b from-slate-900 to-slate-950 border border-teal-500/20 rounded-3xl p-5 md:p-8 shadow-2xl shadow-teal-950/10 flex flex-col relative max-h-[92vh] overflow-y-auto">
+            
+            {/* Elegant sparkling header background decoration */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-teal-500/5 via-transparent to-transparent pointer-events-none rounded-3xl" />
+            
+            {/* Top Close indicator or badge */}
+            <div className="flex justify-between items-center mb-5 border-b border-white/5 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-3.5 h-3.5 rounded-full bg-teal-500 animate-pulse" />
+                <span className="text-[10px] uppercase font-mono tracking-widest font-black text-teal-400">
+                  Aether Label 首席终身荣誉评级档案
+                </span>
+              </div>
+              <span className="text-xs font-mono font-bold text-slate-500">YEAR 3 RETIREMENT SYSTEM</span>
+            </div>
+
+            {/* Main Trophy & Title Segment */}
+            <div className="text-center relative py-4 mb-5 bg-white/3 rounded-2xl border border-white/5 shadow-inner">
+              <div className="text-3xl md:text-4xl mb-2 animate-bounce">🏆</div>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-widest ${
+                activeEnding.rating === 'SSS' ? 'bg-amber-500/25 text-yellow-350 border border-amber-500/40' :
+                activeEnding.rating === 'S' ? 'bg-purple-500/25 text-purple-305 border border-purple-500/40' :
+                activeEnding.rating === 'A' ? 'bg-cyan-500/25 text-cyan-305 border border-cyan-500/40' :
+                'bg-slate-800/60 text-slate-400 border border-white/5'
+              }`}>
+                🌟 生涯荣誉评级: {activeEnding.rating}
+              </span>
+              <h2 className="text-xl md:text-2xl font-black mt-2 bg-gradient-to-r from-teal-300 via-emerald-400 to-cyan-300 bg-clip-text text-transparent tracking-wide">
+                {activeEnding.title}
+              </h2>
+              <p className="text-[10px] text-slate-450 mt-1">
+                于 Aether 历练厂牌累计执剑奋斗 {activeEnding.daysNumber} 天・终算年龄 {activeEnding.age} 岁
+              </p>
+            </div>
+
+            {/* Narrative Tale block */}
+            <div className="space-y-4 mb-6">
+              <div className="bg-slate-950/60 rounded-2xl p-4 border border-white/5">
+                <h3 className="text-xs font-bold text-slate-300 flex items-center gap-1 mb-2">
+                  <span>📖</span> 宿命叙事终章・尘埃落定
+                </h3>
+                <p className="text-[11.5px] leading-relaxed text-slate-300 font-sans tracking-wide indent-6 whitespace-pre-line">
+                  {activeEnding.desc}
+                </p>
+              </div>
+
+              {/* Gemini Custom Career Chronicler letter block */}
+              <div className="bg-slate-950/90 rounded-2xl p-4 border border-teal-500/10 shadow-lg relative min-h-[140px] flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center mb-2.5">
+                    <h3 className="text-xs font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-350 to-emerald-400 flex items-center gap-1">
+                      <span>🦉</span> AI 心理师兼生涯官・定制荣誉自述
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={handleGenerateAiEnding}
+                      disabled={isGeneratingAiEnding}
+                      className="px-3 py-1 bg-gradient-to-r from-teal-600/30 to-emerald-600/30 hover:from-teal-600 hover:to-emerald-600 text-teal-300 hover:text-white border border-teal-500/25 rounded-lg text-[9px] font-black tracking-wider transition-all cursor-pointer disabled:opacity-40"
+                    >
+                      {isGeneratingAiEnding ? "✍️ 正在竭诚手写纪实信件..." : "✨ 启动 AI 生成定制一封信"}
+                    </button>
+                  </div>
+
+                  {aiEndingMessage ? (
+                    <div className="text-[11px] leading-relaxed text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-white/5 italic font-sans max-h-56 overflow-y-auto whitespace-pre-line">
+                      {aiEndingMessage}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-500 leading-normal font-sans italic">
+                      （检测到您当前已绑定 Gemini 密钥，可以直接点击右侧按钮，调用大模型对您这一轮的所有心血大考、主管好感、地下恋人互动等参数做出深度情感自述与 300 字爱心总结信。如未绑定，可随时阅读上述纯真宿命大纲结局。）
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Grid of Dynamic Stat Summary Details */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-6 text-[10px]">
+              <div className="bg-slate-900/40 border border-white/5 p-2 rounded-xl text-center">
+                <span className="text-slate-500 block text-[9px]">终役资产余额</span>
+                <span className="font-bold font-mono text-yellow-300 text-xs">₩ {activeEnding.money.toLocaleString()} 万</span>
+              </div>
+              <div className="bg-slate-900/40 border border-white/5 p-2 rounded-xl text-center">
+                <span className="text-slate-500 block text-[9px]">余留初始债务</span>
+                <span className={`font-bold font-mono text-xs ${activeEnding.debt > 0 ? 'text-red-400' : 'text-green-400'}`}>
+                  {activeEnding.debt > 0 ? `₩ ${activeEnding.debt.toLocaleString()} 万` : '财务彻底两清!'}
+                </span>
+              </div>
+              <div className="bg-slate-900/40 border border-white/5 p-2 rounded-xl text-center">
+                <span className="text-slate-500 block text-[9px]">宿命均值技能值</span>
+                <span className="font-bold font-mono text-cyan-300 text-xs">{activeEnding.skills} Pts</span>
+              </div>
+              <div className="bg-slate-900/40 border border-white/5 p-2 rounded-xl text-center">
+                <span className="text-slate-500 block text-[9px]">最终积累信众</span>
+                <span className="font-bold font-mono text-pink-300 text-xs text-transparent bg-clip-text bg-gradient-to-r from-pink-300 to-rose-300">
+                  {((activeEnding.totalFans || 0) / 10000).toFixed(1)} 万人
+                </span>
+              </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="grid grid-cols-2 gap-3.5 mt-auto">
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveEnding(null);
+                  setConfirmAction("new_game");
+                }}
+                className="py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-600 hover:to-indigo-600 text-white font-black rounded-xl text-xs shadow-md shadow-purple-950/20 text-center cursor-pointer active:scale-98 transition"
+              >
+                🎮 载入新档再次重鸣 (New Game)
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveEnding(null)}
+                className="py-2.5 bg-slate-800 hover:bg-slate-750 text-slate-300 font-bold rounded-xl text-xs text-center cursor-pointer active:scale-98 transition"
+              >
+                👀 折叠返回，余温驻足 (Close)
+              </button>
+            </div>
+
           </div>
         </div>
       )}

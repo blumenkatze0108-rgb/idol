@@ -42,7 +42,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "韩国本国籍",
         favorability: 10,
         trait: "舍己为人治愈大天使：情商极高，总是贴心地给你带低卡咖啡，包容所有闲言碎语默默奉献",
-        avatar: ""
+        avatar: "",
+        age: 19
       },
       {
         id: "team_2",
@@ -53,7 +54,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "韩国本国籍",
         favorability: 8,
         trait: "社恐脆弱训练虫：虽然老实听话，但敏感自卑，夜里独自在被窝里翻看黑粉直拍恶评痛哭",
-        avatar: ""
+        avatar: "",
+        age: 18
       },
       {
         id: "team_3",
@@ -64,7 +66,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "华裔外籍绿卡",
         favorability: 8,
         trait: "练习室大喇叭：心直口快嘴大，极度爱打听谈八卦、说小闲话，说话经常不过脑子不顾及队友想法",
-        avatar: ""
+        avatar: "",
+        age: 20
       },
       {
         id: "team_4",
@@ -75,7 +78,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "日裔外籍绿卡",
         favorability: 6,
         trait: "顶级功利唯己型高冷皇族：实力出众但极其好强防爆同伴，镜头前营业、台下眼神冰冷争抢Center",
-        avatar: ""
+        avatar: "",
+        age: 18
       }
     ];
   } else {
@@ -89,7 +93,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "韩国本国籍",
         favorability: 10,
         trait: "舍己为人治愈大天使：情商极高，总是贴心地给你带低卡咖啡，包容所有闲言碎语默默奉献",
-        avatar: ""
+        avatar: "",
+        age: 20
       },
       {
         id: "team_2",
@@ -100,7 +105,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "韩国本国籍",
         favorability: 8,
         trait: "社恐脆弱训练虫：虽然老实听话，但敏感自卑，夜里独自在被窝里翻看黑粉直拍恶评痛哭",
-        avatar: ""
+        avatar: "",
+        age: 19
       },
       {
         id: "team_3",
@@ -111,7 +117,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "华裔外籍绿卡",
         favorability: 8,
         trait: "练习室大喇叭：心直口快嘴大，极度爱打听谈八卦、说小闲话，说话经常不过脑子不顾及队友想法",
-        avatar: ""
+        avatar: "",
+        age: 21
       },
       {
         id: "team_4",
@@ -122,7 +129,8 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
         nationality: "日裔外籍绿卡",
         favorability: 6,
         trait: "顶级功利唯己型高冷皇族：实力出众但极其好强防爆同伴，镜头前营业、台下眼神冰冷争抢Center",
-        avatar: ""
+        avatar: "",
+        age: 18
       }
     ];
   }
