@@ -707,11 +707,17 @@ export default function SchedulesApp({
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0 justify-end">
             {/* Stamina Badge */}
-            <div className="bg-amber-950/45 border border-amber-500/25 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-amber-300 font-mono flex items-center gap-1 shadow-sm">
+            <div className="bg-amber-950/45 border border-amber-500/25 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-amber-300 font-mono flex items-center gap-1 shadow-sm animate-fade-in">
               <span className="animate-pulse">⚡️</span>
               <span>体力: <strong>{persona.energy}</strong>/100</span>
+            </div>
+
+            {/* Stress Badge */}
+            <div className="bg-rose-950/45 border border-rose-500/25 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-rose-300 font-mono flex items-center gap-1 shadow-sm animate-fade-in">
+              <span>🤯</span>
+              <span>压力: <strong>{persona.stress}</strong>/100</span>
             </div>
 
             <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">

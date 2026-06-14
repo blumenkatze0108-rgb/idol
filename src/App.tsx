@@ -402,9 +402,52 @@ export default function App() {
   ]);
 
   // Custom API configuration (Requirement 10)
-  const [customApiKey, setCustomApiKey] = useState<string>("");
-  const [customModel, setCustomModel] = useState<string>("gemini-2.5-flash");
-  const [customApiEndpoint, setCustomApiEndpoint] = useState<string>("");
+  const [customApiKey, setCustomApiKey] = useState<string>(() => {
+    try {
+      return localStorage.getItem("idolpad_custom_api_key") || "";
+    } catch {
+      return "";
+    }
+  });
+  const [customModel, setCustomModel] = useState<string>(() => {
+    try {
+      return localStorage.getItem("idolpad_custom_api_model") || "gemini-2.5-flash";
+    } catch {
+      return "gemini-2.5-flash";
+    }
+  });
+  const [customApiEndpoint, setCustomApiEndpoint] = useState<string>(() => {
+    try {
+      return localStorage.getItem("idolpad_custom_api_endpoint") || "";
+    } catch {
+      return "";
+    }
+  });
+
+  // Sync API configurations independently to localStorage upon any mutation
+  useEffect(() => {
+    try {
+      localStorage.setItem("idolpad_custom_api_key", customApiKey);
+    } catch (err) {
+      console.warn("Failed to save customApiKey to localStorage", err);
+    }
+  }, [customApiKey]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("idolpad_custom_api_model", customModel);
+    } catch (err) {
+      console.warn("Failed to save customModel to localStorage", err);
+    }
+  }, [customModel]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("idolpad_custom_api_endpoint", customApiEndpoint);
+    } catch (err) {
+      console.warn("Failed to save customApiEndpoint to localStorage", err);
+    }
+  }, [customApiEndpoint]);
 
   // Models loading and dropdown lists
   const [loadingModels, setLoadingModels] = useState<boolean>(false);
@@ -1304,6 +1347,9 @@ ${contact.summary || "无"}`;
     if (evt.id === "e_g1" && persona.nationality === "korean") {
       return false; // Green card bias only applies for green card stans
     }
+    if (evt.id && evt.id.startsWith("e_romance") && !persona.hasLover) {
+      return false; // Romance crisis events only apply if they have a lover
+    }
     return true;
   };
 
@@ -1648,25 +1694,25 @@ ${contact.summary || "无"}`;
               <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
                 <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text flex items-center gap-2 mb-3">
                   <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
-                  🚀 重大迭代：V3.1 职业资历与动态智能语调系统更新 (Changelog)
+                  🚀 重大迭代：V3.2 身心压力可视与跨档密钥持久化更新 (Changelog)
                 </h2>
                 <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
-                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。最新核心版本新增特性清单如下：</p>
+                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据玩家反馈，V3.2 改良功能如下：</p>
                   <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
                     <li>
-                      <strong className="text-slate-200">👑 演艺资历判定 Ageing Factor：</strong>深度接入职业衰老与成熟期模型，以 36 天为一个合约周期。你的主角将自此拥有独特的行业资历层次（0 = 青涩练习生/新人期；1 = 成熟期爱豆；2+ = 殿堂大前辈）。
+                      <strong className="text-slate-200">🤯 身心压力(Stress)无缝可视化：</strong>在日常行程安排看板顶部，紧邻体力条，正式加装了“身心压力值”动态双态指示，随时掌控心率与黑粉情绪红线，拒绝爆痘和解约危机。
                     </li>
                     <li>
-                      <strong className="text-slate-200">💬 动态 AI 语气自适应语调系统：</strong>大模型的语气对谈将根据你的 Ageing Factor 指数进行毫厘级适配！新人阶段的严打狠训、熟手阶段的同事认可、大前辈时期的绝对体面和老到，全部打通至 KakaoTalk 与次日过夜结算。
+                      <strong className="text-slate-200">💾 密钥与模型参数独立跨档记忆：</strong>Gemini 秘钥、自定义端点和微调模型参数全面从存档快照中挣脱出来，直接与浏览器后台 LocalStorage 固化联姻。多开、开新档或大退均能免去重复粘贴的极高痛苦，秒开游戏！
                     </li>
                     <li>
-                      <strong className="text-slate-200">🍲 深夜食堂偷吃加餐对抗：</strong>属性看板加装新式深夜偷吃模拟，可嚼、可长按、可一键快速闷完，更有室友分食、闵经纪人反侦察查寝等多种爆笑突发事件！
+                      <strong className="text-slate-202">💔 职业单身流与恋爱绯闻深度精制：</strong>针对纯事业、母胎单身等零感情命格路线，我们正式从随机事件库上物理剥离了“D社深夜江边曝光密会约会”等风波，保证一心事业的玩家纯真独美，直飞顶流！
                     </li>
                     <li>
-                      <strong className="text-slate-200">☀️ 首尔动态天气监测阻尼：</strong>气温与湿度全天候演化，对爱豆的敏感爆痘和干燥度引发多因子联动，加持江南美医、皮秒超声波及饥饿膳食等高级调理闭环。
+                      <strong className="text-slate-200">👑 演艺资历与自适应语气：</strong>演艺生涯通过 Ageing Factor 实时折算。大模型的语气也获得千人千面分裂：新人期教导重罚、成熟期赞赏中坚、资深前辈期体面工作，更完美嵌入本地 Fallback。
                     </li>
                     <li>
-                      <strong className="text-slate-200">📱 底置 Dock 平板与跑马灯重设：</strong>修护了移动端视窗撑破和重名规避的安全微操，页面底端由平滑运行的字幕信息电台包揽。
+                      <strong className="text-slate-200">🍲 深夜食堂偷吃加餐系统：</strong>新增深夜偷吃互动游戏，包含炸鸡/韩牛/拉面，并带来室友贴脸分食、闵经纪人带跟高鞋咚咚查寝等趣味随机事件连环引爆。
                     </li>
                   </ul>
                 </div>
@@ -3064,8 +3110,9 @@ ${contact.summary || "无"}`;
               <div className="px-1 xs:px-2 sm:px-4 py-0.5 xs:py-1 sm:py-1.5 bg-white/5 rounded-xl sm:rounded-2xl flex items-center gap-1 xs:gap-1.5 sm:gap-3 md:gap-5 shadow-lg border border-white/5 shrink-0 max-w-none">
                 {/* 1. Schedule Calendar */}
                 <button
+                  id="schedule-shortcut-btn"
                   onClick={() => { handleSwitchApp("schedule"); }}
-                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "schedule" ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-105" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1 xs:p-1.5 sm:p-2 md:p-3.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "schedule" ? "bg-purple-600 text-white shadow-lg shadow-purple-500/20 scale-105" : "text-slate-400 hover:text-white"}`}
                   title="日常行列表"
                 >
                   <Calendar className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
@@ -3074,8 +3121,9 @@ ${contact.summary || "无"}`;
 
                 {/* 2. KakaoTalk */}
                 <button
+                  id="kakaotalk-shortcut-btn"
                   onClick={() => { handleSwitchApp("kakaotalk"); }}
-                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "kakaotalk" ? "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/10 scale-105" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1 xs:p-1.5 sm:p-2 md:p-3.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "kakaotalk" ? "bg-yellow-500 text-slate-900 shadow-lg shadow-yellow-500/10 scale-105" : "text-slate-400 hover:text-white"}`}
                   title="KakaoTalk 成员群聊"
                 >
                   <MessageSquare className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
@@ -3083,8 +3131,9 @@ ${contact.summary || "无"}`;
 
                 {/* 3. Weverse */}
                 <button
+                  id="weverse-shortcut-btn"
                   onClick={() => { handleSwitchApp("weverse"); }}
-                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "weverse" ? "bg-teal-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
+                  className={`p-1 xs:p-1.5 sm:p-2 md:p-3.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "weverse" ? "bg-teal-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
                   title="Weverse 官咖讨论"
                 >
                   <Heart className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
@@ -3388,16 +3437,46 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (演艺资历演化、动态语气自适应)
+                  👑 企划社最新巨献公告 (身心压力可视、跨槽密钥固存、零恋爱解耦)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.1 | CAREER MATURITY & SMART ADAPTIVE TONE LOGIC
+                  SYSTEM VERSION 3.2 | STRESS VISUALIZER & INDEPENDENT CACHING
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
-              
+
+              {/* Feature 10: Visual Stress Indicator (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-rose-950/40 to-amber-950/40 border border-rose-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
+                  <span>🤯 10. [首创] 行程面板“今日精神压力值”直接精细可视</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应各位爱豆运营官热烈要求，在【日常日程表】顶部紧邻体力条的绝佳位置，我们增设了实时动态同步的<strong>“🤯 压力: XX/100”指示牌成分</strong>。不用切换面板即可一气宏图统筹规划调理了！
+                </p>
+              </div>
+
+              {/* Feature 11: Persistent API settings (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-teal-950/40 to-blue-950/40 border border-teal-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-teal-300 font-bold text-[12.5px]">
+                  <span>💾 11. [省心] API 配置游离态 LocalStorage 终身固化</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  现在，<strong>您的个人 API Key、自定义微调模型名、自定义端点</strong>全部被直接剥离缓存于独立且稳健的浏览器本地 LocalStorage 中。不管进退存，一次填完终身顺畅！
+                </p>
+              </div>
+
+              {/* Feature 12: Career Solo and Scandal Decoupling (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-indigo-950/40 to-purple-950/40 border border-indigo-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
+                  <span>🔒 12. [独美] 纯正事业型单身流与恋爱绯闻危机绝绝对分立</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  对于在创角 setup 时选择<strong>不谈地下恋、保持零绯闻母胎单身</strong>路线的搞事业纯血爱豆，系统判定逻辑现已彻底物理遮罩并静默切除“D社深夜江边曝光密会约会”等高危风暴，让您搞起事业来畅通无阻，绝对专注！
+                </p>
+              </div>
+
               {/* Feature 9: K-Pop Ageing Factor (BRAND NEW) */}
               <div className="bg-gradient-to-r from-purple-950/40 to-pink-950/40 border border-purple-500/25 p-3.5 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
@@ -3694,16 +3773,46 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (演艺资历演化、动态语气自适应)
+                  👑 企划社最新巨献公告 (身心压力可视、跨槽密钥固存、零恋爱解耦)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.1 | CAREER MATURITY & SMART ADAPTIVE TONE LOGIC
+                  SYSTEM VERSION 3.2 | STRESS VISUALIZER & INDEPENDENT CACHING
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
-              
+
+              {/* Feature 10: Visual Stress Indicator (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-rose-950/40 to-amber-950/40 border border-rose-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
+                  <span>🤯 10. [首创] 行程面板“今日精神压力值”直接精细可视</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应各位爱豆运营官热烈要求，在【日常日程表】顶部紧邻体力条的绝佳位置，我们增设了实时动态同步的<strong>“🤯 压力: XX/100”指示牌成分</strong>。不用切换面板即可一气宏图统筹规划调理了！
+                </p>
+              </div>
+
+              {/* Feature 11: Persistent API settings (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-teal-950/40 to-blue-950/40 border border-teal-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-teal-300 font-bold text-[12.5px]">
+                  <span>💾 11. [省心] API 配置游离态 LocalStorage 终身固化</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  现在，<strong>您的个人 API Key、自定义微调模型名、自定义端点</strong>全部被直接剥离缓存于独立且稳健的浏览器本地 LocalStorage 中。不管进退存，一次填完终身顺畅！
+                </p>
+              </div>
+
+              {/* Feature 12: Career Solo and Scandal Decoupling (BRAND NEW) */}
+              <div className="bg-gradient-to-r from-indigo-950/40 to-purple-950/40 border border-indigo-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
+                  <span>🔒 12. [独美] 纯正事业型单身流与恋爱绯闻危机绝绝对分立</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  对于在创角 setup 时选择<strong>不谈地下恋、保持零绯闻母胎单身</strong>路线的搞事业纯血爱豆，系统判定逻辑现已彻底物理遮罩并静默切除“D社深夜江边曝光密会约会”等高危风暴，让您搞起事业来畅通无阻，绝对专注！
+                </p>
+              </div>
+
               {/* Feature 9: K-Pop Ageing Factor (BRAND NEW) */}
               <div className="bg-gradient-to-r from-purple-950/40 to-pink-950/40 border border-purple-500/25 p-3.5 rounded-xl space-y-2">
                 <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
