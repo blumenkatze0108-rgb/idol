@@ -41,7 +41,7 @@ export default function KakaoTalkApp({
   const selectedContact = chatContacts.find((c) => c.id === selectedContactId) || chatContacts[0];
 
   const getContactAge = (contactId: string): number => {
-    const yearsPassed = Math.floor((persona.dayNumber - 1) / 36);
+    const yearsPassed = Math.floor((persona.dayNumber - 1) / (persona.cycleDays || 36));
     if (contactId === "manager") return 32 + yearsPassed;
     if (contactId === "ceo") return 48 + yearsPassed;
     if (contactId === "rival") return 19 + yearsPassed;

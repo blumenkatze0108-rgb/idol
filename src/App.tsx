@@ -1187,7 +1187,7 @@ ${contact.summary || "无"}`;
       debt: p.traineeDebt,
       skills: totalTalent,
       highestSkill: Math.max(p.vocalSkill, p.danceSkill, p.rapSkill, p.varietySkill),
-      age: getCurrentAge(p.age, p.dayNumber)
+      age: getCurrentAge(p.age, p.dayNumber, 18, p.cycleDays || 36)
     });
     setAiEndingMessage(""); // Clear any previous AI generation
   };
@@ -1694,11 +1694,14 @@ ${contact.summary || "无"}`;
               <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
                 <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text flex items-center gap-2 mb-3">
                   <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
-                  🚀 重大迭代：V3.2 身心压力可视与跨档密钥持久化更新 (Changelog)
+                  🚀 重大迭代：V3.3 全新 24 天特快日历与 12 个月上下半分期 (Changelog)
                 </h2>
                 <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
-                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据玩家反馈，V3.2 改良功能如下：</p>
+                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据玩家反馈，V3.3 震撼迭代加入以下突破内容：</p>
                   <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
+                    <li>
+                      <strong className="text-slate-200">⚡ 24天特快合约年选择：</strong>在创角界面新增【合约年度日历周期】调节档位！支持经典的36天经典模式与全新的24天特快模式（一年由12个月构成，但每个月简化划分【上半月】与【下半月】各1天），加速资历（Ageing Factor）演化，节奏更紧密爽快！
+                    </li>
                     <li>
                       <strong className="text-slate-200">🤯 身心压力(Stress)无缝可视化：</strong>在日常行程安排看板顶部，紧邻体力条，正式加装了“身心压力值”动态双态指示，随时掌控心率与黑粉情绪红线，拒绝爆痘和解约危机。
                     </li>
@@ -2121,7 +2124,7 @@ ${contact.summary || "无"}`;
                       <div>
                         <span className="text-[8px] text-slate-500">生辰星盘: </span>
                         <span className="text-slate-200 font-mono text-[9px]">
-                          {persona.birthday || "2006-01-08"} ({persona.zodiac || "魔羯座"}) | {getCurrentAge(persona.age, persona.dayNumber)}岁
+                          {persona.birthday || "2006-01-08"} ({persona.zodiac || "魔羯座"}) | {getCurrentAge(persona.age, persona.dayNumber, 18, persona.cycleDays || 36)}岁
                         </span>
                       </div>
                       <div>
@@ -2239,7 +2242,7 @@ ${contact.summary || "无"}`;
                       🏆 申请退役与生涯结局 (Ending)
                     </button>
                     <p className="text-[7.5px] text-center text-slate-400 leading-normal font-sans">
-                      完成 3 年合约后（即第 109 天）将自动收官，也可点击上方提前开启多达 8 种宿命结局！
+                      完成 3 年合约后（即第 {(persona.cycleDays || 36) * 3 + 1} 天）将自动收官，也可点击上方提前开启多达 8 种宿命结局！
                     </p>
                   </div>
                 </div>
@@ -2273,8 +2276,9 @@ ${contact.summary || "无"}`;
                         triggerAutoSave(persona, teammates, chatHistories, posts, bubbleMessages, schedules);
                       }}
                       onNextDayTransition={(newPersona, newSchedules, newWeversePosts, newManagerMsg, proactiveMessage) => {
-                        // Check for global contract expiration automatic career ending (Day 109+)
-                        if (newPersona.dayNumber >= 109) {
+                        // Check for global contract expiration automatic career ending (dynamic based on cycleDays)
+                        const maxEndingDay = (newPersona.cycleDays || 36) * 3 + 1;
+                        if (newPersona.dayNumber >= maxEndingDay) {
                           handleTriggerEnding(newPersona);
                           return;
                         }
@@ -2311,8 +2315,9 @@ ${contact.summary || "无"}`;
 
                         let evaluationTriggered = false;
                         
-                        // A. Check for trainee debut evaluation on Day 36+ (completed 36 turns, moving to Day 37)
-                        if (persona.startType === "trainee" && newPersona.dayNumber >= 37) {
+                        // A. Check for trainee debut evaluation on Day 36+ (dynamic based on cycleDays)
+                        const evaluationTargetDay = (persona.cycleDays || 36) + 1;
+                        if (persona.startType === "trainee" && newPersona.dayNumber >= evaluationTargetDay) {
                           evaluationTriggered = true;
                           const totalTalent = newPersona.vocalSkill + newPersona.danceSkill + newPersona.rapSkill + newPersona.varietySkill;
                           const repValue = newPersona.reputation;
@@ -2326,7 +2331,7 @@ ${contact.summary || "无"}`;
                         }
 
                         // B. Check for birthday mini game trigger (Group / Coordinated Anniversary checking)
-                        const currentPeriod = getCalendarPeriod(newPersona.dayNumber);
+                        const currentPeriod = getCalendarPeriod(newPersona.dayNumber, newPersona.cycleDays || 36);
                         const bdayPeriodIndices: number[] = [];
                         personas.forEach((p, idx) => {
                           const bdayVal = idx === activePersonaIdx ? newPersona.birthday : p.birthday;
@@ -3437,15 +3442,25 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (身心压力可视、跨槽密钥固存、零恋爱解耦)
+                  👑 企划社最新巨献公告 (特快24天周期月历、身心压力可视)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.2 | STRESS VISUALIZER & INDEPENDENT CACHING
+                  SYSTEM VERSION 3.3 | 24-DAY SPLIT CALENDAR EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 13: 24-Day Cycle Setup (BRAND NEW V3.3) */}
+              <div className="bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-indigo-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
+                  <span>⚡ 13. [新增] 24天特快合约年与12个月上下半分期方案</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应部分希望快节奏推演和急于晋升殿堂级大前辈玩家的反馈：我们在创角界面新增了<strong>【合约年度日历周期】</strong>选择！你可以随时开启 24 天制特快神颜档（12个月，每月分上半月、下半月各一天完成流转），资历计算与全局合同周期均会精准自动计算，尽情享受特快飞跃的爽快感！
+                </p>
+              </div>
 
               {/* Feature 10: Visual Stress Indicator (BRAND NEW) */}
               <div className="bg-gradient-to-r from-rose-950/40 to-amber-950/40 border border-rose-500/25 p-3.5 rounded-xl space-y-2">
@@ -3773,15 +3788,25 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (身心压力可视、跨槽密钥固存、零恋爱解耦)
+                  👑 企划社最新巨献公告 (特快24天周期月历、身心压力可视)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.2 | STRESS VISUALIZER & INDEPENDENT CACHING
+                  SYSTEM VERSION 3.3 | 24-DAY SPLIT CALENDAR EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 13: 24-Day Cycle Setup (BRAND NEW V3.3) */}
+              <div className="bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-indigo-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
+                  <span>⚡ 13. [新增] 24天特快合约年与12个月上下半分期方案</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应部分希望快节奏推演和急于晋升殿堂级大前辈玩家的反馈：我们在创角界面新增了<strong>【合约年度日历周期】</strong>选择！你可以随时开启 24 天制特快神颜档（12个月，每月分上半月、下半月各一天完成流转），资历计算与全局合同周期均会精准自动计算，尽情享受特快飞跃的爽快感！
+                </p>
+              </div>
 
               {/* Feature 10: Visual Stress Indicator (BRAND NEW) */}
               <div className="bg-gradient-to-r from-rose-950/40 to-amber-950/40 border border-rose-500/25 p-3.5 rounded-xl space-y-2">

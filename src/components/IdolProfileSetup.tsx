@@ -96,6 +96,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [age, setAge] = useState(19); // Calculated automatically from birthday 2006-11-23 -> 19 in May 2026
   const [validationError, setValidationError] = useState<string | null>(null);
   const [bloodType, setBloodType] = useState("O型");
+  const [cycleDays, setCycleDays] = useState<number>(36);
   const [specificNationality, setSpecificNationality] = useState("韩国首尔特别市江南区");
   const [isMixed, setIsMixed] = useState(false);
   const [mixedCountries, setMixedCountries] = useState("中/韩 (Sino-Korean)");
@@ -842,6 +843,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           albumSales: startAlbumSales,
           money: startMoney,
           dayNumber: 1,
+          cycleDays: cycleDays,
           hasLover: m.hasLover,
           loverName: m.hasLover ? (m.loverName?.trim() || (m.loverGender === "female" ? "韩熙珍" : "宋承泽")) : "",
           relationshipStatus: m.hasLover ? "dating" : "single",
@@ -1221,6 +1223,37 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* Contract Year Cycle Length Selection (BRAND NEW V3.3) */}
+                <div id="contract-cycle-setup" className="p-3.5 rounded-2xl bg-[#1d1b31]/65 border border-indigo-500/25 space-y-2.5 mt-2 animate-in fade-in slide-in-from-top-1.5 col-span-1 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-400">📅 合约年度日历周期选择 (Contract Year Cycle Setup)</span>
+                    <span className="bg-indigo-500/20 text-indigo-300 font-mono text-[8px] px-1.5 py-0.5 rounded border border-indigo-500/20">系统版本最新推荐</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 leading-normal">
+                    您希望主角处于多少天的合约年进度？这会深刻影响您主角的资历增长速度(Ageing Factor)以及日常日程流转的感受。
+                  </p>
+                  <div className="grid grid-cols-2 gap-3 mt-1.5">
+                    <button 
+                      type="button"
+                      id="opt-cycle-36"
+                      onClick={() => setCycleDays(36)}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${cycleDays === 36 ? "bg-indigo-950/40 border-indigo-500 text-white shadow-md shadow-indigo-500/10" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                    >
+                      <p className="font-bold text-xs">🚀 36天周期模式 (默认经典)</p>
+                      <p className="text-[9px] text-slate-400 mt-1 leading-tight">每过36天换一年。12个月度，每月划分【上旬、中旬、下旬】各1天。节奏沉浸，完美适应深度体验。</p>
+                    </button>
+                    <button 
+                      type="button"
+                      id="opt-cycle-24"
+                      onClick={() => setCycleDays(24)}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${cycleDays === 24 ? "bg-purple-950/40 border-purple-500 text-white shadow-lg shadow-purple-500/10" : "bg-slate-950/40 border-white/5 text-slate-500"}`}
+                    >
+                      <p className="font-bold text-xs text-purple-300">⚡ 24天特快周期 (新增·12个月上下分)</p>
+                      <p className="text-[9px] text-slate-400 mt-1 leading-tight">每过24天换一年！12个月度，每月划分【上半月、下半月】各1天。节奏更紧密爽快，大步迈进殿堂大前辈！</p>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Secret relationship available to both trainees and idols */}

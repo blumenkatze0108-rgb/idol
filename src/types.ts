@@ -56,7 +56,8 @@ export interface IdolPersona {
   albumSales: number; // Cumulative physical album sales
   money: number; // Cash asset (₩ ten thousand, payout only after debt cleared)
   dayNumber: number; // Current simulation day
-  ageing_factor?: number; // Career age multiple of 36 days index
+  cycleDays?: number; // Career contract cycle period (24 or 36 days, default 36)
+  ageing_factor?: number; // Career age multiple of cycleDays index
   
   // Romance Option - Requirement & Custom Option
   hasLover?: boolean;
@@ -221,18 +222,31 @@ export interface BackupData {
   fanLetters?: any[]; // Keep any or FanLetter here safely
 }
 
-export function getCalendarPeriod(dayNumber: number): { month: number; period: "early" | "mid" | "late"; text: string } {
+export function getCalendarPeriod(dayNumber: number, cycleDays: number = 36): { month: number; period: "early" | "mid" | "late"; text: string } {
   const index = dayNumber - 1;
-  const month = Math.floor((index / 3) % 12) + 1;
-  const periodIndex = index % 3;
-  const periodStr = periodIndex === 0 ? "上旬" : periodIndex === 1 ? "中旬" : "下旬";
-  const periodType = periodIndex === 0 ? "early" : periodIndex === 1 ? "mid" : "late";
-  const yearText = Math.floor(index / 36) > 0 ? `第 ${Math.floor(index / 36) + 1} 年 ` : "";
-  return {
-    month,
-    period: periodType,
-    text: `${yearText}${month}月${periodStr}`
-  };
+  if (cycleDays === 24) {
+    const month = Math.floor((index / 2) % 12) + 1;
+    const periodIndex = index % 2;
+    const periodStr = periodIndex === 0 ? "上半月" : "下半月";
+    const periodType = periodIndex === 0 ? "early" : "late";
+    const yearText = Math.floor(index / 24) > 0 ? `第 ${Math.floor(index / 24) + 1} 年 ` : "";
+    return {
+      month,
+      period: periodType,
+      text: `${yearText}${month}月${periodStr}`
+    };
+  } else {
+    const month = Math.floor((index / 3) % 12) + 1;
+    const periodIndex = index % 3;
+    const periodStr = periodIndex === 0 ? "上旬" : periodIndex === 1 ? "中旬" : "下旬";
+    const periodType = periodIndex === 0 ? "early" : periodIndex === 1 ? "mid" : "late";
+    const yearText = Math.floor(index / 36) > 0 ? `第 ${Math.floor(index / 36) + 1} 年 ` : "";
+    return {
+      month,
+      period: periodType,
+      text: `${yearText}${month}月${periodStr}`
+    };
+  }
 }
 
 export function getBirthdayPeriod(bdayStr: string): { month: number; period: "early" | "mid" | "late"; text: string } | null {
@@ -259,8 +273,8 @@ export function getBirthdayPeriod(bdayStr: string): { month: number; period: "ea
   };
 }
 
-export function getCurrentAge(initialAge: number | undefined, dayNumber: number, fallbackDefault = 18): number {
+export function getCurrentAge(initialAge: number | undefined, dayNumber: number, fallbackDefault = 18, cycleDays = 36): number {
   const base = initialAge ?? fallbackDefault;
-  const yearsPassed = Math.floor((dayNumber - 1) / 36);
+  const yearsPassed = Math.floor((dayNumber - 1) / cycleDays);
   return base + yearsPassed;
 }

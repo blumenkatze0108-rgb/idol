@@ -4,8 +4,8 @@ import { SH_LIST } from "../mockData";
 import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame, AlertCircle } from "lucide-react";
 import { safeFetch, getSeoulWeather } from "./apiHelper";
 
-export function getFixedSkillSchedules(dayN: number): IdolSchedule[] {
-  const period = getCalendarPeriod(dayN);
+export function getFixedSkillSchedules(dayN: number, cycleDays: number = 36): IdolSchedule[] {
+  const period = getCalendarPeriod(dayN, cycleDays);
   return [
     {
       id: `fixed_vocal_${dayN}`,
@@ -224,7 +224,7 @@ export default function SchedulesApp({
     // 1. Prepare secondary stats calculated client-side as base update
     const pUpdateObj = { ...persona };
     pUpdateObj.dayNumber = pUpdateObj.dayNumber + 1;
-    const ageing_factor = Math.floor((pUpdateObj.dayNumber - 1) / 36);
+    const ageing_factor = Math.floor((pUpdateObj.dayNumber - 1) / (pUpdateObj.cycleDays || 36));
     pUpdateObj.ageing_factor = ageing_factor;
     pUpdateObj.energy = Math.min(100, pUpdateObj.energy + 50); // rest Overnight
     pUpdateObj.stress = Math.max(0, pUpdateObj.stress - 15);
@@ -293,7 +293,7 @@ export default function SchedulesApp({
 - 组合模式：${persona.groupName} (${persona.style})
 - 当前体能指标（已安享一夜睡眠恢复后的明日真实体力）：体力值: ${pUpdateObj.energy}/100（提示：主角已经通过第二天的恢复机制得到了充足的精力充盈，不要再一味责备TA感到过度劳累 and 很虚弱了！）, 精神压力值: ${pUpdateObj.stress}/100, 身高: ${pUpdateObj.height}cm, 体重: ${pUpdateObj.weight.toFixed(1)}kg, 人体身体BMI值: ${calcBmi}, 胖瘦评估状态: ${bmiEvaluation}, 皮肤状况: ${pUpdateObj.skinCondition}.
 - 粉丝圈人气：${pUpdateObj.fansCount} 位死忠, 美誉等级: ${pUpdateObj.reputation}/100.
-- 职业资历与衰老成熟指数：ageing_factor: ${pUpdateObj.ageing_factor || 0}（说明：每36天为一个合约年。0 = 青涩活泼的新手练习生期；1 = 沉淀磨砺出的成熟过渡阶段；2 = 资深、练达、自持的K-Pop大前辈阶段；3+ = 殿堂级成熟前辈顶峰阶段，能自如控制情绪并宠辱不惊）。
+- 职业资历与衰老成熟指数：ageing_factor: ${pUpdateObj.ageing_factor || 0}（说明：每 ${pUpdateObj.cycleDays || 36} 天为一个合约年。0 = 青涩活泼的新手练习生期；1 = 沉淀磨砺出的成熟过渡阶段；2 = 资深、练达、自持的K-Pop大前辈阶段；3+ = 殿堂级成熟前辈顶峰阶段，能自如控制情绪并宠辱不惊）。
 
 请根据上述的 ageing_factor 资历指标，精准微调 AI 生成的角色对话语气（包括闵经理人发来的 managerMessage 消息以及主动找主角的 proactiveMessage.text 未读信息）：
 - 如果 ageing_factor 为 0：角色言谈表现得非常直率、对新人严格，指导或嘱咐多带有教训和指点口吻。
@@ -473,7 +473,7 @@ export default function SchedulesApp({
     }));
 
     // Prepend tomorrow's 4 fixed skill courses
-    const fixedSchedules = getFixedSkillSchedules(pUpdateObj.dayNumber);
+    const fixedSchedules = getFixedSkillSchedules(pUpdateObj.dayNumber, pUpdateObj.cycleDays || 36);
     const nextSchedulesList = [...fixedSchedules, ...generatedSchedules];
 
     setTransitionResult({
@@ -721,8 +721,8 @@ export default function SchedulesApp({
             </div>
 
             <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
-              <span className="font-sans font-bold text-indigo-300 mr-1 hidden xs:inline">📅 {getCalendarPeriod(persona.dayNumber).text}</span>
-              <span><strong>{persona.dayNumber}</strong>/36天</span>
+              <span className="font-sans font-bold text-indigo-300 mr-1 hidden xs:inline">📅 {getCalendarPeriod(persona.dayNumber, persona.cycleDays || 36).text}</span>
+              <span><strong>{persona.dayNumber}</strong>/{persona.cycleDays || 36}天</span>
             </div>
           </div>
         </div>
