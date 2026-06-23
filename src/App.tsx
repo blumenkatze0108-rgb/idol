@@ -3442,15 +3442,29 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (特快24天周期月历、身心压力可视)
+                  👑 企划社最新巨献公告 (18点互动制、特快月历、身心可视化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.3 | 24-DAY SPLIT CALENDAR EDITION
+                  SYSTEM VERSION 3.5 | 18-POINT INTERACTION EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 14: 18-Point Interaction System and Stamina/Stress Protection Lock (BRAND NEW V3.5) */}
+              <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
+                  <span>🕒 14. [重磅] 18点每日互动点数制 与 极限制裁/身体保护机制</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为了给大家提供极高主理人自由度和真实的养组合体感，我们对日常演艺体系进行了重构升级：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-emerald-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>⚜️ <strong className="text-emerald-200">全新的 18 点每日互动点数系统 (Interaction Points)</strong>：摒弃了之前繁琐的时间流逝体制！现在，每一项大型业务日程或主动生活互动（如去清潭洞皮肤管理、普拉提私教、深夜大餐密谋、甚至呼叫 Dr. Kim 医生心理咨询）都改为精准扣减 <strong>1~2 个互动点</strong>。每天的规划量和自主支配频次瞬间翻倍，不再因为单一活动草草换天！</p>
+                  <p>🚨 <strong className="text-rose-300">首创 极低体力与爆表压力强制休整挂锁</strong>：有血有肉有神经的爱豆绝非无情的打卡机器！当爱豆体力濒临彻底枯竭（<strong>低于或等于 10⚡</strong>）或心理压力近乎爆表崩溃（<strong>大于或等于 95%</strong>）时，除了进行大口大嚼干饭、去宿舍/保姆车休息大睡、自选修护绿汁SPA等<strong>恢复体力/释放压力</strong>的操作外，其余所有高体力消耗训练、侵入式治疗美化（水光针、热玛吉）、地狱极速断食、各种大型业务日程<strong>均会被强行锁定挂红中止</strong>，督促您优先科学调理，打通爱豆大健康双轨制！</p>
+                </div>
+              </div>
 
               {/* Feature 13: 24-Day Cycle Setup (BRAND NEW V3.3) */}
               <div className="bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-indigo-500/35 p-3.5 rounded-xl space-y-2">
@@ -3788,15 +3802,29 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (特快24天周期月历、身心压力可视)
+                  👑 企划社最新巨献公告 (18点互动制、特快月历、身心可视化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.3 | 24-DAY SPLIT CALENDAR EDITION
+                  SYSTEM VERSION 3.5 | 18-POINT INTERACTION EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 14: 18-Point Interaction System and Stamina/Stress Protection Lock (BRAND NEW V3.5) */}
+              <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
+                  <span>🕒 14. [重磅] 18点每日互动点数制 与 极限制裁/身体保护机制</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为了给大家提供极高主理人自由度和真实的养组合体感，我们对日常演艺体系进行了重构升级：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-emerald-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>⚜️ <strong className="text-emerald-200">全新的 18 点每日互动点数系统 (Interaction Points)</strong>：摒弃了之前繁琐的时间流逝体制！现在，每一项大型业务日程或主动生活互动（如去清潭洞皮肤管理、普拉提私教、深夜大餐密谋、甚至呼叫 Dr. Kim 医生心理咨询）都改为精准扣减 <strong>1~2 个互动点</strong>。每天的规划量和自主支配频次瞬间翻倍，不再因为单一活动草草换天！</p>
+                  <p>🚨 <strong className="text-rose-300">首创 极低体力与爆表压力强制休整挂锁</strong>：有血有肉有神经的爱豆绝非无情的打卡机器！当爱豆体力濒临彻底枯竭（<strong>低于或等于 10⚡</strong>）或心理压力近乎爆表崩溃（<strong>大于或等于 95%</strong>）时，除了进行大口大嚼干饭、去宿舍/保姆车休息大睡、自选修护绿汁SPA等<strong>恢复体力/释放压力</strong>的操作外，其余所有高体力消耗训练、侵入式治疗美化（水光针、热玛吉）、地狱极速断食、各种大型业务日程<strong>均会被强行锁定挂红中止</strong>，督促您优先科学调理，打通爱豆大健康双轨制！</p>
+                </div>
+              </div>
 
               {/* Feature 13: 24-Day Cycle Setup (BRAND NEW V3.3) */}
               <div className="bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-indigo-500/35 p-3.5 rounded-xl space-y-2">

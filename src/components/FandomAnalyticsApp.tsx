@@ -190,7 +190,29 @@ export default function FandomAnalyticsApp({
   // Dermatology purchases (Requirement 11, 12)
   const buyTherapy = (type: "ldm" | "injection" | "thermage" | "depuff") => {
     let cost = 0;
+    let pointsCost = 1;
+    if (type === "thermage") pointsCost = 2;
+    if (type === "depuff") pointsCost = 1;
+
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    if (currentPoints < pointsCost) {
+      onAddLog(`【皮肤科】今日互动点数不足！本护理需要消耗 ${pointsCost} 互动点，但您仅剩 ${currentPoints} 点。`);
+      return;
+    }
+
+    if (type === "injection" || type === "thermage") {
+      if (persona.energy <= 15) {
+        onAddLog(`【体力枯竭】进行水光针/热玛吉提拉施术极度消耗抵抗力。您目前体力仅剩 ${persona.energy}⚡，强行治疗易引发晕眩或面部红肿！请优先进行体力修护。`);
+        return;
+      }
+      if (persona.stress >= 95) {
+        onAddLog(`【精神极度敏感】爱豆目前的脑部压力高达 ${persona.stress}/100 🤯，对微小创伤/痛感处于极度恐慌警戒状态，医生建议立即暂停侵入式医美！请优先安抚情绪。`);
+        return;
+      }
+    }
+
     const p = { ...persona };
+    p.interactionPoints = currentPoints - pointsCost;
 
     if (type === "ldm") {
       cost = 35;
@@ -202,7 +224,7 @@ export default function FandomAnalyticsApp({
       p.skinCondition = "glowing";
       p.stress = Math.max(0, p.stress - 15);
       p.energy = Math.max(0, p.energy - 5);
-      onAddLog("【江南清潭洞皮肤科】您完成了LDM童颜超声波维稳，面部重新焕发出健康蜜桃光泽，疲劳有所缓解！");
+      onAddLog(`【江南清潭洞皮肤科】您完成了LDM童颜超声波维稳，消耗 ${pointsCost} 互动点。面部重新焕发出健康蜜桃光泽，疲劳有所缓解！今天剩余: ${p.interactionPoints} 互动点。`);
     } else if (type === "injection") {
       cost = 65;
       if (p.money < cost && p.startType === "idol") {
@@ -213,7 +235,7 @@ export default function FandomAnalyticsApp({
       p.skinCondition = "perfect";
       p.stress = Math.min(100, p.stress + 5); // hurts!
       p.energy = Math.max(0, p.energy - 10);
-      onAddLog("【江南清潭洞皮肤科】打完高级胶原蛋白水光针！虽然针口有些红肿微疼，但2D无底妆素颜状态达到了巅峰！");
+      onAddLog(`【江南清潭洞皮肤科】打完高级胶原蛋白水光针，消耗 ${pointsCost} 互动点！素颜状态达到了巅峰！今天剩余: ${p.interactionPoints} 互动点。`);
     } else if (type === "thermage") {
       cost = 220;
       if (p.money < cost && p.startType === "idol") {
@@ -225,7 +247,7 @@ export default function FandomAnalyticsApp({
       p.popularity = p.popularity + 8;
       p.stress = Math.min(100, p.stress + 15); // hurts like laser!
       p.energy = Math.max(0, p.energy - 15);
-      onAddLog("【江南清潭洞皮肤科】接受了高端热玛吉(Thermage FLX)面部抗衰提拉。下颌线清晰到能削苹果，路人缘与精美度大幅提升！");
+      onAddLog(`【江南清潭洞皮肤科】完成高端热玛吉面部提拉，消耗 ${pointsCost} 互动点。下颌线清晰，路人缘大幅提升！今天剩余: ${p.interactionPoints} 互动点。`);
     } else {
       // Espresso depuff
       cost = 5;
@@ -236,7 +258,7 @@ export default function FandomAnalyticsApp({
       p.money = Math.max(0, p.money - cost);
       p.weight = Math.max(38, p.weight - 0.3);
       p.stress = Math.max(0, p.stress - 5);
-      onAddLog("【急速排水】您空腹灌下了两杯超浓缩冰美式，并进行了面部刮痧，体重急速下降了 0.3kg！");
+      onAddLog(`【急速排水】您灌下了两杯超浓缩冰美式与刮痧，消耗 ${pointsCost} 互动点，体重下降 0.3kg！今天剩余: ${p.interactionPoints} 互动点。`);
     }
 
     onUpdatePersona(p);
@@ -244,44 +266,98 @@ export default function FandomAnalyticsApp({
 
   // Slimming purchases (Requirement 11, 12)
   const handleFasting = () => {
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    if (currentPoints < 1) {
+      onAddLog("【急速断食】时间不足！执行极端断食消肿需要消耗 1 互动点，但今天仅剩 " + currentPoints + " 点。");
+      return;
+    }
+
+    // Health protections for Fasting
+    if (persona.energy <= 15) {
+      onAddLog(`【断食终止】您目前的体力极差（仅剩 ${persona.energy}⚡）！极端断食消耗极大，强行断食容易引发脱水虚脱或在练习室当场晕倒！请优先吃大餐或睡觉。`);
+      return;
+    }
+    if (persona.stress >= 90) {
+      onAddLog(`【断食限制】当前心理压力已爆表 (${persona.stress}/100) 🤯！极度生理饥饿极易诱发突发性暴食抑郁，甚至精神恍惚，无法断食。请优先安抚情绪或呼叫 Dr. Kim 进行话疗。`);
+      return;
+    }
+
     const p = { ...persona };
+    p.interactionPoints = currentPoints - 1;
     p.weight = Math.max(38, p.weight - 0.7);
     p.energy = Math.max(5, p.energy - 25); // very exhausting!
     p.stress = Math.min(100, p.stress + 18);
     // Bad for skin
     p.skinCondition = "troubled";
-    onAddLog("【极端消肿】连续24小时无盐断食。体重狂掉 0.7kg，但你已经眼冒金星，面色缺乏血气，皮肤开始粗糙。");
+    onAddLog("【极端消肿】连续24小时无盐断食。消耗 1 互动点，体重狂掉 0.7kg，但你已经眼冒金星，面色缺乏血气，皮肤开始粗糙。今日剩余可用互动点：" + p.interactionPoints + " 点。");
     onUpdatePersona(p);
   };
 
   const handlePilates = () => {
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    if (currentPoints < 1) {
+      onAddLog("【普拉提】互动点不足！进行 1对1 普拉提拉伸需要消耗 1 互动点，但今天仅剩 " + currentPoints + " 点。");
+      return;
+    }
+
+    // Health protections for Pilates
+    if (persona.energy <= 10) {
+      onAddLog(`【体力枯竭】进行1对1普拉提强力拉伸需耗体力。您目前精力仅剩 ${persona.energy}⚡，强行训练极易拉伤肌肉和韧带。请优先补充精力。`);
+      return;
+    }
+
     const cost = 45;
     const p = { ...persona };
     if (p.money < cost && p.startType === "idol") {
       onAddLog("资金不足！普拉提1对1私教课程需要 ₩45万。");
       return;
     }
+    p.interactionPoints = currentPoints - 1;
     p.money = Math.max(0, p.money - cost);
     p.weight = Math.max(38, p.weight - 0.2);
     p.danceSkill = Math.min(100, p.danceSkill + 4);
     p.energy = Math.max(0, p.energy - 12);
     p.stress = Math.max(0, p.stress - 8); // destress!
-    onAddLog("【普拉提塑形】伴随着优美的古典配乐，您拉伸了韧带及马甲线。核心控制力与核心舞感舞蹈技巧 (+4) 明显提高！");
+    onAddLog("【普拉提塑形】拉伸了韧带及马甲线，消耗 1 互动点。核心控制力与核心舞感舞蹈技巧 (+4) 明显提高！今日剩余可用互动点：" + p.interactionPoints + " 点。");
     onUpdatePersona(p);
   };
 
   const handleFreeGym = () => {
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    if (currentPoints < 1) {
+      onAddLog("【健身特训】互动点不足！去健身房进行高强度深蹲与肺活量特训需要消耗 1 互动点，但今天仅剩 " + currentPoints + " 点。");
+      return;
+    }
+
+    // Health protections for Gym
+    if (persona.energy <= 15) {
+      onAddLog(`【体力枯竭】高强度阻力深蹲与慢跑排毒极耗气血！您目前体力仅剩 ${persona.energy}⚡，强行举铁极易受伤。请优先补充精力或睡觉。`);
+      return;
+    }
+    if (persona.stress >= 95) {
+      onAddLog(`【精神崩溃边缘】当前心理压力已爆表高达 ${persona.stress}/100 🤯！高压下强迫爱豆进行枯燥训练容易诱发抑郁反弹，请安排心理诊疗缓解。`);
+      return;
+    }
+
     const p = { ...persona };
+    p.interactionPoints = currentPoints - 1;
     p.energy = Math.max(0, p.energy - 20);
     p.weight = Math.max(38, p.weight - 0.1);
     p.vocalSkill = Math.min(100, p.vocalSkill + 1);
     p.stress = Math.min(100, p.stress + 6);
-    onAddLog("【公司免费健身房】高强度深蹲与肺活量慢跑，流出了大汗，体力稍微提升，稍微有助于面部消肿。");
+    onAddLog("【公司免费健身房】完成阻力运动与慢跑排毒，消耗 1 互动点。稍微有助于面部消肿，今日剩余可用互动点：" + p.interactionPoints + " 点。");
     onUpdatePersona(p);
   };
 
   const startEating = (food: any) => {
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    if (currentPoints < 1) {
+      onAddLog(`【深夜加餐】互动点不足！深夜开吃密谋需要 1 互动点，但今天仅剩 ${currentPoints} 点。`);
+      return;
+    }
+
     const p = { ...persona };
+    p.interactionPoints = currentPoints - 1;
     if (p.money < food.cost && p.startType === "idol") {
       onAddLog(`资金不足！【${food.name}】需要 ₩${food.cost}万。`);
       return;
@@ -470,6 +546,13 @@ export default function FandomAnalyticsApp({
 
   const handleTherapySubmit = async () => {
     if (!therapyInput.trim()) return;
+
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    if (currentPoints < 1) {
+      onAddLog("【心理诊疗】互动点不足！呼叫 Dr. Kim 心理咨询会诊需要消耗 1 互动点，但今天仅剩 " + currentPoints + " 点。");
+      return;
+    }
+
     setIsAnalyzing(true);
     setTherapyResult(null);
     setStressDelta(null);
@@ -532,6 +615,7 @@ export default function FandomAnalyticsApp({
       const cleanedText = rawText.replace(/\[STRESS_CHANGE:\s*-?\d+\]/gi, "").trim();
 
       const p = { ...persona };
+      p.interactionPoints = Math.max(0, currentPoints - 1);
       const oldStress = p.stress;
       const newStress = Math.min(100, Math.max(0, oldStress + parsedDelta));
       p.stress = newStress;
@@ -541,20 +625,22 @@ export default function FandomAnalyticsApp({
       onUpdatePersona(p);
 
       const sign = parsedDelta >= 0 ? "+" : "";
-      onAddLog(`【AI 心理诊疗】Dr. Kim 医生完成深度倾诉分析。压力变动：${sign}${parsedDelta}%（降至 ${newStress}%）。`);
+      onAddLog(`【AI 心理诊疗】Dr. Kim 医生完成深度倾诉分析。消耗 1 互动点，压力变动：${sign}${parsedDelta}%（降至 ${newStress}%）。今日剩余可用互动点：${p.interactionPoints} 点。`);
     } catch (error) {
       console.error("AI 心理咨询大模型调用失败:", error);
       onAddLog("【心理诊疗异常】呼叫 Dr. Kim 医生失败，原因由于特训高压或接口不可达，系统自动由助理进行基础心理安慰。");
       
       const fallbackDelta = -12;
       const p = { ...persona };
+      p.interactionPoints = Math.max(0, currentPoints - 1);
       const oldStress = p.stress;
       const newStress = Math.min(100, Math.max(0, oldStress + fallbackDelta));
       p.stress = newStress;
 
-      setTherapyResult(`（助理温馨慰问 fallback）\n孩子，演艺圈的压力确实很重。不论黑粉恶意恶评如何中伤你，也别忘了那些手举灯牌、在台下撕心裂肺喊你名字的团粉。在保姆车里喝杯热红豆排水汤，睡一觉吧。Kim 医生下一次特诊一定会准时到达。`);
+      setTherapyResult(`（助理温馨慰问 fallback）\n孩子，演艺圈的压力确实很重。不论黑粉恶意恶评如何中伤你，也别忘了那些手举灯牌、在台下撕心配裂喊你名字的团粉。在保姆车里吃饱饱，睡一觉吧。`);
       setStressDelta(fallbackDelta);
       onUpdatePersona(p);
+      onAddLog(`【心理诊疗】深度倾诉结束。消耗 1 互动点，压力变动：-12%（降至 ${newStress}%）。今日剩余可用互动点：${p.interactionPoints} 点。`);
     } finally {
       setIsAnalyzing(false);
     }
@@ -569,7 +655,18 @@ export default function FandomAnalyticsApp({
           <Activity className="w-5 h-5 text-indigo-400 animate-pulse" />
           <div>
             <h3 className="text-xs font-bold text-slate-100">爱豆大健康与粉丝结构分析 App</h3>
-            <p className="text-[9px] text-slate-400">查看网络粉丝情绪、进行江南皮肤科维护和体重三围控制</p>
+            <p className="text-[9px] text-slate-450">查看网络粉丝情绪、进行江南皮肤科维护和体重三围控制</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <span className="text-[9px] bg-emerald-900/30 text-emerald-300 border border-emerald-500/10 px-1.5 py-0.5 rounded font-mono font-medium">
+                🕒 剩余互动点: {persona.interactionPoints ?? 18}/18点
+              </span>
+              <span className="text-[9px] bg-amber-900/30 text-amber-300 border border-amber-500/10 px-1.5 py-0.5 rounded font-mono font-medium">
+                ⚡ 体力: {persona.energy}/100
+              </span>
+              <span className="text-[9px] bg-rose-900/30 text-rose-300 border border-rose-500/10 px-1.5 py-0.5 rounded font-mono font-medium">
+                🤯 压力: {persona.stress}/100
+              </span>
+            </div>
           </div>
         </div>
 

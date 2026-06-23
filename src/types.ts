@@ -58,6 +58,8 @@ export interface IdolPersona {
   dayNumber: number; // Current simulation day
   cycleDays?: number; // Career contract cycle period (24 or 36 days, default 36)
   ageing_factor?: number; // Career age multiple of cycleDays index
+  interactionPoints?: number; // 每天剩余可用互动点数 (18点总共)
+  hasRecoveredToday?: boolean; // 每天是否已经执行过自选恢复体力
   
   // Romance Option - Requirement & Custom Option
   hasLover?: boolean;

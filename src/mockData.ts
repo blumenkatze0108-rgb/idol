@@ -211,6 +211,8 @@ export const DEFAULT_PERSONA: IdolPersona = {
   albumSales: 0,
   money: 50,
   dayNumber: 1,
+  interactionPoints: 18,
+  hasRecoveredToday: false,
   
   hasLover: false,
   loverName: "",

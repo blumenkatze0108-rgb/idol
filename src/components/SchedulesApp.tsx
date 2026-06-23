@@ -124,13 +124,40 @@ export default function SchedulesApp({
     const sch = schedules.find((s) => s.id === schId);
     if (!sch || sch.completed) return;
 
+    const currentPoints = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+    const pointsCost = sch.category === "vocal_lesson" || sch.category === "practice" ? 1 :
+                     sch.category === "music_show" || sch.category === "variety_show" || sch.category === "cf_shoot" || sch.category === "concert" || sch.category === "fansign" ? 2 :
+                     sch.category === "clinical_dermatology" ? 1 :
+                     sch.category === "restrictive_diet" ? 1 :
+                     sch.category === "rest_sleep" ? 1 : 1;
+
+    if (currentPoints < pointsCost) {
+      onAddLog(`今日互动点不足！此业务需要消耗 ${pointsCost} 互动点，但今天仅剩 ${currentPoints} 点。请在下方进行自选体力恢复、去宿舍睡觉、或点击【次日清点计算】。`);
+      return;
+    }
+
+    const isRestingAction = sch.category === "rest_sleep" || sch.id.includes("sleep") || sch.title.includes("睡") || sch.title.includes("休息");
+
     if (persona.energy < sch.energyCost) {
-      onAddLog(`体力匮乏！进行此项活动需要 ${sch.energyCost} 体力，目前仅剩 ${persona.energy}。请喝消肿咖啡或去宿舍冰疗睡觉。`);
+      onAddLog(`【体力匮乏】进行此项活动需要 ${sch.energyCost} 体力，目前仅剩 ${persona.energy}。请选择下方【每日自选修护计划】进行体力充值，或者去宿舍泡冷水冰疗睡觉。`);
+      return;
+    }
+
+    // Strict stamina restriction
+    if (persona.energy <= 10 && !isRestingAction) {
+      onAddLog(`【体力枯竭保护】当前体力仅剩 ${persona.energy}⚡（已低于10警戒线）！除选择【每日自选修护计划】或执行【宿舍/保姆车大睡】等恢复行动外，您无法强行执行任何对外大型业务或日常训练。请优先保护爱豆身体！`);
+      return;
+    }
+
+    // Strict stress restriction
+    if (persona.stress >= 95 && !isRestingAction) {
+      onAddLog(`【精神高度崩溃】当前心理压力已接近临界极限 ${persona.stress}/100 🤯！除进行【心理诊疗】呼叫 Dr. Kim 进行深度话疗、大健康大餐放松或自选高端SPA护理外，爱豆目前因心理原因无法配合完成训练或日常业务。请优先安抚情绪！`);
       return;
     }
 
     // Process effects
     const p = { ...persona };
+    p.interactionPoints = currentPoints - pointsCost;
     p.energy = Math.max(0, p.energy - sch.energyCost);
     p.popularity = Math.min(100, p.popularity + sch.rewardPopularity);
     p.reputation = Math.min(100, p.reputation + sch.rewardReputation);
@@ -195,6 +222,7 @@ export default function SchedulesApp({
     p.stress = Math.min(100, Math.max(0, p.stress + stressGrowth));
 
     onUpdatePersona(p);
+    onAddLog(`【时间管理】「${sch.title}」运行完毕，消耗 ${pointsCost} 互动点。今天剩余可用互动点：${p.interactionPoints} 点。`);
 
     // Save schedule completion status
     const updatedSchedules = schedules.map((s) => {
@@ -213,6 +241,64 @@ export default function SchedulesApp({
     }
   };
 
+  const handleDailyRecover = (planType: "juice" | "nap" | "spa") => {
+    if (persona.hasRecoveredToday) {
+      onAddLog("【体能修护】今日已执行过自选恢复！每日仅能修护一次，请等次日起床后再行选择。");
+      return;
+    }
+
+    const p = { ...persona };
+    const currentPoints = typeof p.interactionPoints === 'number' ? p.interactionPoints : 18;
+
+    let cost = 0;
+    let energyVal = 0;
+    let stressVal = 0;
+    let pointsCost = 0;
+    let planName = "";
+
+    if (planType === "juice") {
+      cost = 1;
+      energyVal = 25;
+      stressVal = 5;
+      pointsCost = 1;
+      planName = "江南排毒草本果汁 🍹";
+    } else if (planType === "nap") {
+      cost = 0;
+      energyVal = 40;
+      stressVal = 10;
+      pointsCost = 1;
+      planName = "练习室沙发小憩 💤";
+    } else if (planType === "spa") {
+      cost = 12;
+      energyVal = 70;
+      stressVal = 25;
+      pointsCost = 2; // Spa used to cost 3 hours, now only 2 interaction points
+      planName = "高端香薰理疗SPA 💆";
+    }
+
+    if (currentPoints < pointsCost) {
+      onAddLog(`【体能修护】互动点不足！执行「${planName}」需要 ${pointsCost} 互动点，但今天仅剩 ${currentPoints} 点。`);
+      return;
+    }
+
+    if (p.money < cost && p.startType === "idol") {
+      onAddLog(`【体能修护】韩元代付不足！购买「${planName}」需要 ₩${cost}万。`);
+      return;
+    }
+
+    // Apply stats
+    p.hasRecoveredToday = true;
+    p.interactionPoints = currentPoints - pointsCost;
+    if (p.startType === "idol") {
+      p.money = Math.max(0, p.money - cost);
+    }
+    p.energy = Math.min(100, p.energy + energyVal);
+    p.stress = Math.max(0, p.stress - stressVal);
+
+    onUpdatePersona(p);
+    onAddLog(`【体力瞬时恢复】您安排并享受了「${planName}」！体力值提升 +${energyVal}⚡️，压力减小 -${stressVal}🤯，消耗 ${pointsCost} 个互动点。今日剩余可用互动点：${p.interactionPoints} 点。`);
+  };
+
   // Fully dynamic AI-driven next day transition (Requirement: "所有内容都是根据用户前一天的行为动态生成，会消耗api次数。")
   const handleNextDay = async () => {
     setIsProcessing(true);
@@ -224,6 +310,8 @@ export default function SchedulesApp({
     // 1. Prepare secondary stats calculated client-side as base update
     const pUpdateObj = { ...persona };
     pUpdateObj.dayNumber = pUpdateObj.dayNumber + 1;
+    pUpdateObj.interactionPoints = 18;
+    pUpdateObj.hasRecoveredToday = false;
     const ageing_factor = Math.floor((pUpdateObj.dayNumber - 1) / (pUpdateObj.cycleDays || 36));
     pUpdateObj.ageing_factor = ageing_factor;
     pUpdateObj.energy = Math.min(100, pUpdateObj.energy + 50); // rest Overnight
@@ -720,6 +808,16 @@ export default function SchedulesApp({
               <span>压力: <strong>{persona.stress}</strong>/100</span>
             </div>
 
+            {/* Active Points Badge */}
+            <div className={`border rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] font-mono flex items-center gap-1 shadow-sm transition-all ${
+              (persona.interactionPoints ?? 18) <= 4 
+                ? 'bg-red-950/50 border-red-500/45 text-red-300 animate-pulse' 
+                : 'bg-emerald-950/45 border-emerald-500/25 text-emerald-300'
+            }`}>
+              <span>🕒</span>
+              <span>今天剩余: <strong>{typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18}</strong>/18 互动点</span>
+            </div>
+
             <div className="bg-purple-950/40 border border-purple-500/20 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-purple-300 font-mono flex items-center gap-1.5 shadow-sm">
               <span className="font-sans font-bold text-indigo-300 mr-1 hidden xs:inline">📅 {getCalendarPeriod(persona.dayNumber, persona.cycleDays || 36).text}</span>
               <span><strong>{persona.dayNumber}</strong>/{persona.cycleDays || 36}天</span>
@@ -743,6 +841,83 @@ export default function SchedulesApp({
           </div>
         )}
 
+        {/* Daily selectable energy recovery program (NEW V3.3) */}
+        <div className="bg-slate-950/60 border border-purple-500/15 rounded-xl p-3 mb-3.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-transparent bg-gradient-to-r from-purple-400 to-[#e9b872] bg-clip-text flex items-center gap-1.5">
+              <span>🌸 每日自选修护计划 (Action Refills)</span>
+              {persona.hasRecoveredToday && (
+                <span className="text-[9px] bg-emerald-500/15 border border-emerald-500/25 text-emerald-400 px-1 rounded font-mono font-medium animate-pulse">
+                  今日已修护
+                </span>
+              )}
+            </h4>
+            <span className="text-[9px] text-slate-450">每日限选 1 种进行时能恢复</span>
+          </div>
+
+          <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
+            {/* Plan A (Green juice) */}
+            <button
+              onClick={() => handleDailyRecover("juice")}
+              disabled={persona.hasRecoveredToday}
+              className={`p-2 rounded-lg border outline-none text-left transition-all ${
+                persona.hasRecoveredToday 
+                  ? 'bg-slate-900/30 border-white/5 opacity-50 cursor-not-allowed' 
+                  : 'bg-[#152e25]/35 border-teal-500/20 hover:border-teal-500/55 active:scale-95 cursor-pointer'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[11px] font-semibold text-teal-300">
+                <span>排毒果汁 🍹</span>
+                <span className="text-[9px] text-slate-500 font-mono">1小时</span>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">体力 +25，压力 -5</p>
+              <span className="text-[9px] text-teal-400 font-mono font-black mt-1 block">
+                {persona.startType === "trainee" ? "免费 (厂牌专属)" : "₩ 1万"}
+              </span>
+            </button>
+
+            {/* Plan B (Power Nap) */}
+            <button
+              onClick={() => handleDailyRecover("nap")}
+              disabled={persona.hasRecoveredToday}
+              className={`p-2 rounded-lg border outline-none text-left transition-all ${
+                persona.hasRecoveredToday 
+                  ? 'bg-slate-900/30 border-white/5 opacity-50 cursor-not-allowed' 
+                  : 'bg-[#1a2d3d]/35 border-sky-500/20 hover:border-sky-500/55 active:scale-95 cursor-pointer'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[11px] font-semibold text-sky-300">
+                <span>沙发小憩 💤</span>
+                <span className="text-[9px] text-slate-500 font-mono">2小时</span>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">体力 +40，压力 -10</p>
+              <span className="text-[9px] text-sky-400 font-mono font-black mt-1 block">
+                免费 ₩0
+              </span>
+            </button>
+
+            {/* Plan C (Aroma Spa) */}
+            <button
+              onClick={() => handleDailyRecover("spa")}
+              disabled={persona.hasRecoveredToday}
+              className={`p-2 rounded-lg border outline-none text-left transition-all ${
+                persona.hasRecoveredToday 
+                  ? 'bg-slate-900/30 border-white/5 opacity-50 cursor-not-allowed' 
+                  : 'bg-[#2b1732]/35 border-purple-500/20 hover:border-purple-500/55 active:scale-95 cursor-pointer'
+              }`}
+            >
+              <div className="flex items-center justify-between text-[11px] font-semibold text-purple-300">
+                <span>高端SPA 💆</span>
+                <span className="text-[9px] text-slate-500 font-mono">3小时</span>
+              </div>
+              <p className="text-[10px] text-slate-400 mt-1">体力 +70，压力 -25</p>
+              <span className="text-[9px] text-purple-400 font-mono font-black mt-1 block">
+                {persona.startType === "trainee" ? "免费 (宿舍报账)" : "₩ 12万"}
+              </span>
+            </button>
+          </div>
+        </div>
+
         {/* Schedules list scrollable */}
         <div className="space-y-1.5 overflow-y-auto max-h-[160px] xs:max-h-[200px] sm:max-h-[220px] md:max-h-[220px] pr-1 flex-1 min-h-0">
           {schedules.map((sch) => (
@@ -760,10 +935,11 @@ export default function SchedulesApp({
                 <p className={`text-xs font-semibold mt-1 truncate ${sch.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
                   {sch.title}
                 </p>
-                <div className="flex gap-2 items-center text-[9px] text-slate-450 mt-1 font-mono text-slate-450 flex-wrap">
+                <div className="flex gap-2 items-center text-[9px] text-slate-450 mt-1 font-mono flex-wrap">
                   <span className="text-teal-400">魅力: +{sch.rewardPopularity}</span>
                   <span className="text-indigo-400">名气: +{sch.rewardReputation}</span>
-                  <span className="text-amber-405">消耗: {sch.energyCost}⚡️</span>
+                  <span className="text-amber-500">消耗: {sch.energyCost}⚡️</span>
+                  <span className="text-emerald-400 font-bold bg-emerald-900/20 border border-emerald-500/10 px-1 rounded">🎯 {sch.category === "vocal_lesson" || sch.category === "practice" || sch.category === "clinical_dermatology" || sch.category === "restrictive_diet" || sch.category === "rest_sleep" ? 1 : 2} 互动点</span>
                 </div>
               </div>
 

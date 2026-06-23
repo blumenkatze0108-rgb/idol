@@ -844,6 +844,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           money: startMoney,
           dayNumber: 1,
           cycleDays: cycleDays,
+          interactionPoints: 18,
+          hasRecoveredToday: false,
           hasLover: m.hasLover,
           loverName: m.hasLover ? (m.loverName?.trim() || (m.loverGender === "female" ? "韩熙珍" : "宋承泽")) : "",
           relationshipStatus: m.hasLover ? "dating" : "single",
