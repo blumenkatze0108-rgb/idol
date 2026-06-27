@@ -89,7 +89,16 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [loverGender, setLoverGender] = useState<"female" | "male">("male");
   const [loverAge, setLoverAge] = useState<"same_age" | "older" | "younger">("same_age");
   const [loverIdentity, setLoverIdentity] = useState<"non_celeb" | "celebrity">("non_celeb");
+  const [loverRole, setLoverRole] = useState<string>("演员");
+  const [loverMbti, setLoverMbti] = useState<string>("INFJ");
   const [romancePosition, setRomancePosition] = useState<"left" | "right">("right"); // Default to right-side (受) unless configured
+  const [customTeammates, setCustomTeammates] = useState<SimulatedTeammate[]>([]);
+
+  // Update customTeammates when gender changes or on mount
+  useEffect(() => {
+    setCustomTeammates(generateRandomTeammates(gender, 4));
+  }, [gender]);
+
   const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
   const [birthday, setBirthday] = useState("2006-11-23");
   const [zodiac, setZodiac] = useState("射手座");
@@ -269,6 +278,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       loverGender,
       loverAge,
       loverIdentity,
+      loverRole,
+      loverMbti,
       romancePosition
     };
     setMembersData(prev => ({
@@ -325,6 +336,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     setLoverGender(data.loverGender);
     setLoverAge(data.loverAge);
     setLoverIdentity(data.loverIdentity);
+    setLoverRole(data.loverRole || "演员");
+    setLoverMbti(data.loverMbti || "INFJ");
     setRomancePosition(data.romancePosition || "right");
 
     setTimeout(() => {
@@ -853,6 +866,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           loverGender: m.hasLover ? m.loverGender : undefined,
           loverAge: m.hasLover ? m.loverAge : undefined,
           loverIdentity: m.hasLover ? m.loverIdentity : undefined,
+          loverRole: m.hasLover ? (m.loverRole || "演员") : undefined,
+          loverMbti: m.hasLover ? (m.loverMbti || "INFJ") : undefined,
           loverMood: m.hasLover ? 85 : undefined,
           romancePosition: m.hasLover ? (m.romancePosition || "right") : undefined,
           fansDistribution: isTrainee ? {
@@ -879,7 +894,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       // Generate companions
       // If single and group: generate companions (4 companions to make 5 total). If duo/trio, keep 0 companion teammates as K-pop has 2-3 member group debuts.
       const numCompanionsNeeded = playMode === "single" ? (style === "group" ? 4 : 0) : 0;
-      let companions = numCompanionsNeeded > 0 ? generateRandomTeammates(gender, numCompanionsNeeded) : [];
+      let companions = numCompanionsNeeded > 0 ? (customTeammates.length > 0 ? customTeammates : generateRandomTeammates(gender, numCompanionsNeeded)) : [];
       
       if (numCompanionsNeeded === 4 && companions.length === 4 && finalPersonas.length > 0) {
         const playerRole = finalPersonas[0].roleInGroup;
@@ -888,7 +903,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
         const companionAvailableRoles = allRoles.filter(r => r !== playerRole);
         
         companions = companions.map((t, idx) => {
-          const assignedRole = companionAvailableRoles[idx] || t.role;
+          const assignedRole = t.role || companionAvailableRoles[idx] || t.role;
           return {
             ...t,
             role: assignedRole,
@@ -1070,7 +1085,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                 </div>
 
                 {/* Name, StageName inputs and Genders */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">练习生本名 (Korean Name)</label>
                     <input 
@@ -1287,18 +1302,57 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
                   {hasLover && (
                     <div className="space-y-3 mt-2 bg-slate-950/50 p-3.5 rounded-xl border border-pink-500/15 animate-in fade-in duration-200">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {/* Identity Selection */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                        {/* Profession Selection */}
                         <div>
-                          <label className="text-[10px] text-pink-400 font-bold block mb-1">🎭 恋人身份</label>
+                          <label className="text-[10px] text-pink-400 font-bold block mb-1">🎭 恋人职业/身份</label>
                           <select 
-                            value={loverIdentity}
-                            onChange={(e) => setLoverIdentity(e.target.value as any)}
+                            value={
+                              ["演员", "主持人", "社长", "大势爱豆", "练习生队友", "顶级模特", "编舞总监", "音乐制作人", "圈外普通素人"].includes(loverRole)
+                                ? loverRole
+                                : "custom"
+                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "custom") {
+                                setLoverRole("其他圈内职业");
+                                setLoverIdentity("celebrity");
+                              } else {
+                                setLoverRole(val);
+                                if (val === "圈外普通素人") {
+                                  setLoverIdentity("non_celeb");
+                                } else {
+                                  setLoverIdentity("celebrity");
+                                }
+                              }
+                            }}
                             className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
                           >
-                            <option value="non_celeb">👤 圈外普通素人 (常人)</option>
-                            <option value="celebrity">🌟 圈内业界明星 (明星/爱豆)</option>
+                            <option value="演员">🎬 演员 (Actor)</option>
+                            <option value="主持人">🎤 主持人 (MC/Host)</option>
+                            <option value="社长">🏢 经纪社长 (CEO)</option>
+                            <option value="大势爱豆">🌟 大势爱豆 (Top Idol)</option>
+                            <option value="练习生队友">🤸 练习生队友 (Trainee)</option>
+                            <option value="顶级模特">📸 顶级模特 (Supermodel)</option>
+                            <option value="编舞总监">💃 编舞总监 (Choreographer)</option>
+                            <option value="音乐制作人">🎹 音乐制作人 (Producer)</option>
+                            <option value="圈外普通素人">👤 圈外普通素人 (Non-celebrity)</option>
+                            <option value="custom">✍️ 自定义职业/身份...</option>
                           </select>
+                          
+                          {/* Custom role text input */}
+                          {!["演员", "主持人", "社长", "大势爱豆", "练习生队友", "顶级模特", "编舞总监", "音乐制作人", "圈外普通素人"].includes(loverRole) && (
+                            <input 
+                              type="text"
+                              value={loverRole}
+                              onChange={(e) => {
+                                setLoverRole(e.target.value);
+                                setLoverIdentity(e.target.value === "圈外普通素人" ? "non_celeb" : "celebrity");
+                              }}
+                              placeholder="手动输入职业..."
+                              className="mt-1 w-full bg-slate-900 border border-pink-500/30 rounded px-2 py-0.5 text-[10px] text-pink-300 focus:outline-none"
+                            />
+                          )}
                         </div>
 
                         {/* Gender Selection */}
@@ -1322,10 +1376,60 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                             onChange={(e) => setLoverAge(e.target.value as any)}
                             className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
                           >
-                            <option value="same_age">同龄 (Classmate / Same Age)</option>
+                            <option value="same_age">同龄 (Same Age)</option>
                             <option value="older">年上 (Older / Noona / Oppa)</option>
                             <option value="younger">年下 (Younger / Dongsaeng)</option>
                           </select>
+                        </div>
+
+                        {/* MBTI Selection */}
+                        <div>
+                          <label className="text-[10px] text-pink-400 font-bold block mb-1">🧪 恋人MBTI</label>
+                          <select 
+                            value={
+                              ["INFJ", "ENFJ", "INFP", "ENFP", "INTJ", "ENTJ", "INTP", "ENTP", "ISFJ", "ESFJ", "ISTJ", "ESTJ", "ISFP", "ESFP", "ISTP", "ESTP"].includes(loverMbti)
+                                ? loverMbti
+                                : "custom"
+                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (val === "custom") {
+                                setLoverMbti("XXXX");
+                              } else {
+                                setLoverMbti(val);
+                              }
+                            }}
+                            className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-pink-500 font-bold"
+                          >
+                            <option value="INFJ">INFJ 提倡者 (深沉温柔)</option>
+                            <option value="ENFJ">ENFJ 主人公 (极具领袖魅力)</option>
+                            <option value="INFP">INFP 调停者 (感性治愈)</option>
+                            <option value="ENFP">ENFP 竞选者 (快乐小太阳)</option>
+                            <option value="INTJ">INTJ 策划者 (高冷毒舌)</option>
+                            <option value="ENTJ">ENTJ 指挥官 (霸道掌控)</option>
+                            <option value="INTP">INTP 逻辑学家 (冷静学者)</option>
+                            <option value="ENTP">ENTP 辩论家 (古灵精怪)</option>
+                            <option value="ISFJ">ISFJ 守卫者 (温柔守护)</option>
+                            <option value="ESFJ">ESFJ 执政官 (体贴大管家)</option>
+                            <option value="ISTJ">ISTJ 物流师 (严谨自律)</option>
+                            <option value="ESTJ">ESTJ 总管 (强势可靠)</option>
+                            <option value="ISFP">ISFP 艺术家 (随性慵懒)</option>
+                            <option value="ESFP">ESFP 表演者 (派对焦点)</option>
+                            <option value="ISTP">ISTP 鉴赏家 (洒脱酷拽)</option>
+                            <option value="ESTP">ESTP 企业家 (享乐冒险)</option>
+                            <option value="custom">✍️ 自定义性格...</option>
+                          </select>
+                          
+                          {/* Custom MBTI text input */}
+                          {!["INFJ", "ENFJ", "INFP", "ENFP", "INTJ", "ENTJ", "INTP", "ENTP", "ISFJ", "ESFJ", "ISTJ", "ESTJ", "ISFP", "ESFP", "ISTP", "ESTP"].includes(loverMbti) && (
+                            <input 
+                              type="text"
+                              value={loverMbti}
+                              onChange={(e) => setLoverMbti(e.target.value.toUpperCase().slice(0, 8))}
+                              placeholder="手动输入MBTI..."
+                              className="mt-1 w-full bg-slate-900 border border-pink-500/30 rounded px-2 py-0.5 text-[10px] text-pink-300 focus:outline-none font-mono"
+                            />
+                          )}
                         </div>
                       </div>
 
@@ -1343,17 +1447,24 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                           {loverIdentity === "celebrity" && (
                             <select
                               onChange={(e) => {
-                                if (e.target.value) setLoverName(e.target.value);
+                                if (e.target.value) {
+                                  const parts = e.target.value.split("|");
+                                  setLoverName(parts[0]);
+                                  if (parts[1]) setLoverRole(parts[1]);
+                                }
                               }}
                               className="bg-slate-800 border border-white/10 rounded-lg px-2 text-[10px] text-slate-300"
                             >
-                              <option value="">🔮 快捷导入明星</option>
-                              <option value="队内高冷颜值门面队友 - 申美延">申美延 (队内高冷颜值队友 - 队内恋爱)</option>
-                              <option value="队内元气甜酷主舞队友 - 韩媛雅">韩媛雅 (队内元气甜酷队友 - 队内恋爱)</option>
-                              <option value="顶流行星男团 Center - 姜在赫">姜在赫 (大势顶流团)</option>
-                              <option value="同厂牌高音SOLO天后 - Miyeon">Miyeon (巨肺SOLO同门)</option>
-                              <option value="忠武路大牌青年人气男演员 - 崔胜贤">崔胜贤 (影坛巨头新人)</option>
-                              <option value="队内御用顶级先锋编舞总监 - JAY">JAY (舞室王牌)</option>
+                              <option value="">🔮 快捷导入圈内模板</option>
+                              <option value="申美延|大势爱豆">申美延 (队内高冷颜值队友 - 队内恋爱)</option>
+                              <option value="韩媛雅|大势爱豆">韩媛雅 (队内元气甜酷队友 - 队内恋爱)</option>
+                              <option value="姜在赫|大势爱豆">姜在赫 (顶流行星男团 Center)</option>
+                              <option value="林智妍|演员">林智妍 (大牌青年人气演员)</option>
+                              <option value="崔胜贤|演员">崔胜贤 (忠武路大牌青年人气演员)</option>
+                              <option value="刘在锡|主持人">刘在锡 (国民级王牌主持人)</option>
+                              <option value="金泰浩|制作人">金泰浩 (王牌金牌制作人)</option>
+                              <option value="金社长|社长">金敏秀 (演艺娱乐公司代表社长)</option>
+                              <option value="JAY|编舞总监">JAY (顶级御用先锋编舞总监)</option>
                             </select>
                           )}
                           {loverIdentity === "non_celeb" && (
@@ -1841,6 +1952,104 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                     </div>
                   </div>
                 </div>
+
+                {/* Editable teammates section */}
+                {style === "group" && playMode === "single" && customTeammates.length > 0 && (
+                  <div className="p-4 rounded-2xl bg-[#111622]/40 border border-white/5 space-y-3.5 mt-2 animate-in fade-in slide-in-from-top-1.5">
+                    <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                      <span className="text-xs font-bold text-indigo-300 flex items-center gap-1.5">
+                        👥 队内队友姓名与设定修改 (Teammate Customizer)
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">您可以自由修改队伍里其他 4 名队友的姓名、MBTI性格及担当标签</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {customTeammates.map((tm, idx) => (
+                        <div key={tm.id || idx} className="bg-slate-950/50 p-3.5 rounded-xl border border-white/5 space-y-3">
+                          <div className="flex items-center justify-between text-[11px] border-b border-white/5 pb-1.5">
+                            <span className="font-extrabold text-purple-400">队友 #{idx + 1} ({gender === "female" ? "女" : "男"})</span>
+                            <span className="text-[10px] text-slate-500 font-mono font-bold uppercase tracking-wider">{tm.mbti} · {tm.nationality}</span>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[10px] text-slate-400 block mb-1 font-semibold">中文本名</label>
+                              <input
+                                type="text"
+                                value={tm.name}
+                                onChange={(e) => {
+                                  const updated = [...customTeammates];
+                                  updated[idx] = { ...tm, name: e.target.value };
+                                  setCustomTeammates(updated);
+                                }}
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-yellow-200 focus:outline-none focus:border-purple-500 font-bold"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-slate-400 block mb-1 font-semibold">舞台艺名 (Stage Name)</label>
+                              <input
+                                type="text"
+                                value={tm.stageName}
+                                onChange={(e) => {
+                                  const updated = [...customTeammates];
+                                  updated[idx] = { ...tm, stageName: e.target.value.toUpperCase() };
+                                  setCustomTeammates(updated);
+                                }}
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-slate-100 focus:outline-none focus:border-purple-500 font-mono font-bold"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-[10px] text-slate-400 block mb-1 font-semibold">性格 (MBTI)</label>
+                              <select
+                                value={tm.mbti}
+                                onChange={(e) => {
+                                  const updated = [...customTeammates];
+                                  updated[idx] = { ...tm, mbti: e.target.value };
+                                  setCustomTeammates(updated);
+                                }}
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-slate-200 focus:outline-none focus:border-purple-500 font-mono font-bold"
+                              >
+                                {["INFJ", "ENFJ", "INFP", "ENFP", "INTJ", "ENTJ", "INTP", "ENTP", "ISFJ", "ESFJ", "ISTJ", "ESTJ", "ISFP", "ESFP", "ISTP", "ESTP"].map(m => (
+                                  <option className="bg-[#0b0e17] text-white" key={m} value={m}>{m}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-slate-400 block mb-1 font-semibold">定位担当 (Group Role)</label>
+                              <input
+                                type="text"
+                                value={tm.role}
+                                onChange={(e) => {
+                                  const updated = [...customTeammates];
+                                  updated[idx] = { ...tm, role: e.target.value };
+                                  setCustomTeammates(updated);
+                                }}
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-indigo-300 focus:outline-none focus:border-purple-500 font-semibold"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-[10px] text-slate-400 block mb-1 font-semibold">特质/标签描述 (Trait)</label>
+                            <textarea
+                              rows={1}
+                              value={tm.trait}
+                              onChange={(e) => {
+                                const updated = [...customTeammates];
+                                updated[idx] = { ...tm, trait: e.target.value };
+                                setCustomTeammates(updated);
+                              }}
+                              className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-[11px] text-slate-300 focus:outline-none focus:border-purple-500 leading-normal"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>

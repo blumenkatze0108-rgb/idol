@@ -69,6 +69,8 @@ export interface IdolPersona {
   loverGender?: "female" | "male";
   loverAge?: "same_age" | "older" | "younger";
   loverIdentity?: "non_celeb" | "celebrity";
+  loverRole?: string; // 恋人具体职业/身份 (如: 演员, 主持人, 社长, 模特, 爱豆, 圈外素人)
+  loverMbti?: string; // 恋人的MBTI性格
   loverMood?: number; // 0-100: Relationship stability/mood.
   romancePosition?: "left" | "right"; // "left" (左位/攻) or "right" (右位/受)
   

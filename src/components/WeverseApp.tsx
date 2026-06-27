@@ -30,6 +30,7 @@ export default function WeverseApp({
   const [newPostContent, setNewPostContent] = useState("");
   const [replyInput, setReplyInput] = useState<Record<string, string>>({});
   const [isPosting, setIsPosting] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"posts" | "detail">("posts");
 
   const selectedPost = weversePosts.find((p) => p.id === activePostId) || weversePosts[0];
 
@@ -275,20 +276,45 @@ ${gDesc}
   };
 
   return (
-    <div id="weverse-app" className="flex flex-col md:flex-row h-full rounded-2xl overflow-hidden bg-[#242735] text-slate-100 border border-slate-700">
+    <div id="weverse-app" className="primary-app-container flex flex-col md:flex-row rounded-2xl bg-[#242735] text-slate-100 border border-slate-700">
       
+      {/* Mobile Sub-Tab Switcher */}
+      <div className="flex md:hidden bg-slate-950/40 p-1 rounded-lg gap-1 border-b border-slate-800 shrink-0">
+        <button
+          onClick={() => setMobileTab("posts")}
+          className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all ${
+            mobileTab === "posts" ? "bg-purple-600 text-white shadow" : "text-slate-400"
+          }`}
+        >
+          官咖动态 ({weversePosts.length})
+        </button>
+        <button
+          onClick={() => setMobileTab("detail")}
+          className={`flex-1 py-1.5 text-center text-xs font-bold rounded-lg transition-all ${
+            mobileTab === "detail" ? "bg-purple-600 text-white shadow" : "text-slate-400"
+          }`}
+        >
+          内容与粉丝互动
+        </button>
+      </div>
+
       {/* Left panel posts list */}
-      <div className="w-full md:w-[260px] bg-[#1a1c27] border-r border-slate-800 p-4 shrink-0 flex flex-col justify-between">
-        <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-purple-400 block mb-3 font-mono">
+      <div className={`w-full md:w-[260px] bg-[#1a1c27] border-r border-slate-800 p-4 shrink-0 flex flex-col justify-between min-h-0 ${
+        mobileTab === "posts" ? "flex flex-1" : "hidden md:flex"
+      }`}>
+        <div className="flex flex-col flex-1 min-h-0">
+          <span className="text-xs font-bold uppercase tracking-wider text-purple-400 block mb-3 font-mono shrink-0">
             WEVERSE ARTIST COMM
           </span>
 
-          <div className="space-y-2 overflow-y-auto max-h-[160px] md:max-h-[250px] pr-1">
+          <div className="space-y-2 overflow-y-auto flex-1 min-h-0 pr-1">
             {weversePosts.map((post) => (
               <button
                 key={post.id}
-                onClick={() => setActivePostId(post.id)}
+                onClick={() => {
+                  setActivePostId(post.id);
+                  setMobileTab("detail");
+                }}
                 className={`w-full text-left p-3 rounded-xl transition-all border outline-none ${activePostId === post.id ? 'bg-purple-950/40 border-purple-500' : 'bg-slate-900/40 border-white/5 hover:bg-slate-900/70'}`}
               >
                 <p className="text-[11px] leading-relaxed line-clamp-2 text-slate-300">
@@ -305,7 +331,7 @@ ${gDesc}
         </div>
 
         {/* Create manual post */}
-        <div className="border-t border-slate-800 pt-3 mt-4">
+        <div className="border-t border-slate-800 pt-3 mt-4 shrink-0">
           <label className="block text-[10px] font-semibold text-slate-400 mb-1">写一篇新的官咖文章 (Post update)</label>
           <textarea
             value={newPostContent}
@@ -324,7 +350,9 @@ ${gDesc}
       </div>
 
       {/* Right side interactions */}
-      <div className="flex-1 bg-[#1e202d] flex flex-col justify-between min-h-[350px]">
+      <div className={`flex-1 bg-[#1e202d] flex flex-col justify-between min-h-0 ${
+        mobileTab === "detail" ? "flex" : "hidden md:flex"
+      }`}>
         {/* Post showcase header */}
         <div className="bg-[#242637] p-4 border-b border-slate-800 shrink-0 flex items-center justify-between shadow-md">
           <div>

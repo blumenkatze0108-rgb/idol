@@ -647,51 +647,51 @@ export default function FandomAnalyticsApp({
   };
 
   return (
-    <div id="fandom-analytics-app" className="flex flex-col h-full rounded-2xl overflow-hidden bg-[#0d111a] border border-slate-800 text-white glass-panel">
+    <div id="fandom-analytics-app" className="primary-app-container flex flex-col rounded-2xl bg-[#0d111a] border border-slate-800 text-white glass-panel">
       
       {/* Top Header Selector */}
-      <div className="bg-[#161b26] p-3 border-b border-slate-800 flex items-center justify-between shrink-0">
+      <div className="bg-[#161b26] p-3 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
         <div className="flex items-center gap-2">
-          <Activity className="w-5 h-5 text-indigo-400 animate-pulse" />
-          <div>
-            <h3 className="text-xs font-bold text-slate-100">爱豆大健康与粉丝结构分析 App</h3>
-            <p className="text-[9px] text-slate-450">查看网络粉丝情绪、进行江南皮肤科维护和体重三围控制</p>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              <span className="text-[9px] bg-emerald-900/30 text-emerald-300 border border-emerald-500/10 px-1.5 py-0.5 rounded font-mono font-medium">
+          <Activity className="w-5 h-5 text-indigo-400 animate-pulse shrink-0" />
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xs font-bold text-slate-100 truncate">爱豆大健康与粉丝结构分析 App</h3>
+            <p className="text-[9px] text-slate-450 truncate">查看网络粉丝情绪、进行江南皮肤科维护和体重三围控制</p>
+            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+              <span className="text-[9px] bg-emerald-900/30 text-emerald-300 border border-emerald-500/10 px-1.5 py-0.5 rounded font-mono font-medium whitespace-nowrap">
                 🕒 剩余互动点: {persona.interactionPoints ?? 18}/18点
               </span>
-              <span className="text-[9px] bg-amber-900/30 text-amber-300 border border-amber-500/10 px-1.5 py-0.5 rounded font-mono font-medium">
+              <span className="text-[9px] bg-amber-900/30 text-amber-300 border border-amber-500/10 px-1.5 py-0.5 rounded font-mono font-medium whitespace-nowrap">
                 ⚡ 体力: {persona.energy}/100
               </span>
-              <span className="text-[9px] bg-rose-900/30 text-rose-300 border border-rose-500/10 px-1.5 py-0.5 rounded font-mono font-medium">
+              <span className="text-[9px] bg-rose-900/30 text-rose-300 border border-rose-500/10 px-1.5 py-0.5 rounded font-mono font-medium whitespace-nowrap">
                 🤯 压力: {persona.stress}/100
               </span>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-1.5 shrink-0">
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto pb-1 sm:pb-0 shrink-0">
           <button
             onClick={() => setActiveSubTab("fandom")}
-            className={`px-3 py-1 text-[10px] rounded-lg transition-all ${activeSubTab === "fandom" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
+            className={`px-3 py-1 text-[10px] rounded-lg transition-all shrink-0 ${activeSubTab === "fandom" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
           >
             粉丝网评情感
           </button>
           <button
             onClick={() => setActiveSubTab("body")}
-            className={`px-3 py-1 text-[10px] rounded-lg transition-all ${activeSubTab === "body" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
+            className={`px-3 py-1 text-[10px] rounded-lg transition-all shrink-0 ${activeSubTab === "body" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
           >
             自我身材技能
           </button>
           <button
             onClick={() => setActiveSubTab("dermatology")}
-            className={`px-3 py-1 text-[10px] rounded-lg transition-all ${activeSubTab === "dermatology" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
+            className={`px-3 py-1 text-[10px] rounded-lg transition-all shrink-0 ${activeSubTab === "dermatology" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
           >
             江南美容/塑形
           </button>
           <button
             onClick={() => setActiveSubTab("therapy")}
-            className={`px-3 py-1 text-[10px] rounded-lg transition-all ${activeSubTab === "therapy" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
+            className={`px-3 py-1 text-[10px] rounded-lg transition-all shrink-0 ${activeSubTab === "therapy" ? "bg-indigo-600 text-white font-bold" : "bg-slate-800 text-slate-400 hover:bg-slate-750"}`}
           >
             🧠 AI心理医生
           </button>
@@ -699,7 +699,7 @@ export default function FandomAnalyticsApp({
       </div>
 
       {/* Main Content Areas */}
-      <div className="flex-1 p-4 overflow-y-auto md:max-h-[380px]">
+      <div className="flex-1 p-4 overflow-y-auto min-h-0">
         
         {activeSubTab === "fandom" && (
           <div className="space-y-4">
@@ -716,7 +716,7 @@ export default function FandomAnalyticsApp({
               <div className="lg:col-span-3 space-y-2 bg-slate-900/60 rounded-2xl p-4 border border-white/5">
                 <span className="text-xs font-bold text-purple-300 block mb-2">👥 粉丝大局观及成分列表 (Fandom Structure Breakdown)</span>
                 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
                     <div className="flex justify-between text-[11px] text-slate-300">
                       <span>👑 团粉死忠 (OT-fans)</span>
@@ -761,7 +761,7 @@ export default function FandomAnalyticsApp({
                     <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">讨厌你以外的所有团员。经常在网上撕逼或者辱骂队友抢资源。</p>
                   </div>
 
-                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5 col-span-2">
+                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5 col-span-1 sm:col-span-2">
                     <div className="flex justify-between text-[11px] text-slate-300">
                       <span>🕵️‍♂️ 私生粉 (Sasaengs) & 黑粉恶意爆黑图 (Antis)</span>
                       <span className="font-mono text-red-500 font-bold">{sasaengStalker + antiFans}%</span>
@@ -820,7 +820,7 @@ export default function FandomAnalyticsApp({
         {activeSubTab === "body" && (
           <div className="space-y-4">
             {/* Growth attribute and body state values */}
-            <div className="bg-[#121824] rounded-2xl p-4 border border-slate-800 grid grid-cols-2 gap-4">
+            <div className="bg-[#121824] rounded-2xl p-4 border border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-4">
               
               <div>
                 <span className="text-xs font-bold text-indigo-300 block mb-2">身材体态数据 (Body Indices)</span>
@@ -883,7 +883,7 @@ export default function FandomAnalyticsApp({
             <div className="bg-[#121824] rounded-2xl p-4 border border-slate-800">
               <span className="text-xs font-bold text-slate-300 block mb-3">🏅 练习生四维基础才艺特长数值 (Idol Talent Ratings)</span>
               
-              <div className="grid grid-cols-2 gap-3.5 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
                 <div>
                   <div className="flex justify-between mb-1 text-slate-300">
                     <span>🎤 声乐实力 (Vocal Talent)</span>
@@ -1154,7 +1154,7 @@ export default function FandomAnalyticsApp({
                 </div>
               ) : (
                 /* --- SIX SHINY INTERACTIVE FOODS SELECTOR --- */
-                <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2.5">
+                <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2.5">
                   {FOOD_ITEMS.map((item) => {
                     const tooExpensive = persona.money < item.cost && persona.startType === "idol";
                     return (

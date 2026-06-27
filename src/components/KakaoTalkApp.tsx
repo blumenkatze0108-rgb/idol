@@ -40,6 +40,34 @@ export default function KakaoTalkApp({
 
   const selectedContact = chatContacts.find((c) => c.id === selectedContactId) || chatContacts[0];
 
+  const getChatBackgroundClass = () => {
+    if (selectedContact.id !== "lover" || !persona.hasLover) {
+      return "bg-[#b2c7da]"; // Classic KakaoTalk blue/gray
+    }
+    const role = (persona.loverRole || "演员").trim();
+    if (role.includes("演员")) {
+      return "bg-gradient-to-b from-[#15161e] to-[#252635]"; // Film noir charcoal velvet
+    }
+    if (role.includes("主持人") || role.includes("主持") || role.includes("MC")) {
+      return "bg-gradient-to-b from-[#0e0a1c] to-[#1f1a35]"; // Electric studio neon purple
+    }
+    if (role.includes("社长") || role.includes("代表") || role.includes("CEO") || role.includes("总监")) {
+      return "bg-gradient-to-b from-[#080d19] to-[#151d30]"; // Sleek executive mahogany-navy
+    }
+    if (role.includes("爱豆") || role.includes("明星") || role.includes("偶像") || role.includes("练习生") || role.includes("队员")) {
+      return "bg-gradient-to-b from-[#2a0e20] to-[#140610]"; // Glitter/starlight deep pink-magenta
+    }
+    if (role.includes("普通") || role.includes("素人") || role.includes("圈外")) {
+      return "bg-gradient-to-b from-[#f3f4f6] to-[#e5e7eb]"; // Cozy, bright, minimal light grey
+    }
+    // General romantic/custom default
+    return "bg-gradient-to-b from-[#1f0d14] to-[#100408]"; 
+  };
+
+  const isDarkBg = selectedContact.id === "lover" && persona.hasLover && 
+    !(persona.loverRole || "").includes("普通") && 
+    !(persona.loverRole || "").includes("素人");
+
   const getContactAge = (contactId: string): number => {
     const yearsPassed = Math.floor((persona.dayNumber - 1) / (persona.cycleDays || 36));
     if (contactId === "manager") return 32 + yearsPassed;
@@ -497,7 +525,7 @@ ${groupDesc}
   };
 
   return (
-    <div id="kakaotalk-app" className="flex flex-col landscape:flex-row md:flex-row h-full rounded-2xl overflow-hidden border border-amber-900/10 bg-[#ffeee0]/45 glass-panel text-slate-800 min-h-0">
+    <div id="kakaotalk-app" className="primary-app-container flex flex-col landscape:flex-row md:flex-row rounded-2xl border border-amber-900/10 bg-[#ffeee0]/45 glass-panel text-slate-800 min-h-0">
       
       {/* Left Chat list */}
       <div className={`w-full landscape:w-[200px] md:w-[260px] bg-white/70 border-r border-[#edd8c4] flex flex-col justify-between p-2.5 sm:p-3 shrink-0 ${activeMobileView === "contacts" ? "flex" : "hidden landscape:flex md:flex"}`}>
@@ -572,7 +600,7 @@ ${groupDesc}
       </div>
 
       {/* Right chat screen */}
-      <div className={`flex-1 bg-[#b2c7da] flex flex-col justify-between min-h-0 relative ${activeMobileView === "chat" ? "flex" : "hidden landscape:flex md:flex"}`}>
+      <div className={`flex-1 ${getChatBackgroundClass()} flex flex-col justify-between min-h-0 relative ${activeMobileView === "chat" ? "flex" : "hidden landscape:flex md:flex"}`}>
         
         {/* Chat topbar */}
         <div className="bg-white/90 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm">
@@ -716,7 +744,7 @@ ${groupDesc}
             </div>
           )}
           {currentMessages.length === 0 ? (
-            <div className="text-center py-6 text-slate-500 text-xs text-[#556b82]">
+            <div className={`text-center py-6 text-xs ${isDarkBg ? "text-slate-400" : "text-[#556b82]"}`}>
               暂时没有历史记录。发送几句心里话开始探讨吧！
             </div>
           ) : (
@@ -734,7 +762,7 @@ ${groupDesc}
                     )
                   )}
                   <div className="max-w-[70%]">
-                    {!isIdol && <p className="text-[9px] text-slate-600 mb-0.5">{selectedContact.name}</p>}
+                    {!isIdol && <p className={`text-[9px] mb-0.5 ${isDarkBg ? "text-slate-300 font-bold" : "text-slate-600"}`}>{selectedContact.name}</p>}
                     <div className={`p-2.5 rounded-2xl text-[11px] leading-relaxed shadow-sm ${isIdol ? "bg-[#fef01b] text-slate-900 rounded-tr-none" : "bg-white text-slate-800 rounded-tl-none"} ${msg.queueOnly ? "border border-yellow-600/30 border-dashed" : ""}`}>
                       {msg.text}
                       {msg.queueOnly && (
@@ -743,7 +771,7 @@ ${groupDesc}
                         </span>
                       )}
                     </div>
-                    <span className="block text-[8px] text-slate-500 mt-0.5 text-right font-mono">{msg.time}</span>
+                    <span className={`block text-[8px] mt-0.5 text-right font-mono ${isDarkBg ? "text-slate-400" : "text-slate-500"}`}>{msg.time}</span>
                   </div>
                 </div>
               );
@@ -761,13 +789,13 @@ ${groupDesc}
                 </div>
               )}
               <div className="max-w-[70%]">
-                <p className="text-[9px] text-slate-600 mb-0.5">{selectedContact.name}</p>
+                <p className={`text-[9px] mb-0.5 ${isDarkBg ? "text-slate-300 font-bold" : "text-slate-600"}`}>{selectedContact.name}</p>
                 <div className="bg-white text-slate-800 p-3 px-4 rounded-2xl rounded-tl-none shadow-sm flex items-center gap-1.5 h-8 w-16 justify-center">
                   <span className="w-2 h-2 bg-yellow-500 rounded-full animate-typing-dot-1"></span>
                   <span className="w-2 h-2 bg-yellow-500 rounded-full animate-typing-dot-2"></span>
                   <span className="w-2 h-2 bg-yellow-500 rounded-full animate-typing-dot-3"></span>
                 </div>
-                <span className="block text-[8px] text-amber-800 font-medium mt-1 pl-1 animate-pulse font-mono">
+                <span className={`block text-[8px] font-medium mt-1 pl-1 animate-pulse font-mono ${isDarkBg ? "text-yellow-400" : "text-amber-800"}`}>
                   正在输入中...
                 </span>
               </div>

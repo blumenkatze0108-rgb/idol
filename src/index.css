@@ -5,6 +5,7 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-display: "Outfit", sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --breakpoint-xs: 480px;
 }
 
 @layer base {
@@ -95,4 +96,18 @@
 .animate-typing-dot-3 {
   animation: typing 1.2s infinite ease-in-out;
   animation-delay: 0.5s;
+}
+
+/* Uniform responsive app container for mobile vertical scrolling and desktop non-clipping */
+.primary-app-container {
+  height: calc(100vh - 140px);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .primary-app-container {
+    height: 100% !important;
+    overflow: hidden !important;
+  }
 }

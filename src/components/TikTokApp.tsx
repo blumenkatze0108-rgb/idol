@@ -195,15 +195,15 @@ export default function TikTokApp({
   };
 
   return (
-    <div id="tiktok-app" className="flex flex-col h-full rounded-2xl overflow-hidden border border-slate-800 bg-[#000] text-slate-100">
+    <div id="tiktok-app" className="primary-app-container flex flex-col rounded-2xl border border-slate-800 bg-[#000] text-slate-100">
       
       {/* Top Header tab switcher */}
-      <div className="bg-[#0b0c10] px-4 py-3 border-b border-slate-900 flex items-center justify-between shrink-0">
+      <div className="bg-[#0b0c10] px-4 py-3 border-b border-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
         <div className="flex items-center gap-2">
-          <Film className="w-5 h-5 text-red-500 animate-pulse" />
-          <span className="text-xs font-bold font-sans tracking-wide">TikTok 爱豆短视频挑战 (Requirement 2)</span>
+          <Film className="w-5 h-5 text-red-500 animate-pulse shrink-0" />
+          <span className="text-xs font-bold font-sans tracking-wide truncate">TikTok 爱豆短视频挑战 (Requirement 2)</span>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 shrink-0">
           <button
             onClick={() => setActiveTab("feed")}
             className={`px-3 py-1 text-[10px] font-bold rounded-lg ${activeTab === "feed" ? "bg-red-500 text-white" : "text-slate-400 hover:text-white"}`}

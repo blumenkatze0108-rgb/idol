@@ -171,15 +171,15 @@ export default function XiaohongshuApp({
   };
 
   return (
-    <div id="xiaohongshu-app" className="flex flex-col h-full rounded-2xl overflow-hidden border border-red-950/20 bg-[#fff5f5]/60 glass-panel text-slate-800">
+    <div id="xiaohongshu-app" className="primary-app-container flex flex-col rounded-2xl border border-red-950/20 bg-[#fff5f5]/60 glass-panel text-slate-800">
       
       {/* Red Navbar top */}
-      <div className="bg-[#ff2442] px-4 py-3 flex items-center justify-between shrink-0">
+      <div className="bg-[#ff2442] px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
         <div className="flex items-center gap-2 text-white">
-          <ImageIcon className="w-5 h-5 text-white animate-pulse" />
-          <span className="text-xs font-extrabold font-sans tracking-wide">小红书 - 爱豆私服好物精选 (Requirement 2)</span>
+          <ImageIcon className="w-5 h-5 text-white animate-pulse shrink-0" />
+          <span className="text-xs font-extrabold font-sans tracking-wide truncate">小红书 - 爱豆私服好物精选 (Requirement 2)</span>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 shrink-0">
           <button
             onClick={() => setActiveTab("diary")}
             className={`px-3 py-1 text-[10px] font-bold rounded-lg ${activeTab === "diary" ? "bg-white text-red-600" : "text-red-100 hover:text-white"}`}

@@ -783,19 +783,19 @@ export default function SchedulesApp({
   };
 
   return (
-    <div id="schedules-app" className="rounded-2xl overflow-y-auto bg-[#11131c] border border-slate-800 text-white p-4 flex flex-col justify-between h-full min-h-0 relative glass-panel">
+    <div id="schedules-app" className="primary-app-container rounded-2xl bg-[#11131c] border border-slate-800 text-white p-4 flex flex-col justify-between relative">
       
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-3">
+      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto scrollbar-thin pr-1 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/5 pb-3 mb-3">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-purple-400" />
+            <Calendar className="w-5 h-5 text-purple-400 shrink-0" />
             <div>
               <span className="text-[10px] font-mono text-slate-400 block uppercase">EPISODE CALENDAR</span>
               <h4 className="text-xs font-bold text-slate-100">今日个人及团队业务行程</h4>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5 shrink-0 justify-end">
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0 sm:justify-end">
             {/* Stamina Badge */}
             <div className="bg-amber-950/45 border border-amber-500/25 rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] text-amber-300 font-mono flex items-center gap-1 shadow-sm animate-fade-in">
               <span className="animate-pulse">⚡️</span>
@@ -855,7 +855,7 @@ export default function SchedulesApp({
             <span className="text-[9px] text-slate-450">每日限选 1 种进行时能恢复</span>
           </div>
 
-          <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
+          <div className="grid grid-cols-3 gap-1.5">
             {/* Plan A (Green juice) */}
             <button
               onClick={() => handleDailyRecover("juice")}
@@ -918,8 +918,8 @@ export default function SchedulesApp({
           </div>
         </div>
 
-        {/* Schedules list scrollable */}
-        <div className="space-y-1.5 overflow-y-auto max-h-[160px] xs:max-h-[200px] sm:max-h-[220px] md:max-h-[220px] pr-1 flex-1 min-h-0">
+        {/* Schedules list */}
+        <div className="space-y-1.5 pr-1 mt-3.5">
           {schedules.map((sch) => (
             <div
               key={sch.id}

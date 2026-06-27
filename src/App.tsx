@@ -886,7 +886,7 @@ ${contact.summary || "无"}`;
       const genderSign = p.loverGender === "female" ? "🚺" : "🚹";
       const isCeleb = p.loverIdentity === "celebrity";
       const ageLabel = p.loverAge === "same_age" ? "同龄" : p.loverAge === "older" ? "年上" : "年下";
-      const identityLabel = isCeleb ? "星侣" : "素人";
+      const roleLabel = p.loverRole || (isCeleb ? "演员" : "素人");
       
       let loverMsg = "宝贝，想你了... 今天集训累不累？";
       const currentMood = p.loverMood ?? 80;
@@ -898,10 +898,10 @@ ${contact.summary || "无"}`;
 
       contactList.push({
         id: "lover",
-        name: `💖 ${p.loverName} (${identityLabel}恋人)`,
+        name: `💖 ${p.loverName} (${roleLabel})`,
         avatar: "", // Removed per user request, fallback to sweet heart character
         role: "celeb",
-        mbti: isCeleb ? "ENFJ/大势" : "ISFJ/温柔",
+        mbti: p.loverMbti || "INFJ",
         lastMessage: loverMsg,
         unread: true,
         time: "刚刚",
@@ -1401,7 +1401,7 @@ ${contact.summary || "无"}`;
   };
 
   return (
-    <div className={`min-h-screen relative p-1 md:p-6 select-none overflow-x-hidden transition-all duration-500 ${
+    <div className={`h-[100dvh] md:min-h-screen relative p-0 md:p-6 select-none overflow-hidden transition-all duration-500 ${
       ipadWallpaper === "neon" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-950/40 via-slate-950 to-indigo-950/40" :
       ipadWallpaper === "peach" ? "bg-stone-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-rose-950/30 via-stone-950 to-amber-950/30" :
       ipadWallpaper === "cosmic" ? "bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/50 via-slate-950 to-slate-900" :
@@ -1822,10 +1822,10 @@ ${contact.summary || "无"}`;
       {!hasStarted ? (
         <IdolProfileSetup onComplete={handleSetupComplete} />
       ) : (
-        <div id="ipad-shell-wrapper" className="w-full max-w-7xl h-auto min-h-[100dvh] landscape:h-screen landscape:min-h-0 md:h-[840px] md:max-h-[90vh] relative mx-auto p-0 md:p-4 rounded-none md:rounded-[40px] bg-slate-950 md:bg-[#1c1d25] border-none md:border-t md:border-white/20 shadow-none md:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_2px_rgba(255,255,255,0.06)] flex flex-col overflow-y-auto landscape:overflow-hidden md:overflow-hidden">
+        <div id="ipad-shell-wrapper" className="w-full max-w-7xl h-[100dvh] md:h-[840px] md:max-h-[90vh] relative mx-auto p-0 md:p-4 rounded-none md:rounded-[40px] bg-slate-950 md:bg-[#1c1d25] border-none md:border-t md:border-white/20 shadow-none md:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),0_0_0_2px_rgba(255,255,255,0.06)] flex flex-col overflow-hidden">
           
           {/* Main iPad Inner Screen Aspect ratio */}
-          <div className={`flex-1 w-full rounded-none md:rounded-[28px] overflow-visible landscape:overflow-hidden md:overflow-hidden flex flex-col relative border border-slate-950 transition-all duration-500 ${
+          <div className={`flex-1 w-full rounded-none md:rounded-[28px] overflow-hidden flex flex-col relative border border-slate-950 transition-all duration-500 ${
             ipadWallpaper === "neon" ? "bg-gradient-to-b from-[#110c1c] to-[#090a10]" :
             ipadWallpaper === "peach" ? "bg-gradient-to-b from-[#1e1318] to-[#120f12]" :
             ipadWallpaper === "cosmic" ? "bg-gradient-to-b from-[#0e0e1c] to-[#060810]" :
@@ -2074,7 +2074,7 @@ ${contact.summary || "无"}`;
             )}
 
             {/* DUAL MAIN INTERACTIVE AREAS */}
-            <div id="ipad-main-screen" className="flex-1 flex flex-col landscape:flex-row md:flex-row overflow-visible landscape:overflow-hidden md:overflow-hidden relative min-h-0">
+            <div id="ipad-main-screen" className="flex-1 flex flex-col landscape:flex-row md:flex-row overflow-hidden relative min-h-0">
               
               {/* STATUS BAR DRAWER METERS (Requirement 11, 12, 13) */}
               <div 
@@ -2095,7 +2095,7 @@ ${contact.summary || "无"}`;
                     收起 ✕
                   </button>
                 </div>
-                <div className="space-y-4 flex-1">
+                <div className="space-y-4">
                   
                   {/* Persona Bio Badge */}
                   <div className={`p-3 ${activeTheme.sideCardBg_2} rounded-2xl relative shadow-md transition-all duration-500`}>
@@ -2196,7 +2196,7 @@ ${contact.summary || "无"}`;
 
                 </div>
 
-                <div className="space-y-3.5 border-l md:border-l-0 md:border-t border-white/5 pl-4 md:pl-0 pt-0 md:pt-3 flex-1 md:flex-initial">
+                <div className="space-y-3.5 border-t border-white/5 pt-3 mt-1 shrink-0">
                   {/* Wallet */}
                   <div>
                     <span className="text-[9px] text-slate-450 uppercase font-mono block">旗下艺人现金与提成余额</span>
@@ -2252,7 +2252,7 @@ ${contact.summary || "无"}`;
               <div className={`flex-1 flex flex-col justify-between min-w-0 ${activeTheme.activeAppContainerBg} relative transition-all duration-500`}>
                 
                 {/* Dynamic App content display canvases */}
-                <div className="flex-1 p-3 md:p-6 flex flex-col min-h-0 overflow-visible landscape:overflow-hidden md:overflow-hidden">
+                <div className="flex-1 p-2 xs:p-3 md:p-6 flex flex-col min-h-0 overflow-y-auto md:overflow-hidden">
                   
                   {activeApp === "schedule" && (
                     <SchedulesApp
@@ -2828,7 +2828,7 @@ ${contact.summary || "无"}`;
                   )}
 
                   {activeApp === "settings" && (
-                    <div id="settings-view" className="bg-slate-900 border border-white/5 rounded-2xl p-5 h-full overflow-y-auto space-y-4">
+                    <div id="settings-view" className="primary-app-container bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4">
                       
                       <div>
                         <h4 className="text-sm font-bold flex items-center gap-1 text-slate-100">
@@ -3442,15 +3442,60 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (18点互动制、特快月历、身心可视化)
+                  👑 企划社最新巨献公告 (手机完美自适应、18点互动制、身心可视化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.5 | 18-POINT INTERACTION EDITION
+                  SYSTEM VERSION 3.6 | MOBILE ADAPTIVE SCROLL EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 15: Mobile Viewport Adaptive Scroll Optimization (BRAND NEW V3.6) */}
+              <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
+                  <span>📱 15. [重要优化] 移动端竖屏自适应与防截断全局滚动适配</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为了让各位主理人在手机、iPad等小屏竖屏设备上获得顺滑不截断的完美演艺体验，我们重构了核心容器：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-blue-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>📱 <strong className="text-blue-200">手机竖屏安全区域自适应</strong>：新增了统一 of 自适应视口高度计算类 <code className="text-blue-300 bg-blue-950/65 px-1 rounded">primary-app-container</code>，彻底解决了移动端原生导航栏/底部栏遮挡或组件溢出被截断导致无法触达底部操作的顽疾。</p>
+                  <p>📜 <strong className="text-indigo-200">主应用多终端独立弹性逻辑</strong>：在手机竖屏上自动切换为柔和的局部自适应滑动视口，确保按钮与数据仪表盘触手可得；在平板/电脑宽屏下保持无缝的高阶分栏非切割布局，享受大开大合的完美主理操盘体验！</p>
+                </div>
+              </div>
+
+              {/* Feature 16: Custom Underground Lover Backstory (BRAND NEW V3.6) */}
+              <div className="bg-gradient-to-r from-pink-900/40 to-rose-900/40 border border-pink-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
+                  <span>💖 16. [重磅新特] 地下秘密情人身份背景多字段深度自定义</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应纯爱与剧情脑补玩家的极致热烈呼声，我们在创角 setup 环节上线了全套的<strong>“地下秘密恋人身份卡”自定义生成器</strong>：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🎭 <strong className="text-pink-200">九大内置行业身份与纯自定义职业</strong>：不仅可以选择大势爱豆、顶级模特、同公司练习生队友、公司 CEO 社长、编舞总监等九大内置光鲜亮丽的职业圈层，更能选择“自定义输入”，随心所欲定制对方的社会行当！</p>
+                  <p>🚻 <strong className="text-rose-200">全链字段参数自由构建</strong>：完美定制恋人的 <strong>姓名/艺名、性别、MBTI、真实年龄</strong>。随同携带恋人开局，将解锁专属的「秘密恋人KakaoTalk私密聊天通道」，随时应对由于粉圈亏欠感、D社暗雷而引发的破防冷静分手危机！</p>
+                </div>
+              </div>
+
+              {/* Feature 17: Romance Position Alignment & Personality Tone Dynamic Shifting (BRAND NEW V3.6) */}
+              <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-pink-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>💘 17. [首创] 地下恋人情感攻受定位切换与动态私聊语调自适应</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  不再是死板的固定回复，恋爱对话的攻受属性与主导地位现在掌握在您的手中：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>↕️ <strong className="text-purple-200">攻受定位设定随心调整</strong>：在【设置】面板中，当您拥有地下恋人时，可随时在 <strong>左位 (左 / 攻 / Top / 保护方)</strong> 或是 <strong>右位 (右 / 受 / Bottom / 被宠爱)</strong> 之间相互切线转换！</p>
+                  <p>🗣️ <strong className="text-pink-250">恋人心境私聊完美回馈</strong>：
+                    <br />• <strong>切换为左位 (您是主攻/保护者) 时</strong>：对方的 KakaoTalk 回复与对话文本将转变倾向为<strong>偏受(温柔依恋依顺、体贴退让、甜腻缠人)</strong> 的受方风格；
+                    <br />• <strong>切换为右位 (您是主受/被宠爱者) 时</strong>：恋人的私密安抚和过夜大纲等动作将倾斜至<strong>偏攻(霸道宠溺、强有力护短、富有强欲与占有欲)</strong> 的攻方调性，极尽温柔，极致纯爱！
+                  </p>
+                </div>
+              </div>
 
               {/* Feature 14: 18-Point Interaction System and Stamina/Stress Protection Lock (BRAND NEW V3.5) */}
               <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/35 p-3.5 rounded-xl space-y-2">
@@ -3802,15 +3847,60 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (18点互动制、特快月历、身心可视化)
+                  👑 企划社最新巨献公告 (手机完美自适应、18点互动制、身心可视化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.5 | 18-POINT INTERACTION EDITION
+                  SYSTEM VERSION 3.6 | MOBILE ADAPTIVE SCROLL EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 15: Mobile Viewport Adaptive Scroll Optimization (BRAND NEW V3.6) */}
+              <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
+                  <span>📱 15. [重要优化] 移动端竖屏自适应与防截断全局滚动适配</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为了让各位主理人在手机、iPad等小屏竖屏设备上获得顺滑不截断的完美演艺体验，我们重构了核心容器：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-blue-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>📱 <strong className="text-blue-200">手机竖屏安全区域自适应</strong>：新增了统一 of 自适应视口高度计算类 <code className="text-blue-300 bg-blue-950/65 px-1 rounded">primary-app-container</code>，彻底解决了移动端原生导航栏/底部栏遮挡 or 组件溢出被截断导致无法触达底部操作的顽疾。</p>
+                  <p>📜 <strong className="text-indigo-200">主应用多终端独立弹性逻辑</strong>：在手机竖屏上自动切换为柔和的局部自适应滑动视口，确保按钮与数据仪表盘触手可得；在平板/电脑宽屏下保持无缝的高阶分栏非切割布局，享受大开大合的完美主理操盘体验！</p>
+                </div>
+              </div>
+
+              {/* Feature 16: Custom Underground Lover Backstory (BRAND NEW V3.6) */}
+              <div className="bg-gradient-to-r from-pink-900/40 to-rose-900/40 border border-pink-500/35 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
+                  <span>💖 16. [重磅新特] 地下秘密情人身份背景多字段深度自定义</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应纯爱与剧情脑补玩家的极致热烈呼声，我们在创角 setup 环节上线了全套的<strong>“地下秘密恋人身份卡”自定义生成器</strong>：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🎭 <strong className="text-pink-200">九大内置行业身份与纯自定义职业</strong>：不仅可以选择大势爱豆、顶级模特、同公司练习生队友、公司 CEO 社长、编舞总监等九大内置光鲜亮丽的职业圈层，更能选择“自定义输入”，随心所欲定制对方的社会行当！</p>
+                  <p>🚻 <strong className="text-rose-200">全链字段参数自由构建</strong>：完美定制恋人的 <strong>姓名/艺名、性别、MBTI、真实年龄</strong>。随同携带恋人开局，将解锁专属的「秘密恋人KakaoTalk私密聊天通道」，随时应对由于粉圈亏欠感、D社暗雷而引发的破防冷静分手危机！</p>
+                </div>
+              </div>
+
+              {/* Feature 17: Romance Position Alignment & Personality Tone Dynamic Shifting (BRAND NEW V3.6) */}
+              <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-pink-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>💘 17. [首创] 地下恋人情感攻受定位切换与动态私聊语调自适应</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  不再是死板的固定回复，恋爱对话的攻受属性与主导地位现在掌握在您的手中：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>↕️ <strong className="text-purple-200">攻受定位设定随心调整</strong>：在【设置】面板中，当您拥有地下恋人时，可随时在 <strong>左位 (左 / 攻 / Top / 保护方)</strong> 或是 <strong>右位 (右 / 受 / Bottom / 被宠爱)</strong> 之间相互切线转换！</p>
+                  <p>🗣️ <strong className="text-pink-250">恋人心境私聊完美回馈</strong>：
+                    <br />• <strong>切换为左位 (您是主攻/保护者) 时</strong>：对方的 KakaoTalk 回复与对话文本将转变倾向为<strong>偏受(温柔依恋依顺、体贴退让、甜腻缠人)</strong> 的受方风格；
+                    <br />• <strong>切换为右位 (您是主受/被宠爱者) 时</strong>：恋人的私密安抚和过夜大纲等动作将倾斜至<strong>偏攻(霸道宠溺、强有力护短、富有强欲与占有欲)</strong> 的攻方调性，极尽温柔，极致纯爱！
+                  </p>
+                </div>
+              </div>
 
               {/* Feature 14: 18-Point Interaction System and Stamina/Stress Protection Lock (BRAND NEW V3.5) */}
               <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/35 p-3.5 rounded-xl space-y-2">

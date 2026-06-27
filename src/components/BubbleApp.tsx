@@ -163,7 +163,7 @@ ${groupDesc}
   };
 
   return (
-    <div id="bubble-app" className="flex flex-col h-full rounded-2xl overflow-hidden bg-[#e0eafe]/65 glass-panel text-slate-800 border border-indigo-900/10">
+    <div id="bubble-app" className="primary-app-container flex flex-col rounded-2xl bg-[#e0eafe]/65 glass-panel text-slate-800 border border-indigo-900/10">
       
       {/* Title Header */}
       <div className="bg-white/95 px-4 py-3 border-b border-[#c8d4e7] flex items-center justify-between shrink-0 shadow-sm">

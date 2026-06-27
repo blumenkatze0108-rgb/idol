@@ -377,7 +377,7 @@ export default function FanMailApp({
   };
 
   return (
-    <div id="fanmail-app-view" className="h-full flex flex-col space-y-4 text-white overflow-hidden">
+    <div id="fanmail-app-view" className="primary-app-container flex flex-col space-y-4 text-white">
       
       {/* Dynamic Header Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-slate-950/80 p-4 rounded-2xl border border-white/5 gap-3 shrink-0">
