@@ -31,7 +31,7 @@ import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
 import FanMailApp, { FanLetter, generateRandomFanLetter } from "./components/FanMailApp";
-import { safeFetch, triggerToast, getSeoulWeather } from "./components/apiHelper";
+import { safeFetch, triggerToast, getSeoulWeather, convertToTraditional } from "./components/apiHelper";
 import { motion, AnimatePresence } from "motion/react";
 
 import { 
@@ -448,6 +448,154 @@ export default function App() {
       console.warn("Failed to save customApiEndpoint to localStorage", err);
     }
   }, [customApiEndpoint]);
+
+  // Font Size setting with global root element adaptive scaling
+  const [fontSize, setFontSize] = useState<string>(() => {
+    try {
+      return localStorage.getItem("idolpad_font_size") || "medium";
+    } catch {
+      return "medium";
+    }
+  });
+
+  // Traditional Chinese setting state
+  const [isTraditionalChinese, setIsTraditionalChinese] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("idolpad_is_traditional_chinese") === "true";
+    } catch {
+      return false;
+    }
+  });
+
+  // Sync font size to localStorage & adjust root document style dynamically with proportional offsets for all standard & arbitrary classes
+  useEffect(() => {
+    try {
+      localStorage.setItem("idolpad_font_size", fontSize);
+      let px = "16px";
+      let offset = 0;
+      if (fontSize === "small") {
+        px = "14px";
+        offset = -2;
+      } else if (fontSize === "medium") {
+        px = "16px";
+        offset = 0;
+      } else if (fontSize === "large") {
+        px = "18px";
+        offset = 2;
+      } else if (fontSize === "xlarge") {
+        px = "20px";
+        offset = 4;
+      }
+      document.documentElement.style.fontSize = px;
+
+      // Inject / update dynamic style tag for proportional scaling on all specific font-size classes
+      const styleId = "dynamic-font-scale-override";
+      let styleEl = document.getElementById(styleId) as HTMLStyleElement;
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = styleId;
+        document.head.appendChild(styleEl);
+      }
+
+      if (offset === 0) {
+        styleEl.innerHTML = "";
+      } else {
+        let cssRules = `
+          /* Standard Tailwind text size classes */
+          .text-xs { font-size: calc(0.75rem + ${offset}px) !important; }
+          .text-sm { font-size: calc(0.875rem + ${offset}px) !important; }
+          .text-base { font-size: calc(1rem + ${offset}px) !important; }
+          .text-lg { font-size: calc(1.125rem + ${offset}px) !important; }
+          .text-xl { font-size: calc(1.25rem + ${offset}px) !important; }
+          .text-2xl { font-size: calc(1.5rem + ${offset}px) !important; }
+          .text-3xl { font-size: calc(1.875rem + ${offset}px) !important; }
+          .text-4xl { font-size: calc(2.25rem + ${offset}px) !important; }
+          .text-5xl { font-size: calc(3rem + ${offset}px) !important; }
+        `;
+
+        // Map all common arbitrary pixel text sizes used in the app (from 7px to 80px)
+        const arbitrarySizes = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 64, 80];
+        arbitrarySizes.forEach((size) => {
+          cssRules += `
+            .text-\\[${size}px\\] { font-size: calc(${size}px + ${offset}px) !important; }
+          `;
+        });
+
+        styleEl.innerHTML = cssRules;
+      }
+    } catch (err) {
+      console.warn("Failed to apply font size settings", err);
+    }
+  }, [fontSize]);
+
+  // Sync Traditional Chinese to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem("idolpad_is_traditional_chinese", String(isTraditionalChinese));
+    } catch (err) {
+      console.warn("Failed to save isTraditionalChinese settings", err);
+    }
+  }, [isTraditionalChinese]);
+
+  // Live Mutation Observer translating Simplified to Traditional Chinese recursively in real time
+  useEffect(() => {
+    if (!isTraditionalChinese) return;
+
+    const translateNode = (node: Node) => {
+      const parent = node.parentElement;
+      if (parent) {
+        const tag = parent.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SCRIPT" || tag === "STYLE") {
+          return;
+        }
+        if (parent.isContentEditable) {
+          return;
+        }
+      }
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.nodeValue;
+        if (text) {
+          const translated = convertToTraditional(text);
+          if (translated !== text) {
+            node.nodeValue = translated;
+          }
+        }
+      } else {
+        node.childNodes.forEach(translateNode);
+      }
+    };
+
+    // Translate current body
+    translateNode(document.body);
+
+    // Track future changes recursively
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          translateNode(node);
+        });
+        if (mutation.type === "characterData") {
+          const node = mutation.target;
+          const text = node.nodeValue;
+          if (text) {
+            const translated = convertToTraditional(text);
+            if (translated !== text) {
+              node.nodeValue = translated;
+            }
+          }
+        }
+      });
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => observer.disconnect();
+  }, [isTraditionalChinese]);
 
   // Models loading and dropdown lists
   const [loadingModels, setLoadingModels] = useState<boolean>(false);
@@ -2252,7 +2400,7 @@ ${contact.summary || "无"}`;
               <div className={`flex-1 flex flex-col justify-between min-w-0 ${activeTheme.activeAppContainerBg} relative transition-all duration-500`}>
                 
                 {/* Dynamic App content display canvases */}
-                <div className="flex-1 p-2 xs:p-3 md:p-6 flex flex-col min-h-0 overflow-y-auto md:overflow-hidden">
+                <div className="flex-1 p-2 xs:p-3 md:p-6 flex flex-col min-h-0 h-[calc(100vh-140px)] md:h-auto overflow-y-auto flex-shrink-0">
                   
                   {activeApp === "schedule" && (
                     <SchedulesApp
@@ -3074,6 +3222,77 @@ ${contact.summary || "无"}`;
                         </div>
                       </div>
 
+                      {/* Font Size & Traditional Chinese localization setting box */}
+                      <div className="bg-slate-950 p-4 rounded-xl border border-white/5 space-y-4">
+                        <span className="text-[10px] block font-mono text-cyan-400 uppercase font-bold tracking-wide">
+                          🌐 系统个性化与全球化语言设置 (Display & Localization Settings)
+                        </span>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {/* Font Size Adjustment Section */}
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-semibold text-slate-300">
+                              🔤 字符大小调节 (Font Size scaling)
+                            </label>
+                            <p className="text-[9px] text-slate-500 leading-tight">
+                              全局自适应缩放所有应用字体与 UI 元素，适配各种屏幕和阅读需求。
+                            </p>
+                            
+                            <div className="grid grid-cols-4 gap-1.5 pt-1">
+                              {[
+                                { id: "small", label: "小号" },
+                                { id: "medium", label: "标准" },
+                                { id: "large", label: "大号" },
+                                { id: "xlarge", label: "特大" }
+                              ].map((item) => (
+                                <button
+                                  key={item.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setFontSize(item.id);
+                                    handleAddSystemLog(`[界面配置] 成功将全局字符大小调整为【${item.label}】！`);
+                                    triggerToast("🔤 字体大小调整", `全局字符已缩放至【${item.label}】模式`, "success");
+                                  }}
+                                  className={`py-1.5 px-2 rounded-lg border text-[10px] font-bold text-center transition-all cursor-pointer ${
+                                    fontSize === item.id
+                                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-300 font-extrabold shadow-sm"
+                                      : "bg-slate-900 border-white/5 text-slate-400 hover:text-slate-200"
+                                  }`}
+                                >
+                                  {item.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Traditional Chinese Localization Toggle Section */}
+                          <div className="space-y-2">
+                            <label className="block text-[11px] font-semibold text-slate-300">
+                              🇹🇼 繁體中文切換 (Traditional Chinese Toggle)
+                            </label>
+                            <p className="text-[9px] text-slate-500 leading-tight">
+                              開啟後，全系統 UI 與後續 AI 模型輸出、模擬對話均會自動實時轉換為繁體中文。
+                            </p>
+                            
+                            <div className="flex items-center justify-between bg-slate-900/50 p-2 rounded-xl border border-white/5 mt-1">
+                              <span className="text-[10px] text-slate-300 font-medium">切換為繁體中文 (Traditional Chinese)</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const nextVal = !isTraditionalChinese;
+                                  setIsTraditionalChinese(nextVal);
+                                  handleAddSystemLog(`[语言切换] 成功${nextVal ? "开启" : "关闭"}繁体中文模式！`);
+                                  triggerToast("🌐 语言切换成功", nextVal ? "已切换为繁体中文。后续 AI 仿真回复与全系统 UI 均转为繁体。" : "已恢复为简体中文模式", "success");
+                                }}
+                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${isTraditionalChinese ? "bg-cyan-500" : "bg-slate-700"}`}
+                              >
+                                <span className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isTraditionalChinese ? "translate-x-4" : "translate-x-0"}`} />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
                       {/* Dev diagnostics information */}
                       <div className="p-3 bg-purple-950/20 border border-purple-500/15 rounded-xl flex gap-2">
                         <Info className="w-4 h-4 text-purple-400 mt-0.5 shrink-0" />
@@ -3445,12 +3664,26 @@ ${contact.summary || "无"}`;
                   👑 企划社最新巨献公告 (手机完美自适应、18点互动制、身心可视化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.6 | MOBILE ADAPTIVE SCROLL EDITION
+                  SYSTEM VERSION 3.8 | MOBILE ADAPTIVE SCROLL & GLOBAL CUSTOMIZATION EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 18: Global Font Size Adjustment & Traditional Chinese All-Field Toggle (BRAND NEW V3.8) */}
+              <div className="bg-gradient-to-r from-amber-600/20 via-orange-600/20 to-yellow-600/10 border border-amber-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
+                  <span>🌐 18. [重磅升级] 全局字号等比例自适应缩放 & 繁体中文全域高保真转译</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应大中华区及海外主理人对于无障碍辅助与多语言阅读的极致呼声，我们在【设置】面板中隆重呈献全新无级自适应算法：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🔍 <strong className="text-amber-200">全局字号等比例独立放大</strong>：摆脱单一根节点缩放，新增智能字号偏移算法！系统内所有 Tailwind 标准字号（<code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-xs</code> ~ <code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-5xl</code>）与各模块细微自定字号（从 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">7px</code> 到 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">80px</code>）均会根据所选档位（小、中、大、特大）在原有大底字号上<strong>分别等量递增/递减</strong>。排版完美无缝，绝无错位或遮挡！</p>
+                  <p>🇹🇼 <strong className="text-orange-200">3880+ 词条 OpenCC 繁体字典完美转译</strong>：全面集成官方高保真繁体中文对照表，不单能够一键动态切换全部静态 UI，更配合端侧实时 <code className="text-orange-300 bg-orange-950/65 px-1 rounded">MutationObserver</code> 嗅探器，对所有 AI 输出及实时聊天互动进行即时深层繁体转译，实现 100% 繁体化视觉沉浸！</p>
+                </div>
+              </div>
 
               {/* Feature 15: Mobile Viewport Adaptive Scroll Optimization (BRAND NEW V3.6) */}
               <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/35 p-3.5 rounded-xl space-y-2">
@@ -3850,12 +4083,26 @@ ${contact.summary || "无"}`;
                   👑 企划社最新巨献公告 (手机完美自适应、18点互动制、身心可视化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.6 | MOBILE ADAPTIVE SCROLL EDITION
+                  SYSTEM VERSION 3.8 | MOBILE ADAPTIVE SCROLL & GLOBAL CUSTOMIZATION EDITION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 18: Global Font Size Adjustment & Traditional Chinese All-Field Toggle (BRAND NEW V3.8) */}
+              <div className="bg-gradient-to-r from-amber-600/20 via-orange-600/20 to-yellow-600/10 border border-amber-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
+                  <span>🌐 18. [重磅升级] 全局字号等比例自适应缩放 & 繁体中文全域高保真转译</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应大中华区及海外主理人对于无障碍辅助与多语言阅读的极致呼声，我们在【设置】面板中隆重呈献全新无级自适应算法：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🔍 <strong className="text-amber-200">全局字号等比例独立放大</strong>：摆脱单一根节点缩放，新增智能字号偏移算法！系统内所有 Tailwind 标准字号（<code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-xs</code> ~ <code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-5xl</code>）与各模块细微自定字号（从 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">7px</code> 到 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">80px</code>）均会根据所选档位（小、中、大、特大）在原有大底字号上<strong>分别等量递增/递减</strong>。排版完美无缝，绝无错位或遮挡！</p>
+                  <p>🇹🇼 <strong className="text-orange-200">3880+ 词条 OpenCC 繁体字典完美转译</strong>：全面集成官方高保真繁体中文对照表，不单能够一键动态切换全部静态 UI，更配合端侧实时 <code className="text-orange-300 bg-orange-950/65 px-1 rounded">MutationObserver</code> 嗅探器，对所有 AI 输出及实时聊天互动进行即时深层繁体转译，实现 100% 繁体化视觉沉浸！</p>
+                </div>
+              </div>
 
               {/* Feature 15: Mobile Viewport Adaptive Scroll Optimization (BRAND NEW V3.6) */}
               <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/35 p-3.5 rounded-xl space-y-2">

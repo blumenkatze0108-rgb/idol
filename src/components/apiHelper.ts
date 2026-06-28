@@ -4,6 +4,8 @@
 // it will fallback to calling the official Gemini API or OpenAI API directly from the browser
 // using the user's customApiKey, or fallback to our rich client-side simulator.
 
+import s2tDict from "./s2t_dict.json";
+
 export function getClientMockResponse(prompt: string, sInstruction?: string): string {
   const pLower = prompt.toLowerCase();
   const sLower = sInstruction ? sInstruction.toLowerCase() : "";
@@ -98,7 +100,7 @@ export function getClientMockResponse(prompt: string, sInstruction?: string): st
     } else if (favorability >= 25 && favorability < 60) {
       const mateRepliesMid = [
         `${playerGreeting}！刚才新主打歌的1.5倍速汗水连跳两轮跳完，我感觉整个人腿在打颤。今晚称重考核求放水同盟啊，我昨晚只敢啃了半颗西红柿，现在肚子还在咕咕乱叫呢🥺`,
-        `${playerGreeting}！今天美容室等一下一起点冷冻极饿体脂沙拉呗？刚才打听到今天隔壁公司的竞品要推迟两个月回归了，太好了，咱们这次的打歌回归撞车威胁没了，哈哈！`
+        `${playerGreeting}！今天美容室等一下一起点冷冻极饿体脂沙拉呗？刚才打听到今天隔壁公司的竞品要推推迟两个月回归了，太好了，咱们这次的打歌回归撞车威胁没了，哈哈！`
       ];
       return mateRepliesMid[Math.floor(Math.random() * mateRepliesMid.length)];
     } else {
@@ -158,92 +160,118 @@ export async function smartCallGemini(params: {
 }): Promise<{ text: string; simulated?: boolean }> {
   const { prompt, systemInstruction, customApiKey, model, customApiEndpoint } = params;
 
-  // 1. Try to call backend API
+  // Check traditional Chinese settings
+  let isTraditional = false;
   try {
-    const response = await fetch("/api/gemini/generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        prompt,
-        systemInstruction,
-        customApiKey,
-        model,
-        customApiEndpoint
-      })
-    });
+    isTraditional = localStorage.getItem("idolpad_is_traditional_chinese") === "true";
+  } catch (e) {}
 
-    if (response.ok) {
-      const data = await response.json();
-      return { text: data.text || "", simulated: !!data.simulated };
+  let finalPrompt = prompt;
+  let finalSystemInstruction = systemInstruction;
+
+  if (isTraditional) {
+    const chineseDirective = "\n【CRITICAL REQUIREMENT: You MUST write your entire response using Traditional Chinese (繁體中文). Do NOT use Simplified Chinese under any circumstances.】";
+    if (finalSystemInstruction) {
+      finalSystemInstruction += chineseDirective;
+    } else {
+      finalSystemInstruction = "You are a professional AI companion." + chineseDirective;
     }
-  } catch (error) {
-    console.warn("Express backend /api/gemini/generate unreachable, falling back to direct client call or mock simulator", error);
   }
 
-  // 2. If backend failed or is unreachable, try direct client-side call if apiKey is provided
-  if (customApiKey && customApiKey.trim() !== "" && customApiKey !== "MY_GEMINI_API_KEY") {
+  const runCall = async (): Promise<{ text: string; simulated?: boolean }> => {
+    // 1. Try to call backend API
     try {
-      const useOpenAi = !!customApiEndpoint && !customApiEndpoint.includes("googleapis.com");
+      const response = await fetch("/api/gemini/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: finalPrompt,
+          systemInstruction: finalSystemInstruction,
+          customApiKey,
+          model,
+          customApiEndpoint
+        })
+      });
 
-      if (useOpenAi) {
-        let targetUrl = customApiEndpoint.trim();
-        if (!targetUrl.endsWith("/chat/completions")) {
-          targetUrl = targetUrl.replace(/\/$/, "");
-          if (targetUrl.endsWith("/v1")) {
-            targetUrl = `${targetUrl}/chat/completions`;
-          } else {
-            targetUrl = `${targetUrl}/v1/chat/completions`;
+      if (response.ok) {
+        const data = await response.json();
+        return { text: data.text || "", simulated: !!data.simulated };
+      }
+    } catch (error) {
+      console.warn("Express backend /api/gemini/generate unreachable, falling back to direct client call or mock simulator", error);
+    }
+
+    // 2. If backend failed or is unreachable, try direct client-side call if apiKey is provided
+    if (customApiKey && customApiKey.trim() !== "" && customApiKey !== "MY_GEMINI_API_KEY") {
+      try {
+        const useOpenAi = !!customApiEndpoint && !customApiEndpoint.includes("googleapis.com");
+
+        if (useOpenAi) {
+          let targetUrl = customApiEndpoint.trim();
+          if (!targetUrl.endsWith("/chat/completions")) {
+            targetUrl = targetUrl.replace(/\/$/, "");
+            if (targetUrl.endsWith("/v1")) {
+              targetUrl = `${targetUrl}/chat/completions`;
+            } else {
+              targetUrl = `${targetUrl}/v1/chat/completions`;
+            }
+          }
+
+          const res = await fetch(targetUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${customApiKey}`
+            },
+            body: JSON.stringify({
+              model: model || "gpt-3.5-turbo",
+              messages: [
+                { role: "system", content: finalSystemInstruction || "You are a professional AI companion." },
+                { role: "user", content: finalPrompt }
+              ],
+              temperature: 1.0
+            })
+          });
+
+          if (res.ok) {
+            const json = await res.json();
+            return { text: json.choices?.[0]?.message?.content || "" };
+          }
+        } else {
+          // Direct Google Gemini client-side call
+          const geminiModel = model || "gemini-2.1-flash" || "gemini-2.5-flash";
+          const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${customApiKey}`;
+          
+          const res = await fetch(googleUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `SYSTEM INSTRUCTION: ${finalSystemInstruction || ""}\n\nUSER REQUEST: ${finalPrompt}` }] }]
+            })
+          });
+
+          if (res.ok) {
+            const json = await res.json();
+            return { text: json.candidates?.[0]?.content?.parts?.[0]?.text || "" };
           }
         }
-
-        const res = await fetch(targetUrl, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${customApiKey}`
-          },
-          body: JSON.stringify({
-            model: model || "gpt-3.5-turbo",
-            messages: [
-              { role: "system", content: systemInstruction || "You are a professional AI companion." },
-              { role: "user", content: prompt }
-            ],
-            temperature: 1.0
-          })
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          return { text: json.choices?.[0]?.message?.content || "" };
-        }
-      } else {
-        // Direct Google Gemini client-side call
-        const geminiModel = model || "gemini-2.1-flash" || "gemini-2.5-flash";
-        const googleUrl = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${customApiKey}`;
-        
-        const res = await fetch(googleUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `SYSTEM INSTRUCTION: ${systemInstruction || ""}\n\nUSER REQUEST: ${prompt}` }] }]
-          })
-        });
-
-        if (res.ok) {
-          const json = await res.json();
-          return { text: json.candidates?.[0]?.content?.parts?.[0]?.text || "" };
-        }
+      } catch (e) {
+        console.error("Direct browser API call failed", e);
       }
-    } catch (e) {
-      console.error("Direct browser API call failed", e);
     }
-  }
 
-  // 3. Absolute client fallback when both backend and direct key calls failed/unset
-  return {
-    text: getClientMockResponse(prompt, systemInstruction),
-    simulated: true
+    // 3. Absolute client fallback when both backend and direct key calls failed/unset
+    return {
+      text: getClientMockResponse(finalPrompt, finalSystemInstruction),
+      simulated: true
+    };
   };
+
+  const resObj = await runCall();
+  if (isTraditional && resObj.text) {
+    resObj.text = convertToTraditional(resObj.text);
+  }
+  return resObj;
 }
 
 export async function safeFetch(input: any, init?: any): Promise<Response> {
@@ -420,4 +448,48 @@ export function getSeoulWeather(dayNumber: number): SeoulWeather {
   return weatherCycles[(dayNumber - 1) % weatherCycles.length];
 }
 
+// Simplified to Traditional Chinese translation dictionaries and helper function
+export const PHRASE_MAP: Record<string, string> = {
+  "服务器": "伺服器",
+  "软件": "軟體",
+  "自适应": "自適應",
+  "设置": "設定",
+  "屏幕": "螢幕",
+  "视频": "影片",
+  "练习生": "練習生",
+  "联系人": "聯絡人",
+  "自定义": "自定義",
+  "账号": "帳號",
+  "数据": "數據",
+  "体验": "體驗",
+  "网关": "網關",
+  "菜单": "菜單",
+  "对话框": "對話框"
+};
 
+const mappingSource = "们們 这這 时時 还還 会會 后後 国國 为為 么麼 对對 给給 说說 谁誰 话話 见見 风風 动動 声聲 乐樂 营營 划劃 业業 录錄 练練 习習 经經 纪紀 恋戀 宠寵 爱愛 单單 关關 系系 项項 设設 置置 变變 东東 样樣 间間 开開 总總 体體 质質 脸臉 消消 肿腫 红紅 式式 热熱 搜搜 频頻 道道 连連 续續 剧劇 视視 画畫 评評 测測 试試 验驗 办辦 室室 让讓 将將 备備 准準 考考 核核 离離 处處 理理 师師 数數 据據 图圖 选選 择擇 双雙 弹彈 适適 配配 滚滾 应應 用用 显顯 示示 隐隱 私私 密密 字字 符符 调調 节節 简簡 繁繁 转轉 换換 历歷 登登 码碼 网網 站站 链鏈 接接 新新 闻聞 队隊 团團 结結 始始 果果 轻輕 饰飾 伤傷 痛痛 缓緩 解解 苏蘇 醒醒 梦夢 想想 来來 过過 现現 创創 词詞 曲編 导導 演演 唱唱 跳跳 谱譜 歌歌 学學 校校 毕畢 课課 程程 计計 排排 场場 票票 杀殺 面面 绿綠 蓝藍 银銀 铜銅 铁鐵 钢鋼 气氣 电電 脑腦 路路 讯訊 息息 邮郵 件件 递遞 送送 收收 发發 达達 从從 与與 个個 两兩 无無 头頭 长長 万萬 只只 几幾 书書 机機 车車 欢歡 难難 兴興 飞飛 观觀 岁歲 签簽 认認 点點 确確 丽麗 虽雖 儿兒 听聽 怀懷 执執 县縣 坝壩 岗崗 岛島 壳殼 凭憑 毁毀 别別 剪剪 医醫 药藥 护護 疗療 烧燒 感感 冒冒 哑啞 喉喉 咙嚨 炎炎 痒癢 酸酸 胀脹 疲疲 劳勞 睡睡 觉覺 失失 眠眠 惊驚 圈圈 皱皺 纹紋 防防 晒曬 洁潔 妆妝 帮幫 谢謝 愧愧 惭慚 怜憐 悯憫 紧緊 张張 松鬆 压壓 力力 誉譽 粉粉 丝絲 烈烈 卧臥 厨廚 厕廁 澡澡 重重 脸臉";
+
+export const S2T_MAP: Record<string, string> = {};
+mappingSource.split(" ").forEach(pair => {
+  if (pair.length === 2) {
+    S2T_MAP[pair[0]] = pair[1];
+  }
+});
+
+export function convertToTraditional(text: string): string {
+  if (!text) return text;
+  let result = text;
+  
+  // Translate common phrases first
+  for (const [sPhrase, tPhrase] of Object.entries(PHRASE_MAP)) {
+    result = result.replaceAll(sPhrase, tPhrase);
+  }
+  
+  // Translate individual characters
+  let out = "";
+  for (let i = 0; i < result.length; i++) {
+    const char = result[i];
+    out += (s2tDict as Record<string, string>)[char] || S2T_MAP[char] || char;
+  }
+  return out;
+}
