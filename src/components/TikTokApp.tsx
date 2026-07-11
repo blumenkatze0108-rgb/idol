@@ -12,6 +12,8 @@ interface TikTokProp {
   onUpdateStats: (popularity: number, reputation: number, energy: number, stress: number) => void;
   onAddLog: (log: string) => void;
   personas?: IdolPersona[];
+  tiktokVideos: VideoPost[];
+  onUpdateTiktokVideos: (videos: VideoPost[]) => void;
 }
 
 interface VideoPost {
@@ -34,7 +36,9 @@ export default function TikTokApp({
   customApiEndpoint,
   onUpdateStats,
   onAddLog,
-  personas
+  personas,
+  tiktokVideos,
+  onUpdateTiktokVideos
 }: TikTokProp) {
   const [activeTab, setActiveTab] = useState<"feed" | "plan">("feed");
   const [danceChoice, setDanceChoice] = useState("新歌主打《Siren Dance》魔性震动挑战");
@@ -63,40 +67,39 @@ export default function TikTokApp({
     onAddLog(`成功在 TikTok《${selectedVideo.danceChoice.substring(0, 15)}》视频评论中发布了爱豆暖心饭撒！`);
   };
 
-  // Simulated TikTok videos
-  const [tiktokVideos, setTiktokVideos] = useState<VideoPost[]>([]);
-
   // Dynamically initialize of feed videos to maintain consistency
   useEffect(() => {
-    const firstMate = teammates && teammates.length > 0 ? teammates[0] : null;
-    const mateName = firstMate ? firstMate.name : "智雅";
-    const mateCollab = firstMate ? firstMate.id : "JI_AH";
-    
-    setTiktokVideos([
-      {
-        id: "v_1",
-        title: `【宿舍日常】卸了妆跟${mateName}在宿舍跳 1.5倍速新歌副歌，跳完直接累倒在地瘫成咸鱼...`,
-        danceChoice: "主打歌快速版 1.5x Dance Challenge",
-        collabWith: mateCollab,
-        views: 1250000,
-        likes: 98000,
-        shares: 14200,
-        viralIndex: 85,
-        time: "2天前"
-      },
-      {
-        id: "v_2",
-        title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
-        danceChoice: "Wink变装主旋律挑战",
-        collabWith: "solo",
-        views: 3400000,
-        likes: 410000,
-        shares: 31000,
-        viralIndex: 94,
-        time: "4天前"
-      }
-    ]);
-  }, [teammates]);
+    if (tiktokVideos.length === 0) {
+      const firstMate = teammates && teammates.length > 0 ? teammates[0] : null;
+      const mateName = firstMate ? firstMate.name : "智雅";
+      const mateCollab = firstMate ? firstMate.id : "JI_AH";
+      
+      onUpdateTiktokVideos([
+        {
+          id: "v_1",
+          title: `【宿舍日常】卸了妆跟${mateName}在宿舍跳 1.5倍速新歌副歌，跳完直接累倒在地瘫成咸鱼...`,
+          danceChoice: "主打歌快速版 1.5x Dance Challenge",
+          collabWith: mateCollab,
+          views: 1250000,
+          likes: 98000,
+          shares: 14200,
+          viralIndex: 85,
+          time: "2天前"
+        },
+        {
+          id: "v_2",
+          title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
+          danceChoice: "Wink变装主旋律挑战",
+          collabWith: "solo",
+          views: 3400000,
+          likes: 410000,
+          shares: 31000,
+          viralIndex: 94,
+          time: "4天前"
+        }
+      ]);
+    }
+  }, [teammates, tiktokVideos.length]);
 
   const handleShootChallenge = async () => {
     setIsShooting(true);
@@ -170,7 +173,7 @@ export default function TikTokApp({
         time: "刚刚"
       };
 
-      setTiktokVideos([newVideo, ...tiktokVideos]);
+      onUpdateTiktokVideos([newVideo, ...tiktokVideos]);
 
       // Calculate reward effects
       const popGain = Math.floor(viralScore * 0.15);

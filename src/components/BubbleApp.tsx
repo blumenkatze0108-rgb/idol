@@ -199,7 +199,7 @@ ${groupDesc}
                 </div>
               )}
               <div className="max-w-[75%]">
-                <div className={`p-2.5 rounded-2xl text-[11px] leading-relaxed shadow-sm ${isIdol ? "bg-[#3af175]/15 text-slate-800 rounded-tr-none border border-emerald-500/15" : "bg-white text-slate-800 rounded-tl-none border border-[#d2dceb]"}`}>
+                <div className={`p-2.5 rounded-2xl text-[11px] leading-relaxed shadow-sm ${isIdol ? "bg-emerald-200 text-emerald-950 font-semibold rounded-tr-none border border-emerald-300" : "bg-white text-slate-900 rounded-tl-none border border-[#d2dceb]"}`}>
                   <p className="font-sans whitespace-pre-line">{msg.text}</p>
                 </div>
                 <span className="block text-[8px] text-slate-500 mt-0.5 text-right font-mono">{msg.time}</span>

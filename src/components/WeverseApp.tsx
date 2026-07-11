@@ -59,7 +59,19 @@ Do not write any markdown tags or other intro/outro.`;
     let haterUser = "NetizenHater";
     let haterText = "怎么天天有空发Weverse，到底有没有好好练习唱歌啊？发音一塌糊涂。";
 
-    let systemInstruction = `You are an expert game master managing Kpop social fan simulations. Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐" if supportive/fans call her, and NEVER use male-only terms like "欧巴/哥哥/他/哥" to describe her. If male, fans call them "欧巴/哥哥/他" and NEVER use female-only terms like "欧尼/姐姐/她".`;
+    let fanTypeGuidance = "";
+    if (persona.delusionalFanType === "female") {
+      fanTypeGuidance = "Your supportive fan base consists almost entirely of deeply infatuated FEMALE delusional fans (梦女). They treat the idol with obsessive romantic adoration, calling them husband/baby/prince, or saying sweet delusional things typical of obsessive female dreamers (e.g., '今天也想嫁给欧尼/哥哥', '老公/老婆').";
+    } else if (persona.delusionalFanType === "male") {
+      fanTypeGuidance = "Your supportive fan base consists almost entirely of deeply infatuated MALE delusional fans (梦男). They treat the idol with obsessive romantic adoration, calling her their goddess, wifey, or using passionate male-dreamer terminology (e.g., '老婆今天太美了', '我的女神').";
+    } else {
+      fanTypeGuidance = "Your supportive fan base is a realistic mix of both deeply infatuated male and female delusional fans (梦男 and 梦女). Provide a balanced mix of male and female dreamer expressions.";
+    }
+
+    let systemInstruction = `You are an expert game master managing Kpop social fan simulations. Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐" if supportive/fans call her, and NEVER use male-only terms like "欧巴/哥哥/他/哥" to describe her. If male, fans call them "欧巴/哥哥/他" and NEVER use female-only terms like "欧尼/姐姐/她".
+
+Delusional Fan Demographic Style:
+${fanTypeGuidance}`;
     if (personas && personas.length > 1) {
       const gDesc = personas.map((p, idx) => `- 成员 ${idx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}, MBTI: ${p.mbti}`).join("\n");
       systemInstruction += `\n\n【重要：当前属于一个 ${personas.length} 人的自制高保真高定全明星组合 "${persona.groupName}"】
@@ -209,7 +221,19 @@ ${gDesc}
     let commentAuthor = "YunaAngel";
     let commentTxt = "直播里的智允宝宝太可爱了，素颜状态也超级好，清冷感美女实锤！";
 
-    let sysInstruction = `You are in a live streaming room for Kpop idol "${persona.stageName}". Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐/她" if female, and NEVER use male-only terms like "欧巴/哥哥/他" to describe her. If male, fans call them "欧巴/哥哥/慢/他/哥" and NEVER use female terms like "欧尼/姐姐/她".`;
+    let fanTypeGuidance = "";
+    if (persona.delusionalFanType === "female") {
+      fanTypeGuidance = "Your supportive live stream chat consists almost entirely of deeply infatuated FEMALE delusional fans (梦女). They write obsessive romantic comments, calling the idol husband/wifey/baby/prince, using passionate and affectionate girl-dreamer speak.";
+    } else if (persona.delusionalFanType === "male") {
+      fanTypeGuidance = "Your supportive live stream chat consists almost entirely of deeply infatuated MALE delusional fans (梦男). They write obsessive romantic comments, calling her their goddess, wifey/老婆, using passionate male-dreamer speak.";
+    } else {
+      fanTypeGuidance = "Your supportive live stream chat is a realistic mix of both deeply infatuated male and female delusional fans (梦男 and 梦女).";
+    }
+
+    let sysInstruction = `You are in a live streaming room for Kpop idol "${persona.stageName}". Player Gender: "${persona.gender}". Since the player is ${persona.gender === "female" ? "FEMALE (女性/女爱豆)" : "MALE (男性/男爱豆)"}, all generated fan comments in Chinese must address them appropriately, using terms like "欧尼/姐姐/她" if female, and NEVER use male-only terms like "欧巴/哥哥/他" to describe her. If male, fans call them "欧巴/哥哥/慢/他/哥" and NEVER use female terms like "欧尼/姐姐/她".
+
+Delusional Fan Demographic Style:
+${fanTypeGuidance}`;
     if (personas && personas.length > 1) {
       const gDesc = personas.map((p, idx) => `- 成员 ${idx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}`).join("\n");
       sysInstruction += `\n\n【重要：官方组合 "${persona.groupName}" 直播背景】
@@ -360,7 +384,13 @@ ${gDesc}
               <span className="text-xs font-bold text-white">［{persona.stageName}］- 官咖官宣</span>
               <span className="text-[9px] bg-purple-900/40 border border-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded uppercase font-mono">{persona.conceptTheme.split(" ")[0]}</span>
             </div>
-            <p className="text-[10px] text-slate-400 mt-1">发帖能吸引团粉和梦男粉。合理回复恶评或开启直播。</p>
+            <p className="text-[10px] text-slate-400 mt-1">
+              发帖能吸引团粉和{
+                persona.delusionalFanType === "female" ? "梦女粉" :
+                persona.delusionalFanType === "male" ? "梦男粉" :
+                "梦男梦女粉"
+              }。合理回复恶评或开启直播。
+            </p>
           </div>
 
           <button

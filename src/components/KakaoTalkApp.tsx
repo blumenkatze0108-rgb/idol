@@ -95,7 +95,7 @@ export default function KakaoTalkApp({
     return 18 + yearsPassed; // Fallback
   };
 
-  const handleLoverAction = (actionType: "date" | "gift" | "letter" | "reconcile") => {
+  const handleLoverAction = (actionType: "date" | "gift" | "letter" | "reconcile" | "voice" | "bubble_space") => {
     if (!persona.hasLover || !onUpdatePersona) return;
     setLoverError(null);
 
@@ -120,6 +120,38 @@ export default function KakaoTalkApp({
       
       msgText = `[💕 深夜自驾汉江兜风] 你们戴着黑色鸭舌帽跟口罩，开着租来的轻便车游荡在深夜2点的汉江大桥下。虽然你有些提心吊胆，生怕路过的夜跑保姆车或跟拍镜头发现，但Ta在暗处轻轻捏了捏你的手，眼里满是热诚。 (地下恋人安定度 +20, 个人体力 -30, 曝光概率上升 15)`;
       logText = `[💞 地下恋爱] 深夜汉江秘密兜风：恋人 ${persona.loverName} 的心境安定度上升了20点（目前为 ${nextMood}/100）。但受制于熬夜外出，您的体力下浮30点，绯闻曝光暗雷预存上升！`;
+    } 
+    else if (actionType === "voice") {
+      if (nextPersona.energy < 15) {
+        setLoverError("太疲惫了（体力值低于15点），你打着瞌睡都快睡着了，不适合跟Ta煲甜蜜的秘密电话粥。先休息下吧！");
+        return;
+      }
+      nextPersona.energy = Math.max(0, nextPersona.energy - 15);
+      nextPersona.stress = Math.max(0, nextPersona.stress - 10);
+      
+      const nextMood = Math.min(100, pMood + 10);
+      nextPersona.loverMood = nextMood;
+      
+      msgText = `[📞 秘密深夜长途通话] 你们蒙着被子，用只有彼此知晓的加密私人小号连线了3个小时。Ta在电话那头轻声哼唱着你最爱的歌谣，甚至听到了彼此细微的呼吸。深夜的倾诉让所有白天的练习压力烟消云散。 (地下恋人心情 +10, 个人体力 -15, 精神压力 -10)`;
+      logText = `[💞 地下恋爱] 蒙被秘密煲深夜电话粥：恋人 ${persona.loverName} 的心境好感回升10点（当前为 ${nextMood}/100）。你的压力也得到了舒缓！`;
+    }
+    else if (actionType === "bubble_space") {
+      const bubbleCost = 50; // Cost 50w for secret Bubble space server support
+      if (nextPersona.money < bubbleCost) {
+        const diff = bubbleCost - nextPersona.money;
+        nextPersona.money = 0;
+        nextPersona.traineeDebt += diff;
+        alertMsg = `（由于你现金资产不足，差额的 ₩${diff}w 自动转化为你的累积债务）`;
+      } else {
+        nextPersona.money -= bubbleCost;
+      }
+      
+      nextPersona.stress = Math.min(100, nextPersona.stress + 5);
+      const nextMood = Math.min(100, pMood + 18);
+      nextPersona.loverMood = nextMood;
+      
+      msgText = `[💫 专属私密泡泡星闪空间互动] 你们在只有两名成员的加密情侣Bubble空间里上传了同款情侣鞋/情侣手链的对焦照（Lovestagram暗示）。虽然这给饭圈唯粉留下了大量‘抽丝剥茧、暗戳戳秀恩爱’的八卦痕迹，但这种游走在曝光边缘的致命隐秘浪漫让Ta激动不已。 (地下恋人心情 +18, 压力轻微上升 5, 耗费资产 ₩50万)`;
+      logText = `[💞 地下恋爱] 在专属情侣Bubble上传 Lovestagram 抽丝暗号：恋人 ${persona.loverName} 被你的果敢示爱深深打动！好感上升18点（当前为 ${nextMood}/100）。${alertMsg}`;
     } 
     else if (actionType === "gift") {
       const giftCost = 150; // ₩150万韩元 ($1.1k approx) 
@@ -710,6 +742,18 @@ ${groupDesc}
                       className="py-1.5 px-1 bg-pink-100 hover:bg-pink-200 text-pink-900 border border-pink-200 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer text-center"
                     >
                       🎁 匿名定制高级冷戒
+                    </button>
+                    <button
+                      onClick={() => handleLoverAction("voice")}
+                      className="py-1.5 px-1 bg-pink-100 hover:bg-pink-200 text-pink-900 border border-pink-200 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer text-center"
+                    >
+                      📞 秘密深夜连线电话
+                    </button>
+                    <button
+                      onClick={() => handleLoverAction("bubble_space")}
+                      className="py-1.5 px-1 bg-pink-100 hover:bg-pink-200 text-pink-900 border border-pink-200 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-all active:scale-95 cursor-pointer text-center"
+                    >
+                      💫 专属加密 Bubble Lovestagram
                     </button>
                     <button
                       onClick={() => handleLoverAction("letter")}

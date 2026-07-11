@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IdolPersona } from "../types";
 import { Send, Zap, Eye, Image as ImageIcon, Sparkles, Heart } from "lucide-react";
 import { safeFetch } from "./apiHelper";
@@ -11,6 +11,8 @@ interface XiaohongshuProp {
   onUpdateStats: (popularity: number, reputation: number, energy: number, stress: number) => void;
   onAddLog: (log: string) => void;
   personas?: IdolPersona[];
+  posts: RedPost[];
+  onUpdatePosts: (posts: RedPost[]) => void;
 }
 
 interface RedPost {
@@ -32,7 +34,9 @@ export default function XiaohongshuApp({
   customApiEndpoint,
   onUpdateStats,
   onAddLog,
-  personas
+  personas,
+  posts,
+  onUpdatePosts
 }: XiaohongshuProp) {
   const [activeTab, setActiveTab] = useState<"diary" | "create">("diary");
   const [ootdStyle, setOotdStyle] = useState("清冷感白大衣+超大黑框极简黑眼镜 (Noir Minimalist)");
@@ -61,30 +65,35 @@ export default function XiaohongshuApp({
     onAddLog(`成功在小红书《${selectedPost.title.substring(0, 15)}...》帖子下给粉丝翻牌子回复啦！`);
   };
 
-  const [posts, setPosts] = useState<RedPost[]>([
-    {
-      id: "p_1",
-      title: "【OOTD】机场上班私服被要链接了！慵懒极简的高级感穿搭大公开 🧥✨",
-      tagline: "#爱豆上班路 #私服穿搭 #清冷感穿搭 #OOTD",
-      ootdStyle: "慵懒黑色工装皮上衣 + 极简复古微宽牛仔裤 + 雪松木质调冷感香水",
-      makeupChoice: "冷郁烟熏小猫猫伪素颜妆",
-      likes: 42000,
-      saves: 18400,
-      comments: 650,
-      time: "1天前"
-    },
-    {
-      id: "p_2",
-      title: "【日常爱用好物】随身携带的江南名品气垫与本命口红，黄皮爱豆直接锁死！💄",
-      tagline: "#爱用物分享 #爱豆开包记 #今日口红 #黄皮友好",
-      ootdStyle: "白色羊绒开衫配碎金戴眼线",
-      makeupChoice: "元气蜜桃减龄夏日妆",
-      likes: 58000,
-      saves: 31000,
-      comments: 1100,
-      time: "3天前"
+  // Dynamically initialize of posts to maintain consistency
+  useEffect(() => {
+    if (posts.length === 0) {
+      onUpdatePosts([
+        {
+          id: "p_1",
+          title: "【OOTD】机场上班私服被要链接了！慵懒极简的高级感穿搭大公开 🧥✨",
+          tagline: "#爱豆上班路 #私服穿搭 #清冷感穿搭 #OOTD",
+          ootdStyle: "慵懒黑色工装皮上衣 + 极简复古微宽牛仔裤 + 雪松木质调冷感香水",
+          makeupChoice: "冷郁烟熏小猫猫伪素颜妆",
+          likes: 42000,
+          saves: 18400,
+          comments: 650,
+          time: "1天前"
+        },
+        {
+          id: "p_2",
+          title: "【日常爱用好物】随身携带的江南名品气垫与本命口红，黄皮爱豆直接锁死！💄",
+          tagline: "#爱用物分享 #爱豆开包记 #今日口红 #黄皮友好",
+          ootdStyle: "白色羊绒开衫配碎金戴眼线",
+          makeupChoice: "元气蜜桃减龄夏日妆",
+          likes: 58000,
+          saves: 31000,
+          comments: 1100,
+          time: "3天前"
+        }
+      ]);
     }
-  ]);
+  }, [posts.length]);
 
   const handleCreatePost = async () => {
     setIsPosting(true);
@@ -146,7 +155,7 @@ export default function XiaohongshuApp({
         time: "刚刚"
       };
 
-      setPosts([newPost, ...posts]);
+      onUpdatePosts([newPost, ...posts]);
 
       // Stat impacts
       const popReward = Math.floor(randomWeight * 4);

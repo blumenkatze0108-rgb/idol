@@ -94,6 +94,13 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [romancePosition, setRomancePosition] = useState<"left" | "right">("right"); // Default to right-side (受) unless configured
   const [customTeammates, setCustomTeammates] = useState<SimulatedTeammate[]>([]);
 
+  // Customizable fanbase and manager setups
+  const [delusionalFanType, setDelusionalFanType] = useState<"both" | "female" | "male">("both");
+  const [managerPersonality, setManagerPersonality] = useState<"strict" | "gentle" | "money_minded" | "unreliable" | "custom">("strict");
+  const [managerCustomName, setManagerCustomName] = useState<string>("");
+  const [managerCustomTitle, setManagerCustomTitle] = useState<string>("室长级经纪人");
+  const [managerCustomIntro, setManagerCustomIntro] = useState<string>("极其严厉，负责全队体重、日程及业务能力监督考核。");
+
   // Update customTeammates when gender changes or on mount
   useEffect(() => {
     setCustomTeammates(generateRandomTeammates(gender, 4));
@@ -367,6 +374,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     if (isSwitchingRef.current) return;
     setHeight(gender === "female" ? 167 : 181);
     setWeight(gender === "female" ? 46.5 : 62.0);
+    // Sync default manager name as well
+    if (!managerCustomName || managerCustomName === "严相勋" || managerCustomName === "闵相勋") {
+      setManagerCustomName(gender === "female" ? "严相勋" : "闵相勋");
+    }
   }, [gender]);
 
   // Adjust default lover details based on gender/identity swaps for convenience
@@ -859,6 +870,11 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           cycleDays: cycleDays,
           interactionPoints: 18,
           hasRecoveredToday: false,
+          delusionalFanType: delusionalFanType,
+          managerPersonality: managerPersonality,
+          managerCustomName: managerCustomName || (m.gender === "female" ? "严相勋" : "闵相勋"),
+          managerCustomTitle: managerCustomTitle,
+          managerCustomIntro: managerCustomIntro,
           hasLover: m.hasLover,
           loverName: m.hasLover ? (m.loverName?.trim() || (m.loverGender === "female" ? "韩熙珍" : "宋承泽")) : "",
           relationshipStatus: m.hasLover ? "dating" : "single",
@@ -1506,6 +1522,127 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                       </div>
                     </div>
                   )}
+                </div>
+
+
+                {/* Delusional Fandom Demographic Selection */}
+                <div className="p-3.5 rounded-2xl bg-[#0e1626] border border-blue-500/25 space-y-2.5 mt-2 col-span-1 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-blue-400">💞 粉丝群体倾向设置 (Fandom Demographic Style)</span>
+                    <span className="bg-blue-500/20 text-blue-300 font-mono text-[8px] px-1.5 py-0.5 rounded border border-blue-500/20">受众偏好设定</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 leading-normal">
+                    根据偶像的风格和市场反馈，你的狂热 Delusional（幻想/梦系）粉丝群体性别比例如何？
+                    不同的比例将决定游戏内 W-Live 弹幕、Weverse 评论、手写信、泡泡聊天中「梦男 (Male Dreamers)」与「梦女 (Female Dreamers)」发出的狂热留言、幻想表白的出现频率与代词设定。
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 mt-1.5">
+                    <button 
+                      type="button"
+                      onClick={() => setDelusionalFanType("both")}
+                      className={`py-2 px-1.5 rounded-xl border text-center transition-all cursor-pointer ${delusionalFanType === "both" ? "bg-indigo-950/40 border-indigo-500 text-indigo-300 font-bold text-xs" : "bg-slate-950/40 border-white/5 text-slate-500 text-[11px]"}`}
+                    >
+                      🔮 梦男+梦女 混合
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setDelusionalFanType("female")}
+                      className={`py-2 px-1.5 rounded-xl border text-center transition-all cursor-pointer ${delusionalFanType === "female" ? "bg-pink-950/40 border-pink-500 text-pink-300 font-bold text-xs" : "bg-slate-950/40 border-white/5 text-slate-500 text-[11px]"}`}
+                    >
+                      💅 梦女倾向 (女粉居多)
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setDelusionalFanType("male")}
+                      className={`py-2 px-1.5 rounded-xl border text-center transition-all cursor-pointer ${delusionalFanType === "male" ? "bg-sky-950/40 border-sky-500 text-sky-300 font-bold text-xs" : "bg-slate-950/40 border-white/5 text-slate-500 text-[11px]"}`}
+                    >
+                      🕶️ 梦男倾向 (男粉居多)
+                    </button>
+                  </div>
+                </div>
+
+                {/* Manager Personality & Name Setup */}
+                <div className="p-3.5 rounded-2xl bg-[#14120e] border border-amber-500/25 space-y-2.5 mt-2 col-span-1 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-400">🤝 企划社专属经纪人定制 (Exclusive Manager Settings)</span>
+                    <span className="bg-amber-500/20 text-amber-300 font-mono text-[8px] px-1.5 py-0.5 rounded border border-amber-500/20">经纪人定制人设</span>
+                  </div>
+                  <p className="text-[10px] text-slate-300 leading-normal">
+                    定制你身边形影不离的随行经纪人！她的行事作风、MBTI 以及对你的态度，将直接影响每日日程核算后的清晨点评和 KakaoTalk 对话情绪风格！
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-1.5">
+                    {/* Name Input */}
+                    <div>
+                      <label className="text-[10px] text-amber-400 font-bold block mb-1">✍️ 经纪人姓名</label>
+                      <div className="flex gap-1.5">
+                        <input 
+                          type="text"
+                          value={managerCustomName}
+                          onChange={(e) => setManagerCustomName(e.target.value)}
+                          placeholder="例如: 严相勋 / 闵相勋 / 柳姐..."
+                          className="flex-1 bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-amber-200 focus:outline-none focus:border-amber-500 font-extrabold"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const names = gender === "female" ? ["严相勋", "车智贤", "宋代表", "林美熙"] : ["闵相勋", "崔室长", "郑多恩", "韩理事"];
+                            setManagerCustomName(names[Math.floor(Math.random() * names.length)]);
+                          }}
+                          className="px-2 bg-slate-800 text-slate-300 border border-white/10 rounded-lg text-[9px] hover:bg-slate-700"
+                        >
+                          🎲 随机
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Title Input */}
+                    <div>
+                      <label className="text-[10px] text-amber-400 font-bold block mb-1">🎖️ 职位职称 (头衔)</label>
+                      <input 
+                        type="text"
+                        value={managerCustomTitle}
+                        onChange={(e) => setManagerCustomTitle(e.target.value)}
+                        placeholder="例如: 室长级经纪人 / 贴身大管家 / 魔鬼教官..."
+                        className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Personality Select */}
+                  <div>
+                    <label className="text-[10px] text-amber-400 font-bold block mb-1">🧠 经纪人行事作风 / 性格特质</label>
+                    <select 
+                      value={managerPersonality}
+                      onChange={(e) => {
+                        const val = e.target.value as any;
+                        setManagerPersonality(val);
+                        if (val === "strict") {
+                          setManagerCustomIntro("极其严厉，负责全队体重、日程及业务能力监督考核。");
+                        } else if (val === "gentle") {
+                          setManagerCustomIntro("知性温柔，像欧尼/欧巴一样无微不至关怀，包容你的小毛病。");
+                        } else if (val === "money_minded") {
+                          setManagerCustomIntro("势利市侩，一切看商业价值，你红了就贴上来，落魄了就极其冰冷。");
+                        } else if (val === "unreliable") {
+                          setManagerCustomIntro("粗心迷糊，虽然经常漏带演出服 and 行程卡，但性格和善，跟你打成一片。");
+                        }
+                      }}
+                      className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-amber-500 font-bold"
+                    >
+                      <option value="strict">👹 严厉苛刻型 (ESTJ) — 经典魔鬼室长，狠抠体脂与细节</option>
+                      <option value="gentle">🌸 温柔守护型 (ISFJ) — 细腻且包容，会私下给你买感冒药</option>
+                      <option value="money_minded">💎 利益市侩型 (ENTJ) — 商业价值至上，严酷现实派</option>
+                      <option value="unreliable">🤡 迷糊损友型 (ENFP) — 搞笑笨蛋人设，虽然粗心但极好相处</option>
+                      <option value="custom">✍️ 独家定义人设描述...</option>
+                    </select>
+
+                    <textarea
+                      value={managerCustomIntro}
+                      onChange={(e) => setManagerCustomIntro(e.target.value)}
+                      placeholder="自定义经纪人的性格侧写、黑历史或口头禅描述..."
+                      rows={2}
+                      className="mt-1.5 w-full bg-slate-900/60 border border-amber-500/20 rounded-xl p-2 text-[10px] text-amber-300 focus:outline-none focus:border-amber-500/50 leading-relaxed font-sans"
+                    />
+                  </div>
                 </div>
 
 

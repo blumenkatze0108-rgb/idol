@@ -374,6 +374,8 @@ export default function SchedulesApp({
       bmiEvaluation = "微胖偏重型 (已大幅超出南韩爱豆严酷出道红线，会遭到大范围脱粉，黑粉疯狂嘲讽『面如盆大、背影如熊、不务正业偷吃油腻汉堡炸鸡、男/女德大面积滑坡、职业道德彻底崩溃』)";
     }
 
+    const mLabel = persona.gender === "female" ? "严" : "闵";
+
     const prompt = `玩家昨日完成了以下团队与个人行程：[${completedText}]。
 主角设定：
 - 专属名字/艺名：${persona.name} / ${persona.stageName}
@@ -383,20 +385,20 @@ export default function SchedulesApp({
 - 粉丝圈人气：${pUpdateObj.fansCount} 位死忠, 美誉等级: ${pUpdateObj.reputation}/100.
 - 职业资历与衰老成熟指数：ageing_factor: ${pUpdateObj.ageing_factor || 0}（说明：每 ${pUpdateObj.cycleDays || 36} 天为一个合约年。0 = 青涩活泼的新手练习生期；1 = 沉淀磨砺出的成熟过渡阶段；2 = 资深、练达、自持的K-Pop大前辈阶段；3+ = 殿堂级成熟前辈顶峰阶段，能自如控制情绪并宠辱不惊）。
 
-请根据上述的 ageing_factor 资历指标，精准微调 AI 生成的角色对话语气（包括闵经理人发来的 managerMessage 消息以及主动找主角的 proactiveMessage.text 未读信息）：
+请根据上述的 ageing_factor 资历指标，精准微调 AI 生成的角色对话语气（包括${mLabel}经理人发来的 managerMessage 消息以及主动找主角的 proactiveMessage.text 未读信息）：
 - 如果 ageing_factor 为 0：角色言谈表现得非常直率、对新人严格，指导或嘱咐多带有教训和指点口吻。
 - 如果 ageing_factor 为 1：由于艺人积累了一年多的行当沉淀，配角说话能微露出对你业务和心理成熟度的认可与尊重，不再一味怒骂。
 - 如果 ageing_factor >= 2：语气转向极其稳重、妥帖、饱经世故的资深对话口吻，少了一些毛躁的呵斥敲打，多了一些对待行业资深老手、成熟老艺人的成熟理解，甚至会有更多的商务关切、顶层演艺方向寄语与稳重自持的信任嘱托。
 
 请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】（请围绕上述具体BMI身材类型，让粉丝或黑粉在评论中激烈辩驳起来，使黑粉、唯粉和各路路人粉的激辩极其饱满、尖锐、贴合Kpop现实！）。并全新计算【明日全新的三个量身定制行程】。
-还要为高冷、好感度仅有 ${pUpdateObj.managerFavorability}/100 的闵经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
+还要为高冷、好感度仅有 ${pUpdateObj.managerFavorability}/100 的${mLabel}经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
 
-此外，请生成一条清晨时分除闵经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'、或任一练习生队内队友例如组合主舞/主唱等）主动找主角发来的私聊消息（几率：75%）。
+此外，请生成一条清晨时分除${mLabel}经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'、或任一练习生队内队友例如组合主舞/主唱等）主动找主角发来的私聊消息（几率：75%）。
 
 请严格仅返回以下标准合法的纯 JSON 格式数据（注意：不要将其包裹在 markdown 代码块中，仅返回纯JSON）：
 {
   "narrative": "中文。昨晚到今天清晨的粉丝评论/爆料，以及主角的各项健康指数、皮肤细节变迁反馈，限120~180字。",
-  "managerMessage": "根据 ageing_factor 特点撰写。闵经理人发来的实时KakaoTalk未读信息文本。性格要求对新人和外籍略带刻薄（在 ageing_factor = 0 时尤甚），若 ageing_factor 较高、昨日努力或好感度高则转为更专业稳健的工作探讨语调。",
+  "managerMessage": "根据 ageing_factor 特点撰写。${mLabel}经理人发来的实时KakaoTalk未读信息文本。性格要求对新人和外籍略带刻薄（在 ageing_factor = 0 时尤甚），若 ageing_factor 较高、昨日努力或好感度高则转为更专业稳健的工作探讨语调。",
   "schedules": [
     {
       "id": "new_sch_a",
@@ -480,27 +482,27 @@ export default function SchedulesApp({
       
       let narrative = `昨夜结束了今天的业务。由于清晨体重微微有起伏，黑粉立刻在论坛带节奏『看来爱豆根本没有容貌和自尊觉醒，上镜水肿成发面馒头了』。团粉与唯粉在论坛高能对线，你夜里顶着失眠的风险进行了消肿护理，肌肉有些僵硬。新的一天伴随着练习室空调的轰鸣拉开了血色帷幕……`;
       if (isFatigued) {
-        narrative = `体力过度透支导致你在保姆车上彻底昏睡沉沦。成员们对你近来的虚弱有些许怨言：『队长今天体力又断崖了，编舞连轴转要怎么排？！』。好在海外死忠粉疯狂灌爆打卡榜，你虚无的名气稍微得到了一些维系。今天闵经纪人已经冷脸站在了走廊尽头。`;
+        narrative = `体力过度透支导致你在保姆车上彻底昏睡沉沦。成员们对你近来的虚弱有些许怨言：『队长今天体力又断崖了，编舞连轴转要怎么排？！』。好在海外死忠粉疯狂灌爆打卡榜，你虚无的名气稍微得到了一些维系。今天${mLabel}经纪人已经冷脸站在了走廊尽头。`;
       } else if (isStressed) {
         narrative = `由于昨夜你极度透支的精神压力，回到宿舍后，你的下巴附近爆发了几颗红肿的痘痘，韩网站姐的新直拍连夜流传开，粉卷里都在关心你的皮肤红肿状况。代表更是在清晨晨会上敲了敲桌子叹了口气。今天不得不重新规划极其残忍的皮肤科与特训。`;
       }
 
       let managerMessage = persona.managerFavorability < 35 
-        ? "【KakaoTalk - 闵室长】\n呀！昨晚的演出你那个转身动作是不是慢了半拍？高价买来的编舞概念全被你给糟蹋了！今天的极饿体脂对抗你最好动作快一点，再让我看到上镜有赘肉，年末C位直接让给智敏！" 
-        : "【KakaoTalk - 闵室长】\n表现得还算凑合，继续保持。今天的行程依旧满档，我帮你准备的高能消肿水一已经寄到清潭洞皮肤科前台里了，做完护理立马回公司声乐室加练！";
+        ? `【KakaoTalk - ${mLabel}室长】\n呀！昨晚的演出你那个转身动作是不是慢了半拍？高价买来的编舞概念全被你给糟蹋了！今天的极饿体脂对抗你最好动作快一点，再让我看到上镜有赘肉，年末C位直接让给智敏！` 
+        : `【KakaoTalk - ${mLabel}室长】\n表现得还算凑合，继续保持。今天的行程依旧满档，我帮你准备的高能消肿水一已经寄到清潭洞皮肤科前台里了，做完护理立马回公司声乐室加练！`;
 
       const factor = pUpdateObj.ageing_factor || 0;
       if (factor === 1) {
-        managerMessage = "【KakaoTalk - 闵室长】\n你已经度过了第一年的新手期，如今举手投足成熟沉稳了许多。今天的业务行程我发你了，放手去做，团队需要你拿出资深爱豆的担当和沉淀气质来，继续保持高标准运营！";
+        managerMessage = `【KakaoTalk - ${mLabel}室长】\n你已经度过了第一年的新手期，如今举手投足成熟沉稳了许多。今天的业务行程我发你了，放手去做，团队需要你拿出资深爱豆的担当和沉淀气质来，继续保持高标准运营！`;
       } else if (factor >= 2) {
-        managerMessage = "【KakaoTalk - 闵室长】\n作为厂牌的资深元老和大前辈，咱们之间就不用那些客套教训了。刚才和PD、李社长开会重点提了你接下来的长期演艺身价定位，希望今天你也能展现最巅峰和完美练达的舞台风范。";
+        managerMessage = `【KakaoTalk - ${mLabel}室长】\n作为厂牌的资深元老和大前辈，咱们之间就不用那些客套教训了。刚才和PD、李社长开会重点提了你接下来的长期演艺身价定位，希望今天你也能展现最巅峰和完美练达的舞台风范。`;
       }
 
       let proactiveMsgObj = null;
       if (factor > 0) {
         const senderText = factor === 1 
-          ? "【KakaoTalk - 社长李代表】\n不错，经过这一年的磨练你的行事说话是稳重成熟了不少。未来厂牌和新人的风向标还得看你的表现，加油吧。"
-          : "【KakaoTalk - 社长李代表】\n刚才听闵经纪人说你在决策和应答方面大显沉稳练达的大前辈风采。我很欣慰能在这个顶峰期见证你心智的蜕变成熟，厂牌很看好你的高阶表现。";
+          ? "【KakaoTalk - 社长李代表】\n不错，经过这一年的磨练你的行事说话是稳重成熟了不少。未来厂牌 and 新人的风向标还得看你的表现，加油吧。"
+          : `【KakaoTalk - 社长李代表】\n刚才听${mLabel}经纪人说你在决策和应答方面大显沉稳练达的大前辈风采。我很欣慰能在这个顶峰期见证你心智的蜕变成熟，厂牌很看好你的高阶表现。`;
         proactiveMsgObj = {
           senderId: "ceo",
           senderName: "厂牌代表李秉旭",
@@ -546,6 +548,91 @@ export default function SchedulesApp({
         ],
         weversePostContent: "［热议帖］大家有没有觉得，宝宝今天的皮肤状态和之前的饭撒对视好像变好了很多？虽然昨晚有些疲惫，但那个拼命营业的劲儿真的太让人怜爱了..."
       };
+    }
+
+    // Dynamic replacement of manager name references based on player gender (female -> 严, male -> 闵)
+    if (mLabel === "严") {
+      if (parsedResult.narrative) {
+        parsedResult.narrative = parsedResult.narrative
+          .replace(/闵室长/g, "严室长")
+          .replace(/闵经理人/g, "严经理人")
+          .replace(/闵经理/g, "严经理")
+          .replace(/闵经纪人/g, "严经纪人")
+          .replace(/闵相勋/g, "严相勋")
+          .replace(/闵纪人/g, "严纪人")
+          .replace(/闵室/g, "严室");
+      }
+      if (parsedResult.managerMessage) {
+        parsedResult.managerMessage = parsedResult.managerMessage
+          .replace(/闵室长/g, "严室长")
+          .replace(/闵经理人/g, "严经理人")
+          .replace(/闵经理/g, "严经理")
+          .replace(/闵经纪人/g, "严经纪人")
+          .replace(/闵相勋/g, "严相勋")
+          .replace(/闵纪人/g, "严纪人")
+          .replace(/闵室/g, "严室");
+      }
+      if (parsedResult.weversePostContent) {
+        parsedResult.weversePostContent = parsedResult.weversePostContent
+          .replace(/闵室长/g, "严室长")
+          .replace(/闵经理人/g, "严经理人")
+          .replace(/闵经理/g, "严经理")
+          .replace(/闵经纪人/g, "严经纪人")
+          .replace(/闵相勋/g, "严相勋")
+          .replace(/闵纪人/g, "严纪人")
+          .replace(/闵室/g, "严室");
+      }
+      if (parsedResult.proactiveMessage && parsedResult.proactiveMessage.text) {
+        parsedResult.proactiveMessage.text = parsedResult.proactiveMessage.text
+          .replace(/闵室长/g, "严室长")
+          .replace(/闵经理人/g, "严经理人")
+          .replace(/闵经理/g, "严经理")
+          .replace(/闵经纪人/g, "严经纪人")
+          .replace(/闵相勋/g, "严相勋")
+          .replace(/闵纪人/g, "严纪人")
+          .replace(/闵室/g, "严室");
+      }
+    } else if (mLabel === "闵") {
+      if (parsedResult.narrative) {
+        parsedResult.narrative = parsedResult.narrative
+          .replace(/严室长/g, "闵室长")
+          .replace(/严经理人/g, "闵经理人")
+          .replace(/严经理/g, "闵经理")
+          .replace(/严经纪人/g, "闵经纪人")
+          .replace(/严相勋/g, "闵相勋")
+          .replace(/严纪人/g, "闵纪人")
+          .replace(/严室/g, "闵室");
+      }
+      if (parsedResult.managerMessage) {
+        parsedResult.managerMessage = parsedResult.managerMessage
+          .replace(/严室长/g, "闵室长")
+          .replace(/严经理人/g, "闵经理人")
+          .replace(/严经理/g, "闵经理")
+          .replace(/严经纪人/g, "闵经纪人")
+          .replace(/严相勋/g, "闵相勋")
+          .replace(/严纪人/g, "闵纪人")
+          .replace(/严室/g, "闵室");
+      }
+      if (parsedResult.weversePostContent) {
+        parsedResult.weversePostContent = parsedResult.weversePostContent
+          .replace(/严室长/g, "闵室长")
+          .replace(/严经理人/g, "闵经理人")
+          .replace(/严经理/g, "闵经理")
+          .replace(/严经纪人/g, "闵经纪人")
+          .replace(/严相勋/g, "闵相勋")
+          .replace(/严纪人/g, "闵纪人")
+          .replace(/严室/g, "闵室");
+      }
+      if (parsedResult.proactiveMessage && parsedResult.proactiveMessage.text) {
+        parsedResult.proactiveMessage.text = parsedResult.proactiveMessage.text
+          .replace(/严室长/g, "闵室长")
+          .replace(/严经理人/g, "闵经理人")
+          .replace(/严经理/g, "闵经理")
+          .replace(/严经纪人/g, "闵经纪人")
+          .replace(/严相勋/g, "闵相勋")
+          .replace(/严纪人/g, "闵纪人")
+          .replace(/严室/g, "闵室");
+      }
     }
 
     // Map scheduled results cleanly to app schedules formats
@@ -616,7 +703,11 @@ export default function SchedulesApp({
     }
 
     // Intercept with sasaeng stalker or big fan harassment pop-up if fanbase is large (Requirement 6)
-    if (pUpdate.fansCount > 15000 && Math.random() < 0.6 && !emergencyHarassment) {
+    // Reduce trigger rate from 0.6 to 0.15, and enforce a minimum cooldown of 5 days (User-requested anti-spam fix)
+    const daysSinceLastEmergency = pUpdate.dayNumber - (pUpdate.lastEmergencyDay || 0);
+    if (pUpdate.fansCount > 15000 && daysSinceLastEmergency >= 5 && Math.random() < 0.15 && !emergencyHarassment) {
+      // Record trigger day in persona state to track cooldown
+      pUpdate.lastEmergencyDay = pUpdate.dayNumber;
       const scens = [
         {
           type: "sasaeng" as const,

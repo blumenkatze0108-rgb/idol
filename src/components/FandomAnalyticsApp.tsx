@@ -728,15 +728,25 @@ export default function FandomAnalyticsApp({
                     <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">最核心、最稳固的团队力量，只买正规专辑、疯狂做数据打歌。</p>
                   </div>
 
-                  <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
+                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
                     <div className="flex justify-between text-[11px] text-slate-300">
-                      <span>🧪 梦男梦女 (Delusionals)</span>
+                      <span>🧪 {
+                        persona.delusionalFanType === "female" ? "狂热梦女粉 (Dream Girls)" :
+                        persona.delusionalFanType === "male" ? "狂热梦男粉 (Dream Boys)" :
+                        "梦男梦女粉 (Delusionals)"
+                      }</span>
                       <span className="font-mono text-pink-400 font-bold">{delusional}%</span>
                     </div>
                     <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
                       <div className="bg-pink-500 h-full" style={{ width: `${delusional}%` }} />
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">氪金泡泡极品！幻想与你在首尔恋爱，极度嫉妒你与任何异性入镜。</p>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">
+                      {
+                        persona.delusionalFanType === "female" ? "极品梦女受众！疯狂刷泡泡与表白，幻想在首尔和你结婚，极度讨厌你和男艺人合作。" :
+                        persona.delusionalFanType === "male" ? "极品梦男受众！疯狂留言称呼你为老婆/女神，砸巨款买卡，极度讨厌你和异性接触。" :
+                        "氪金泡泡极品！幻想与你在首尔恋爱，极度嫉妒你与任何异性入镜。"
+                      }
+                    </p>
                   </div>
 
                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">

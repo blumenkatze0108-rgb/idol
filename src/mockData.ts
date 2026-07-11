@@ -137,11 +137,38 @@ export function generateRandomTeammates(gender: "male" | "female", count = 4): S
 }
 
 // Procedurally generate other major characters (Requirement 15) - Standardized fixed Staff
-export function generateCoreStaff(playerGender: "male" | "female" = "female") {
+export function generateCoreStaff(playerGender: "male" | "female" = "female", persona?: IdolPersona) {
+  let managerName = playerGender === "female" ? "严相勋 (室长级经纪人)" : "闵相勋 (室长级经纪人)";
+  let managerMbti = "ESTJ";
+  
+  if (persona) {
+    if (persona.managerCustomName) {
+      const titleSuffix = persona.managerCustomTitle ? ` (${persona.managerCustomTitle})` : " (专属经纪人)";
+      managerName = persona.managerCustomName.includes("(") ? persona.managerCustomName : `${persona.managerCustomName}${titleSuffix}`;
+    }
+    if (persona.managerPersonality) {
+      switch (persona.managerPersonality) {
+        case "gentle":
+          managerMbti = "ISFJ";
+          break;
+        case "money_minded":
+          managerMbti = "ENTJ";
+          break;
+        case "unreliable":
+          managerMbti = "ENFP";
+          break;
+        case "strict":
+        default:
+          managerMbti = "ESTJ";
+          break;
+      }
+    }
+  }
+
   return {
     manager: {
-      name: playerGender === "female" ? "严相勋 (室长级经纪人)" : "闵相勋 (室长级经纪人)",
-      mbti: "ESTJ",
+      name: managerName,
+      mbti: managerMbti,
       avatar: ""
     },
     ceo: {

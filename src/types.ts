@@ -82,6 +82,14 @@ export interface IdolPersona {
     cpFans: number;   // CP粉 %
     antiFans: number; // 黑粉 %
   };
+
+  // Customizable manager and delusional fanbase setups
+  delusionalFanType?: "both" | "female" | "male"; // "both" (梦男+梦女) | "female" (主攻梦女) | "male" (主攻梦男)
+  managerPersonality?: "strict" | "gentle" | "money_minded" | "unreliable" | "custom";
+  managerCustomName?: string;
+  managerCustomTitle?: string;
+  managerCustomIntro?: string;
+  lastEmergencyDay?: number; // Day number of the last triggered sasaeng or big fan event to enforce cooldown
 }
 
 // Generated teammates list for groups

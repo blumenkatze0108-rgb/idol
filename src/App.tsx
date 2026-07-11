@@ -141,6 +141,8 @@ export default function App() {
   const [personasBubbleMessages, setPersonasBubbleMessages] = useState<BubbleMessage[][]>([INITIAL_BUBBLE_MESSAGES]);
   const [personasSchedules, setPersonasSchedules] = useState<IdolSchedule[][]>([SH_LIST]);
   const [personasFanLetters, setPersonasFanLetters] = useState<any[][]>([[]]);
+  const [personasTiktokVideos, setPersonasTiktokVideos] = useState<any[][]>([[]]);
+  const [personasXiaohongshuPosts, setPersonasXiaohongshuPosts] = useState<any[][]>([[]]);
 
   // Derived current active single states matching legacy naming conventions
   const persona = personas[activePersonaIdx] || personas[0] || DEFAULT_PERSONA;
@@ -151,6 +153,8 @@ export default function App() {
   const bubbleMessages = personasBubbleMessages[activePersonaIdx] || personasBubbleMessages[0] || INITIAL_BUBBLE_MESSAGES;
   const schedules = personasSchedules[activePersonaIdx] || personasSchedules[0] || SH_LIST;
   const fanLetters = personasFanLetters[activePersonaIdx] || personasFanLetters[0] || [];
+  const tiktokVideos = personasTiktokVideos[activePersonaIdx] || personasTiktokVideos[0] || [];
+  const xiaohongshuPosts = personasXiaohongshuPosts[activePersonaIdx] || personasXiaohongshuPosts[0] || [];
 
   // State synchronization setters that transparently update the correct active index
   const setPersona = (val: IdolPersona | ((p: IdolPersona) => IdolPersona)) => {
@@ -246,6 +250,32 @@ export default function App() {
 
   const setFanLetters = (val: any[] | ((p: any[]) => any[])) => {
     setPersonasFanLetters(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || []);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setTiktokVideos = (val: any[] | ((p: any[]) => any[])) => {
+    setPersonasTiktokVideos(prev => {
+      const arr = [...prev];
+      const idx = activePersonaIdx;
+      if (typeof val === "function") {
+        arr[idx] = val(arr[idx] || []);
+      } else {
+        arr[idx] = val;
+      }
+      return arr;
+    });
+  };
+
+  const setXiaohongshuPosts = (val: any[] | ((p: any[]) => any[])) => {
+    setPersonasXiaohongshuPosts(prev => {
       const arr = [...prev];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
@@ -513,13 +543,12 @@ export default function App() {
           .text-5xl { font-size: calc(3rem + ${offset}px) !important; }
         `;
 
-        // Map all common arbitrary pixel text sizes used in the app (from 7px to 80px)
-        const arbitrarySizes = [7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 24, 28, 32, 36, 40, 48, 64, 80];
-        arbitrarySizes.forEach((size) => {
+        // Map all standard and arbitrary pixel font sizes from 6px to 100px comprehensively
+        for (let size = 6; size <= 100; size++) {
           cssRules += `
             .text-\\[${size}px\\] { font-size: calc(${size}px + ${offset}px) !important; }
           `;
-        });
+        }
 
         styleEl.innerHTML = cssRules;
       }
@@ -542,6 +571,30 @@ export default function App() {
     if (!isTraditionalChinese) return;
 
     const translateNode = (node: Node) => {
+      // Dynamic translation of placeholder attributes for inputs and textareas
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        const el = node as HTMLElement;
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") {
+          const placeholder = el.getAttribute("placeholder");
+          if (placeholder) {
+            const translated = convertToTraditional(placeholder);
+            if (translated !== placeholder) {
+              el.setAttribute("placeholder", translated);
+            }
+          }
+        }
+        el.querySelectorAll("input, textarea").forEach((inputEl) => {
+          const placeholder = inputEl.getAttribute("placeholder");
+          if (placeholder) {
+            const translated = convertToTraditional(placeholder);
+            if (translated !== placeholder) {
+              inputEl.setAttribute("placeholder", translated);
+            }
+          }
+        });
+      }
+
       const parent = node.parentElement;
       if (parent) {
         const tag = parent.tagName;
@@ -873,6 +926,8 @@ ${contact.summary || "无"}`;
           if (parsed.personasBubbleMessages) setPersonasBubbleMessages(parsed.personasBubbleMessages);
           if (parsed.personasSchedules) setPersonasSchedules(parsed.personasSchedules);
           if (parsed.personasFanLetters) setPersonasFanLetters(parsed.personasFanLetters);
+          if (parsed.personasTiktokVideos) setPersonasTiktokVideos(parsed.personasTiktokVideos);
+          if (parsed.personasXiaohongshuPosts) setPersonasXiaohongshuPosts(parsed.personasXiaohongshuPosts);
           if (parsed.customApiKey) setCustomApiKey(parsed.customApiKey);
           if (parsed.customModel) setCustomModel(parsed.customModel);
           if (parsed.customApiEndpoint) setCustomApiEndpoint(parsed.customApiEndpoint || "");
@@ -886,6 +941,8 @@ ${contact.summary || "无"}`;
           setPersonasBubbleMessages([parsed.bubbleMessages || INITIAL_BUBBLE_MESSAGES]);
           setPersonasSchedules([parsed.schedules || SH_LIST]);
           setPersonasFanLetters([parsed.fanLetters || [generateRandomFanLetter(parsed.persona, parsed.persona.dayNumber)]]);
+          setPersonasTiktokVideos([parsed.tickTokVideos || []]);
+          setPersonasXiaohongshuPosts([parsed.xiaohongshuPosts || []]);
 
           const contactList = generateSubContacts(parsed.persona, parsed.teammates || [], parsed.chatHistories || {});
           setPersonasChatContacts([contactList]);
@@ -903,23 +960,35 @@ ${contact.summary || "无"}`;
 
   // Propose a customized chat list based on generated teammates (Requirement 9, 15)
   const generateSubContacts = (p: IdolPersona, tm: SimulatedTeammate[], currHist: Record<string, ChatMessage[]> = chatHistories): ChatContact[] => {
-    const staff = generateCoreStaff(p.gender);
+    const staff = generateCoreStaff(p.gender, p);
     
     // 1. Procedural randomized openers based on personality & favorability (Requirement 13 & 15)
-    let managerMsg = p.gender === "female" ? "下午的称重评测很严酷，动作别划水！" : "今晚称重考核加练到半夜，小子，皮绷紧点！";
-    if (p.managerFavorability < 20) {
-      const msgs = [
-        "今天的卡路里超标贴图我已经截图了。现在立刻来办公室做面部消肿！",
-        "在这个圈子里，比你好看且肯吃苦的练习生有一卡车。别让我看到你昨天的划水动作再次上演！",
-        "公司花重金给你在江南清潭洞皮肤科拿了号，做完LDM童颜维稳后十分钟，立刻回公司声乐室特训！"
-      ];
-      managerMsg = msgs[Math.floor(Math.random() * msgs.length)];
-    } else if (p.managerFavorability >= 20 && p.managerFavorability < 50) {
-      const msgs = [
-        "今天的通告单已经发在工作群了。下午体脂称重前严禁喝水，脸部消肿黑咖啡自己记得喝。",
-        "昨天录音表现勉强及格，但接下来千万不能懈怠。今天的编舞考核社长代表和PD们也会空降，打起十二分精神！"
-      ];
-      managerMsg = msgs[Math.floor(Math.random() * msgs.length)];
+    let managerMsg = "";
+    const mPersonality = p.managerPersonality || "strict";
+    const mName = p.managerCustomName || (p.gender === "female" ? "严相勋" : "闵相勋");
+    
+    if (mPersonality === "strict") {
+      if (p.managerFavorability < 25) {
+        managerMsg = `我是${mName}。你昨天的卡路里摄入严重超标，现在立刻来我的办公室进行面部消肿！少跟我找借口。`;
+      } else {
+        managerMsg = `今天的通告单发工作群了，动作别划水！下午体脂称重前严禁喝水，黑咖啡自己记得喝。`;
+      }
+    } else if (mPersonality === "gentle") {
+      if (p.managerFavorability < 25) {
+        managerMsg = `最近是不是压力太大了呀？看你昨天练舞有点心不在焉，我给你泡了润喉的热红茶，休息时来喝一口吧。`;
+      } else {
+        managerMsg = `昨晚练习很累吧？我在休息室放了润喉糖和消肿冰贴，不要太勉强自己，身体才是最重要的。`;
+      }
+    } else if (mPersonality === "money_minded") {
+      if (p.managerFavorability < 25) {
+        managerMsg = `公司在这个季度投在你身上的营销费用是天文数字。如果今天的称重考核和直拍测评还是及格线，代表那边我可不好交代。`;
+      } else {
+        managerMsg = `这次的商业代言分成已经发到你的预备账上了。你红了，我对你的资源倾斜就更顺理成章，明白我的意思吧？`;
+      }
+    } else if (mPersonality === "unreliable") {
+      managerMsg = `哎呀不好了！下午测评的备用服装我好像忘在上一家美容室了... 那个，你能先穿着练习服顶一下吗？千万别告诉代表啊呜呜！`;
+    } else {
+      managerMsg = `今天也要加倍努力啊！遇到任何事情随时联系我，我会是你最坚实的后盾。`;
     }
 
     let ceoMsg = "如果下一张专辑首日销量没破五万，后续打歌资源将自动缩紧。";
@@ -1090,7 +1159,9 @@ ${contact.summary || "无"}`;
     currWeverse = weversePosts,
     currBubble = bubbleMessages,
     currSch = schedules,
-    currFanLetters = fanLetters
+    currFanLetters = fanLetters,
+    currTiktok = tiktokVideos,
+    currXiaohongshu = xiaohongshuPosts
   ) => {
     const idx = activePersonaIdx;
 
@@ -1118,6 +1189,12 @@ ${contact.summary || "无"}`;
     const updatedFanLetters = [...personasFanLetters];
     updatedFanLetters[idx] = currFanLetters;
 
+    const updatedTiktok = [...personasTiktokVideos];
+    updatedTiktok[idx] = currTiktok;
+
+    const updatedXiaohongshu = [...personasXiaohongshuPosts];
+    updatedXiaohongshu[idx] = currXiaohongshu;
+
     const data: any = {
       // Legacy compatibility single values
       persona: currPersona,
@@ -1126,8 +1203,8 @@ ${contact.summary || "无"}`;
       weversePosts: currWeverse,
       bubbleMessages: currBubble,
       schedules: currSch,
-      tickTokVideos: [],
-      xiaohongshuPosts: [],
+      tickTokVideos: currTiktok,
+      xiaohongshuPosts: currXiaohongshu,
       fanLetters: currFanLetters,
 
       // Modern multi-open parallel arrays
@@ -1140,6 +1217,8 @@ ${contact.summary || "无"}`;
       personasBubbleMessages: updatedBubble,
       personasSchedules: updatedSchedules,
       personasFanLetters: updatedFanLetters,
+      personasTiktokVideos: updatedTiktok,
+      personasXiaohongshuPosts: updatedXiaohongshu,
 
       customApiKey,
       customModel,
@@ -1158,6 +1237,8 @@ ${contact.summary || "无"}`;
     const finalBubbleMessagesList: BubbleMessage[][] = [];
     const finalSchedulesList: IdolSchedule[][] = [];
     const finalFanLettersList: any[][] = [];
+    const finalTiktokVideosList: any[][] = [];
+    const finalXiaohongshuPostsList: any[][] = [];
 
     newPersonaInput.forEach((p, idx) => {
       // 1. Teammates setup (include other player slots as close companion sisters)
@@ -1205,6 +1286,8 @@ ${contact.summary || "无"}`;
       finalBubbleMessagesList.push([...INITIAL_BUBBLE_MESSAGES]);
       finalSchedulesList.push([...SH_LIST]);
       finalFanLettersList.push(initLetters);
+      finalTiktokVideosList.push([]);
+      finalXiaohongshuPostsList.push([]);
     });
 
     setPersonas(finalPersonas);
@@ -1216,6 +1299,8 @@ ${contact.summary || "无"}`;
     setPersonasBubbleMessages(finalBubbleMessagesList);
     setPersonasSchedules(finalSchedulesList);
     setPersonasFanLetters(finalFanLettersList);
+    setPersonasTiktokVideos(finalTiktokVideosList);
+    setPersonasXiaohongshuPosts(finalXiaohongshuPostsList);
 
     setShowPostSetupDisclaimer(true);
     setDisclaimerCountdown(5);
@@ -1235,6 +1320,8 @@ ${contact.summary || "无"}`;
       personasBubbleMessages: finalBubbleMessagesList,
       personasSchedules: finalSchedulesList,
       personasFanLetters: finalFanLettersList,
+      personasTiktokVideos: finalTiktokVideosList,
+      personasXiaohongshuPosts: finalXiaohongshuPostsList,
       customApiKey,
       customModel,
       customApiEndpoint
@@ -1842,28 +1929,28 @@ ${contact.summary || "无"}`;
               <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
                 <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text flex items-center gap-2 mb-3">
                   <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
-                  🚀 重大迭代：V3.3 全新 24 天特快日历与 12 个月上下半分期 (Changelog)
+                  🚀 最新迭代：V3.9 全能自适应与高对比体验优化版 (Changelog)
                 </h2>
                 <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
-                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据玩家反馈，V3.3 震撼迭代加入以下突破内容：</p>
+                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据玩家反馈，V3.9 重磅迭代加入以下突破及修复内容：</p>
                   <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
                     <li>
-                      <strong className="text-slate-200">⚡ 24天特快合约年选择：</strong>在创角界面新增【合约年度日历周期】调节档位！支持经典的36天经典模式与全新的24天特快模式（一年由12个月构成，但每个月简化划分【上半月】与【下半月】各1天），加速资历（Ageing Factor）演化，节奏更紧密爽快！
+                      <strong className="text-slate-200">🔍 全局字号等比例自适应缩放</strong>：在「设置」中引入全新的「无级字号缩放偏移算法」！当玩家调整字号时，系统内所有标准 Tailwind 字体大小（xs 至 5xl）及各模块自定义字号（从 6px 至 100px）均将在其原有默认大小上<strong>各自等量递增/递减</strong>，完美规避排版错折叠，舒适大字不挤压！
                     </li>
                     <li>
-                      <strong className="text-slate-200">🤯 身心压力(Stress)无缝可视化：</strong>在日常行程安排看板顶部，紧邻体力条，正式加装了“身心压力值”动态双态指示，随时掌控心率与黑粉情绪红线，拒绝爆痘和解约危机。
+                      <strong className="text-slate-200">🇹🇼 全域繁体中文高保真实时转译</strong>：新增 Traditional Chinese 全场景转换支持！不仅完美汉化游戏内静态 UI，更集成了端侧实时 <code className="text-purple-300 bg-purple-950/50 px-1 rounded">MutationObserver</code> 动态监听器，对所有 AI 产生的内容、泡泡、Kakao 实时聊天及 input/textarea 输入提示 placeholder 进行 100% 繁体深度转译！
                     </li>
                     <li>
-                      <strong className="text-slate-200">💾 密钥与模型参数独立跨档记忆：</strong>Gemini 秘钥、自定义端点和微调模型参数全面从存档快照中挣脱出来，直接与浏览器后台 LocalStorage 固化联姻。多开、开新档或大退均能免去重复粘贴的极高痛苦，秒开游戏！
+                      <strong className="text-slate-200">📜 电脑端设置面板纵向滚动修复</strong>：完美解决了 PC 浏览器由于外层容器强制隐藏滚动条而导致「设置」选项卡下方隐藏功能无法触达的顽疾。现在电脑端设置栏已能完美顺滑滚动到底！
                     </li>
                     <li>
-                      <strong className="text-slate-202">💔 职业单身流与恋爱绯闻深度精制：</strong>针对纯事业、母胎单身等零感情命格路线，我们正式从随机事件库上物理剥离了“D社深夜江边曝光密会约会”等风波，保证一心事业的玩家纯真独美，直飞顶流！
+                      <strong className="text-slate-202">💬 泡泡发信气泡高对比度优化</strong>：彻底解决了泡泡聊天界面中，玩家/粉丝发出的消息气泡「字色与气泡底色雷同、内容几乎隐形」的视觉易读性 Bug，保障阅读体验字字清晰。
                     </li>
                     <li>
-                      <strong className="text-slate-200">👑 演艺资历与自适应语气：</strong>演艺生涯通过 Ageing Factor 实时折算。大模型的语气也获得千人千面分裂：新人期教导重罚、成熟期赞赏中坚、资深前辈期体面工作，更完美嵌入本地 Fallback。
+                      <strong className="text-slate-200">📱 社交媒体作品切换持久化机制</strong>：针对在小红书、TikTok 发布作品并离开选项卡后再折返导致作品突发性消失的数据丢失 Bug，加入了全生命周期的发布数据持久化策略，保障您的热点成就完好如初。
                     </li>
                     <li>
-                      <strong className="text-slate-200">🍲 深夜食堂偷吃加餐系统：</strong>新增深夜偷吃互动游戏，包含炸鸡/韩牛/拉面，并带来室友贴脸分食、闵经纪人带跟高鞋咚咚查寝等趣味随机事件连环引爆。
+                      <strong className="text-slate-200">🤝 经纪人双向动态命名纠偏</strong>：修正了当玩家性别为女性时，经纪人本应为「严室长」，但在剧情和 Kakao 回复中偶然被标注为「闵经纪人/闵室长」的身份称谓混淆 Bug，确保互动代入感完美契合。
                     </li>
                   </ul>
                 </div>
@@ -2358,7 +2445,7 @@ ${contact.summary || "无"}`;
                     <span className="text-[9px] block text-slate-400 uppercase font-mono mb-1">团队主管与成员关系度</span>
                     <div className="space-y-1 text-[10px] text-slate-300">
                       <div className="flex justify-between">
-                        <span>👔 闵室长:</span>
+                        <span>👔 {persona.gender === "female" ? "严" : "闵"}室长:</span>
                         <span className="font-bold font-mono text-purple-400">{persona.managerFavorability}/100</span>
                       </div>
                       {persona.style === "group" && (
@@ -2951,6 +3038,11 @@ ${contact.summary || "无"}`;
                       customApiKey={customApiKey}
                       customModel={customModel}
                       customApiEndpoint={customApiEndpoint}
+                      tiktokVideos={tiktokVideos}
+                      onUpdateTiktokVideos={(videos) => {
+                        setTiktokVideos(videos);
+                        triggerAutoSave(persona, teammates, chatHistories, weversePosts, bubbleMessages, schedules, fanLetters, videos, xiaohongshuPosts);
+                      }}
                       onUpdateStats={(pop, rep, nrg, stress) => {
                         const up = { ...persona, popularity: pop, reputation: rep, energy: nrg, stress };
                         setPersona(up);
@@ -2966,6 +3058,11 @@ ${contact.summary || "无"}`;
                       customApiKey={customApiKey}
                       customModel={customModel}
                       customApiEndpoint={customApiEndpoint}
+                      posts={xiaohongshuPosts}
+                      onUpdatePosts={(posts) => {
+                        setXiaohongshuPosts(posts);
+                        triggerAutoSave(persona, teammates, chatHistories, weversePosts, bubbleMessages, schedules, fanLetters, tiktokVideos, posts);
+                      }}
                       onUpdateStats={(pop, rep, nrg, stress) => {
                         const up = { ...persona, popularity: pop, reputation: rep, energy: nrg, stress };
                         setPersona(up);
@@ -2976,7 +3073,7 @@ ${contact.summary || "无"}`;
                   )}
 
                   {activeApp === "settings" && (
-                    <div id="settings-view" className="primary-app-container bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4">
+                    <div id="settings-view" className="primary-app-container scrollable-desktop bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4">
                       
                       <div>
                         <h4 className="text-sm font-bold flex items-center gap-1 text-slate-100">
@@ -4080,15 +4177,31 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (手机完美自适应、18点互动制、身心可视化)
+                  👑 企划社最新巨献公告 (全局字号自适应、繁体转译、高对比优化)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.8 | MOBILE ADAPTIVE SCROLL & GLOBAL CUSTOMIZATION EDITION
+                  SYSTEM VERSION 3.9 | GLOBAL ADDITIVE FONT SCROLL & REALTIME TRADITIONAL CHINESE
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 19: Recent Hotfixes (BRAND NEW V3.9) */}
+              <div className="bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-purple-950/20 border border-purple-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>🛠️ 19. [热点修复] V3.9 热点问题修复与全设备体感增筑</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应主理人们反馈，我们连夜攻坚完成了以下数个核心系统体验修复与底层优化：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>📜 <strong className="text-purple-200">PC端设置面板纵向滚动</strong>：修复了在电脑宽屏下，设置面板被外层容器限制而无法滚动的Bug，现在隐藏功能和长文导入一拉到底！</p>
+                  <p>💬 <strong className="text-indigo-200">泡泡发信气泡高对比度</strong>：玩家发信消息气泡完美重塑！调整前景和背景色彩对比，绝无白字隐形，确保泡泡对话清晰易读。</p>
+                  <p>📱 <strong className="text-pink-300">社媒作品切换持久化</strong>：重构了小红书和TikTok作品管理器。离开当前App再切回时，已发布作品将100%永久保留，永不消失！</p>
+                  <p>🤝 <strong className="text-cyan-300">经纪人身份命名智能纠偏</strong>：完善了性别称谓逻辑。当玩家性别为女（经纪人为「严室长」）时，彻底消除偶尔将消息标签误判为「闵经纪人」的幽灵时序Bug。</p>
+                </div>
+              </div>
 
               {/* Feature 18: Global Font Size Adjustment & Traditional Chinese All-Field Toggle (BRAND NEW V3.8) */}
               <div className="bg-gradient-to-r from-amber-600/20 via-orange-600/20 to-yellow-600/10 border border-amber-500/35 p-3.5 rounded-xl space-y-2 font-sans">

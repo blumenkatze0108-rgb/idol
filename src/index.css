@@ -110,4 +110,7 @@
     height: 100% !important;
     overflow: hidden !important;
   }
+  .scrollable-desktop {
+    overflow-y: auto !important;
+  }
 }
