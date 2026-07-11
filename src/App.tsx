@@ -3758,15 +3758,31 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (手机完美自适应、18点互动制、身心可视化)
+                  👑 企划社最新巨献公告 (粉丝倾向梦系、经纪人专属定制、深夜恋爱互动)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.8 | MOBILE ADAPTIVE SCROLL & GLOBAL CUSTOMIZATION EDITION
+                  SYSTEM VERSION 4.0 | FANDOM DEMOGRAPHICS & MANAGER PERSONALITY CUSTOMIZATION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 20: Fandom & Manager Customization (BRAND NEW V4.0) */}
+              <div className="bg-gradient-to-r from-pink-900/40 via-purple-900/30 to-indigo-950/20 border border-pink-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
+                  <span>✨ 20. [全能定制] 粉丝属性梦男/梦女偏向设定、经纪人专属MBTI人设与深夜秘密电话</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为提供更完美的沉浸式爱豆追梦之旅，我们在创角 setup 阶段重磅呈献粉丝与经纪人全方位定制底座：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🔮 <strong className="text-pink-200">梦男梦女比例自由定制</strong>：在建档时可自由设定你狂热梦系受众倾向（混合、梦女女粉为主、梦男男粉为主）。这将直接重构 W-Live 直播弹幕、Weverse 评论和手写信，定制专属浪漫及称呼！</p>
+                  <p>🤝 <strong className="text-amber-200">专属经纪人人设 (ESTJ/ISFJ/ENTJ/ENFP)</strong>：可自由定制随行经纪人的姓名、职称与 MBTI 性格侧写，不仅会在每日日程结算清晨点评中展示，还会重塑 KakaoTalk 的发信语气与态度！</p>
+                  <p>📞 <strong className="text-cyan-200">深夜煲电话粥与专属 Lovestagram</strong>：在 KakaoTalk 恋人互动中新增「深夜煲电话粥」与「私密 Bubble 空间」，不惊动狗仔的前提下，大幅拉近彼此的秘密地下恋心境！</p>
+                  <p>🚨 <strong className="text-red-300">突发骚扰降噪冷却</strong>：大大降低了私生粉和毒站姐的突发频率（降至15%），并增加 <strong>5天严格冷却期</strong>，防堵骚扰过频，保卫主理人健康！</p>
+                </div>
+              </div>
 
               {/* Feature 18: Global Font Size Adjustment & Traditional Chinese All-Field Toggle (BRAND NEW V3.8) */}
               <div className="bg-gradient-to-r from-amber-600/20 via-orange-600/20 to-yellow-600/10 border border-amber-500/35 p-3.5 rounded-xl space-y-2 font-sans">
@@ -4177,15 +4193,31 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (全局字号自适应、繁体转译、高对比优化)
+                  👑 企划社最新巨献公告 (粉丝倾向梦系、经纪人专属定制、深夜恋爱互动)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 3.9 | GLOBAL ADDITIVE FONT SCROLL & REALTIME TRADITIONAL CHINESE
+                  SYSTEM VERSION 4.0 | FANDOM DEMOGRAPHICS & MANAGER PERSONALITY CUSTOMIZATION
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 20: Fandom & Manager Customization (BRAND NEW V4.0) */}
+              <div className="bg-gradient-to-r from-pink-900/40 via-purple-900/30 to-indigo-950/20 border border-pink-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
+                  <span>✨ 20. [全能定制] 粉丝属性梦男/梦女偏向设定、经纪人专属MBTI人设与深夜秘密电话</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  为提供更完美的沉浸式爱豆追梦之旅，我们在创角 setup 阶段重磅呈献粉丝与经纪人全方位定制底座：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🔮 <strong className="text-pink-200">梦男梦女比例自由定制</strong>：在建档时可自由设定你狂热梦系受众倾向（混合、梦女女粉为主、梦男男粉为主）。这将直接重构 W-Live 直播弹幕、Weverse 评论和手写信，定制专属浪漫及称呼！</p>
+                  <p>🤝 <strong className="text-amber-200">专属经纪人人设 (ESTJ/ISFJ/ENTJ/ENFP)</strong>：可自由定制随行经纪人的姓名、职称与 MBTI 性格侧写，不仅会在每日日程结算清晨点评中展示，还会重塑 KakaoTalk 的发信语气与态度！</p>
+                  <p>📞 <strong className="text-cyan-200">深夜煲电话粥与专属 Lovestagram</strong>：在 KakaoTalk 恋人互动中新增「深夜煲电话粥」与「私密 Bubble 空间」，不惊动狗仔的前提下，大幅拉近彼此的秘密地下恋心境！</p>
+                  <p>🚨 <strong className="text-red-300">突发骚扰降噪冷却</strong>：大大降低了私生粉和毒站姐的突发频率（降至15%），并增加 <strong>5天严格冷却期</strong>，防堵骚扰过频，保卫主理人健康！</p>
+                </div>
+              </div>
 
               {/* Feature 19: Recent Hotfixes (BRAND NEW V3.9) */}
               <div className="bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-purple-950/20 border border-purple-500/35 p-3.5 rounded-xl space-y-2 font-sans">
