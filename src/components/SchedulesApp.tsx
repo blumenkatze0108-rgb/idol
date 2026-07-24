@@ -380,7 +380,7 @@ export default function SchedulesApp({
 主角设定：
 - 专属名字/艺名：${persona.name} / ${persona.stageName}
 - 初始成长模式：${persona.startType === "trainee" ? "处于三大厂高压下的练习期债务生" : "刚发布专辑的正式打歌主唱爱豆"}
-- 组合模式：${persona.groupName} (${persona.style})
+- 企划模式：${persona.style === "solo" ? "【个人Solo独立歌手】（极其重要：全过程无任何队友，绝不得产生队友相关叙事或私聊！）" : `${persona.groupName} (${persona.style})`}
 - 当前体能指标（已安享一夜睡眠恢复后的明日真实体力）：体力值: ${pUpdateObj.energy}/100（提示：主角已经通过第二天的恢复机制得到了充足的精力充盈，不要再一味责备TA感到过度劳累 and 很虚弱了！）, 精神压力值: ${pUpdateObj.stress}/100, 身高: ${pUpdateObj.height}cm, 体重: ${pUpdateObj.weight.toFixed(1)}kg, 人体身体BMI值: ${calcBmi}, 胖瘦评估状态: ${bmiEvaluation}, 皮肤状况: ${pUpdateObj.skinCondition}.
 - 粉丝圈人气：${pUpdateObj.fansCount} 位死忠, 美誉等级: ${pUpdateObj.reputation}/100.
 - 职业资历与衰老成熟指数：ageing_factor: ${pUpdateObj.ageing_factor || 0}（说明：每 ${pUpdateObj.cycleDays || 36} 天为一个合约年。0 = 青涩活泼的新手练习生期；1 = 沉淀磨砺出的成熟过渡阶段；2 = 资深、练达、自持的K-Pop大前辈阶段；3+ = 殿堂级成熟前辈顶峰阶段，能自如控制情绪并宠辱不惊）。
@@ -393,11 +393,11 @@ export default function SchedulesApp({
 请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】（请围绕上述具体BMI身材类型，让粉丝或黑粉在评论中激烈辩驳起来，使黑粉、唯粉和各路路人粉的激辩极其饱满、尖锐、贴合Kpop现实！）。并全新计算【明日全新的三个量身定制行程】。
 还要为高冷、好感度仅有 ${pUpdateObj.managerFavorability}/100 的${mLabel}经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
 
-此外，请生成一条清晨时分除${mLabel}经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'、或任一练习生队内队友例如组合主舞/主唱等）主动找主角发来的私聊消息（几率：75%）。
+此外，请生成一条清晨时分除${mLabel}经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'${persona.style === "solo" ? "" : "、或任一练习生队内队友例如组合主舞/主唱等"}）主动找主角发来的私聊消息（几率：75%）。
 
 请严格仅返回以下标准合法的纯 JSON 格式数据（注意：不要将其包裹在 markdown 代码块中，仅返回纯JSON）：
 {
-  "narrative": "中文。昨晚到今天清晨的粉丝评论/爆料，以及主角的各项健康指数、皮肤细节变迁反馈，限120~180字。",
+  "narrative": "中文。昨晚到今天清晨的粉丝评论/爆料，以及主角的各项健康指数、皮肤细节变迁反馈，限120~180字。${persona.style === "solo" ? "【严格限制：Solo独立歌手，绝不可出现队友/宿舍同居！】" : ""}",
   "managerMessage": "根据 ageing_factor 特点撰写。${mLabel}经理人发来的实时KakaoTalk未读信息文本。性格要求对新人和外籍略带刻薄（在 ageing_factor = 0 时尤甚），若 ageing_factor 较高、昨日努力或好感度高则转为更专业稳健的工作探讨语调。",
   "schedules": [
     {
@@ -428,11 +428,11 @@ export default function SchedulesApp({
       "energyCost": 20
     }
   ],
-  "weversePostContent": "一条今天最新的Weverse内热门贴，内容是围绕主角昨天曝光的热搜表现或皮肤、实力展开的粉丝圈激辩。",
+  "weversePostContent": "一条今天最新的Weverse内热门贴，内容是围绕主角昨天曝光的热搜表现或皮肤、实力展开的粉丝圈激辩。${persona.style === "solo" ? "【严格限制：Solo歌手，只讨论个人】" : ""}",
   "proactiveMessage": {
-    "senderId": "选填，可以是 'ceo', 'rival'，或者组合队内队友的名字，若概率不触发则设为 null。若是队内队友，设为组合内任一个人的ID或英文拼写",
+    "senderId": "选填，可以是 'ceo', 'rival'${persona.style === "solo" ? "（注意：Solo歌手，严禁选队友）" : "，或者组合队内队友的名字"}，若概率不触发则设为 null。${persona.style === "solo" ? "绝不可设为队友ID" : "若是队内队友，设为组合内任一个人的ID或英文拼写"}",
     "senderName": "具体显示的名字（例如 '社长李代表', '大势爱豆敏太' 等）",
-    "text": "根据 ageing_factor 调优口吻。主动给主角发来的私聊未读消息（限80字以内，符合人设性格MBTI，如果是ceo好感低则敲打，队友则关心或者吐槽，rival则假意祝福或者竞争约话）"
+    "text": "根据 ageing_factor 调优口吻。主动给主角发来的私聊未读消息（限80字以内，符合人设性格MBTI，如果是ceo好感低则敲打，${persona.style === "solo" ? "rival则假意祝福或者竞争约话" : "队友则关心或者吐槽，rival则假意祝福或者竞争约话"}）"
   }
 }`;
 

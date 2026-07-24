@@ -399,7 +399,10 @@ export default function KakaoTalkApp({
 
       customSystemPrompt += historyContext;
 
-      if (personas && personas.length > 1) {
+      if (persona.style === "solo") {
+        customSystemPrompt += `\n\n【极其重要 Solo 模式限制】
+当前玩家爱豆为【个人Solo独立歌手】，全过程绝无任何组合队友！绝对禁止提及任何队友、团员、宿舍同居或团队争执！所有话题均围绕爱豆个人Solo事业、个人通告与发展！`;
+      } else if (personas && personas.length > 1) {
         const groupDesc = personas.map((p, pIdx) => {
           return `- 成员 ${pIdx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}, MBTI: ${p.mbti}, 国籍: ${p.nationality}`;
         }).join("\n");

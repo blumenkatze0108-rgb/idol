@@ -70,36 +70,63 @@ export default function TikTokApp({
   // Dynamically initialize of feed videos to maintain consistency
   useEffect(() => {
     if (tiktokVideos.length === 0) {
-      const firstMate = teammates && teammates.length > 0 ? teammates[0] : null;
-      const mateName = firstMate ? firstMate.name : "智雅";
-      const mateCollab = firstMate ? firstMate.id : "JI_AH";
-      
-      onUpdateTiktokVideos([
-        {
-          id: "v_1",
-          title: `【宿舍日常】卸了妆跟${mateName}在宿舍跳 1.5倍速新歌副歌，跳完直接累倒在地瘫成咸鱼...`,
-          danceChoice: "主打歌快速版 1.5x Dance Challenge",
-          collabWith: mateCollab,
-          views: 1250000,
-          likes: 98000,
-          shares: 14200,
-          viralIndex: 85,
-          time: "2天前"
-        },
-        {
-          id: "v_2",
-          title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
-          danceChoice: "Wink变装主旋律挑战",
-          collabWith: "solo",
-          views: 3400000,
-          likes: 410000,
-          shares: 31000,
-          viralIndex: 94,
-          time: "4天前"
-        }
-      ]);
+      if (persona.style === "solo") {
+        onUpdateTiktokVideos([
+          {
+            id: "v_1",
+            title: `【个人练习】卸了妆在练习室跳 1.5倍速新歌副歌，跳完直接累倒在地...`,
+            danceChoice: "主打歌快速版 1.5x Dance Challenge",
+            collabWith: "solo",
+            views: 1250000,
+            likes: 98000,
+            shares: 14200,
+            viralIndex: 85,
+            time: "2天前"
+          },
+          {
+            id: "v_2",
+            title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
+            danceChoice: "Wink变装主旋律挑战",
+            collabWith: "solo",
+            views: 3400000,
+            likes: 410000,
+            shares: 31000,
+            viralIndex: 94,
+            time: "4天前"
+          }
+        ]);
+      } else {
+        const firstMate = teammates && teammates.length > 0 ? teammates[0] : null;
+        const mateName = firstMate ? firstMate.name : "智雅";
+        const mateCollab = firstMate ? firstMate.id : "JI_AH";
+        
+        onUpdateTiktokVideos([
+          {
+            id: "v_1",
+            title: `【宿舍日常】卸了妆跟${mateName}在宿舍跳 1.5倍速新歌副歌，跳完直接累倒在地瘫成咸鱼...`,
+            danceChoice: "主打歌快速版 1.5x Dance Challenge",
+            collabWith: mateCollab,
+            views: 1250000,
+            likes: 98000,
+            shares: 14200,
+            viralIndex: 85,
+            time: "2天前"
+          },
+          {
+            id: "v_2",
+            title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
+            danceChoice: "Wink变装主旋律挑战",
+            collabWith: "solo",
+            views: 3400000,
+            likes: 410000,
+            shares: 31000,
+            viralIndex: 94,
+            time: "4天前"
+          }
+        ]);
+      }
     }
-  }, [teammates, tiktokVideos.length]);
+  }, [teammates, tiktokVideos.length, persona.style]);
 
   const handleShootChallenge = async () => {
     setIsShooting(true);
@@ -130,7 +157,9 @@ export default function TikTokApp({
       Challenge Choice: "${danceChoice}"
       Collaboration: "${partnerName}"`;
       
-      if (personas && personas.length > 1) {
+      if (persona.style === "solo") {
+        sysPrompt += `\n【极其重要 Solo 模式限制】玩家当前为 Solo 个人歌手，全过程绝对没有任何组合队友！文案描述、表情与标签绝对禁止提到队友、团队或队友合照，完全围绕爱豆个人的 Solo 舞台与个人日常！`;
+      } else if (personas && personas.length > 1) {
         const grpMembers = personas.map(p => `${p.name} (艺名: ${p.stageName}, 担当: ${p.roleInGroup})`).join(", ");
         sysPrompt += `\n极其重要限制：该组合目前属于高保真多角色主掌模式，全明星团队名为 "${persona.groupName}"，成员阵容仅限以下这几位：[${grpMembers}]。绝对禁止在TikTok描述、文案或标签里捏造、幻想、提到任何其他未包含的用户设计组合队友。文案应该多以全团角度出发！`;
       }
@@ -303,20 +332,22 @@ export default function TikTokApp({
                   className="w-full bg-slate-900/90 border border-white/10 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-red-500 text-white font-medium"
                 >
                   <option value="solo">🧍 Solo 独树一帜单跳</option>
-                  {personas && personas.length > 1 ? (
-                    personas
-                      .filter((p) => p.name !== persona.name)
-                      .map((p) => (
-                        <option key={p.name} value={p.name}>
-                          👯‍♂️ 共同录制: {p.name} (艺名:{p.stageName || p.name}) — {p.roleInGroup || "队友"}
+                  {persona.style !== "solo" && (
+                    personas && personas.length > 1 ? (
+                      personas
+                        .filter((p) => p.name !== persona.name)
+                        .map((p) => (
+                          <option key={p.name} value={p.name}>
+                            👯‍♂️ 共同录制: {p.name} (艺名:{p.stageName || p.name}) — {p.roleInGroup || "队友"}
+                          </option>
+                        ))
+                    ) : (
+                      teammates.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          👯‍♂️ 共同录制: {t.name} (好感:{t.favorability}/100) — {t.trait.substring(0, 15)}...
                         </option>
                       ))
-                  ) : (
-                    teammates.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        👯‍♂️ 共同录制: {t.name} (好感:{t.favorability}/100) — {t.trait.substring(0, 15)}...
-                      </option>
-                    ))
+                    )
                   )}
                 </select>
               </div>

@@ -56,9 +56,10 @@ export default function BubbleApp({
 
     // 2. Generate randomized response from fans or teammate gossip (Requirement 14)
     try {
-      let randMate = teammates && teammates.length > 0 ? teammates[0] : null;
-      if (teammates && teammates.length > 0) {
-        const found = teammates.find(mate => 
+      const activeTeammates = persona.style === "group" ? (teammates || []) : [];
+      let randMate = activeTeammates.length > 0 ? activeTeammates[0] : null;
+      if (activeTeammates.length > 0) {
+        const found = activeTeammates.find(mate => 
           userText.includes(mate.name) || 
           (mate.stageName && userText.includes(mate.stageName))
         );
@@ -67,11 +68,11 @@ export default function BubbleApp({
         }
       }
 
-      const isTeammateQuestion = userText.includes("队友") || 
+      const isTeammateQuestion = persona.style === "group" && (userText.includes("队友") || 
         userText.includes("不和") || 
         userText.includes("吵架") || 
         userText.includes("私下") || 
-        (teammates && teammates.some(t => userText.includes(t.name) || (t.stageName && userText.includes(t.stageName))) || userText.includes("智雅"));
+        (activeTeammates.some(t => userText.includes(t.name) || (t.stageName && userText.includes(t.stageName)))));
       
       let promptQuery = `The Kpop Idol "${persona.name}" (Gender: ${persona.gender === "female" ? "female/女性/女爱豆" : "male/男性/男爱豆"}) sent this Bubble to fans: "${userText}". Describe fan feedback or a teammate chime-in. Keep it short. Player Gender is "${persona.gender}".`;
       let systemPrompt = `You are a group of highly passionate subscribers commenting inside a private idol bubble platform. Player Gender: "${persona.gender}". Since the player is ${persona.gender === 'female' ? 'female' : 'male'}, supportive comments and addressing terms inside fan replies MUST use female honorifics like "欧尼/姐姐/她" if referring to a female, or male ones like "欧巴/哥哥/他/哥" if referring to a male. NEVER cross-gender address. Output a couple of fan comments in Chinese starting with fan names, like '智允的小雏菊: ...' or 'MelonMelon: ...'.`;

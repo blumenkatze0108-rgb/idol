@@ -165,8 +165,11 @@ const PRESET_FAN_LETTERS = [
 // Helper to generate a procedural randomized fan mail
 export function generateRandomFanLetter(persona: IdolPersona, dayNum = 1): FanLetter {
   const isTrainee = persona.startType === "trainee";
-  const numMatches = PRESET_FAN_LETTERS.length;
-  const picked = PRESET_FAN_LETTERS[Math.floor(Math.random() * numMatches)];
+  const pool = persona.style === "solo" 
+    ? PRESET_FAN_LETTERS.filter(l => l.fanType !== "OT_fan") 
+    : PRESET_FAN_LETTERS;
+  const numMatches = pool.length;
+  const picked = pool[Math.floor(Math.random() * numMatches)];
   
   // Custom adjustments based on persona name
   let processedContent = picked.content
@@ -291,7 +294,7 @@ export default function FanMailApp({
 
 请根据以上的当前真实属性：
 1. 撰写一封符合高逼真、带有浓重韩圈熟词腔调（例如：上班路、直拍、主打、切瓜、消音舞台、C位、站姐、毒唯、小卡、私生、打歌一套服、美容室、宿舍）的手写信。
-极其重要：如果来信涉及到日常团队或多名成员，必须绝对局限、提及、并尊重以上用户自创设计的真实组合成员姓名：[${personas && personas.length > 1 ? personas.map(p => p.stageName).join(", ") : (teammates.length > 0 ? teammates.map(t => t.name).join(", ") : "无")}]！绝对禁止捏造、脑补或另外发明任何此列表中未列出的其他组合队友姓名。
+极其重要：${persona.style === "solo" ? "该爱豆为【个人Solo独立歌手】，全过程无任何组合队友！绝对禁止提及或发想任何队友、团队撕逼或成员互动！" : `如果来信涉及到日常团队或多名成员，必须绝对局限、提及、并尊重以上用户自创设计的真实组合成员姓名：[${personas && personas.length > 1 ? personas.map(p => p.stageName).join(", ") : (teammates.length > 0 ? teammates.map(t => t.name).join(", ") : "无")}]！绝对禁止捏造、脑补或另外发明任何此列表中未列出的其他组合队友姓名。`}
 2. 粉丝类型可以随机：可以是极端的战斗小唯粉、护犊子的大站姐、喜欢暗戳戳磕你和队友CP的Shipper粉、或者在异乡打拼的留学生心疼关照你的怒那粉，也可以是毒舌但默默关注你的直男吐槽粉。
 3. 如果主角有地下恋爱关系且绯闻传出（status: revealed），请写一封伤心脱粉求证的或者是永远相信你可以守护你的坚强信。
 4. 严格只返回以下标准的合法纯 JSON 代码包（不要附加 markdown 代码块前缀）：

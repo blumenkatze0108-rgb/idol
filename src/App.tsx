@@ -1050,53 +1050,55 @@ ${contact.summary || "无"}`;
       }
     ];
 
-    // Include generated group members chatter
-    tm.forEach((mate, mateIdx) => {
-      const greeting = p.gender === "female" ? "欧尼" : "哥";
-      const isExtrovert = mate.mbti && mate.mbti.startsWith("E");
-      let mateMsg = `${greeting}！今晚称重评测放水求同盟呗！`;
-      
-      if (isExtrovert) {
-        const msgs = [
-          `${greeting}！刚才舞蹈集训完，我偷偷买了两杯清潭洞清晨限定冰美式，在新宿舍门口呢，等会儿匀你一杯！别让闵室长发现喔！☕️🤫`,
-          `嘿嘿！听说昨晚代表在代表室夸起你的声乐咬字了，看来下张专辑你的 killing part 要拿满了！下午美容室等我，一起点鸡胸肉沙拉！🥑`,
-          `${greeting}！刚才看到有人在Weverse给你专门写小长文安利了，超级治愈！今天也要元气满满地把练习室炸掉，Fighting！💃`,
-          `哈哈，昨天录音PD甚至夸我唱歌有进步咧！今晚一起在宿舍吃无盐轻食拌沙拉吧，我学了新的拌酱！🥣`,
-          `${greeting}听说明天电视台预录的时间提早了，我们千万别迟到，今晚记得调五个闹钟！⏰`,
-          `${greeting}！今晚我打算去排练室拍个翻跳短视频，你愿意当我的特约摄影师嘛？拍完请你喝零糖冰美式！🍦`
-        ];
-        // Select message by index to prevent identical greetings for different members
-        mateMsg = msgs[mateIdx % msgs.length];
-      } else {
-        const msgs = [
-          `${greeting}... 那个，这次主打歌中段的走位，我有一小段总是慢半拍，晚上练习完可以单独加练，能不能麻烦你提点一下我... 🥺`,
-          `在客厅桌上留了消肿大麦茶和维他命，出门练习前记得带上。今天称重考核，我们一定能全员通过的，加油。`,
-          `刚刚听说隔壁公司的竞品要推迟回归期了，我们的打歌夺冠机会突然变大了，哈哈。希望新主打能早点空降一位...`,
-          `宿舍的冰箱里我放了半个西柚，上面贴了你的名字，练习累了记得回去吃掉哦，可以迅速补充水分。🍊`,
-          `${greeting}，昨天看你有些疲惫，要注意休息。桌上放了蒸汽眼罩，睡前敷一个会舒服很多。🌙`,
-          `关于下次主打曲的副歌和声部分，我觉得我们的声音叠在一起效果特别温润，有空我们在琴房合一下音怎么样？🎹`
-        ];
-        // Select message by index to prevent identical greetings for different members
-        mateMsg = msgs[mateIdx % msgs.length];
-      }
+    // Include generated group members chatter only for group style
+    if (p.style === "group") {
+      tm.forEach((mate, mateIdx) => {
+        const greeting = p.gender === "female" ? "欧尼" : "哥";
+        const isExtrovert = mate.mbti && mate.mbti.startsWith("E");
+        let mateMsg = `${greeting}！今晚称重评测放水求同盟呗！`;
+        
+        if (isExtrovert) {
+          const msgs = [
+            `${greeting}！刚才舞蹈集训完，我偷偷买了两杯清潭洞清晨限定冰美式，在新宿舍门口呢，等会儿匀你一杯！别让闵室长发现喔！☕️🤫`,
+            `嘿嘿！听说昨晚代表在代表室夸起你的声乐咬字了，看来下张专辑你的 killing part 要拿满了！下午美容室等我，一起点鸡胸肉沙拉！🥑`,
+            `${greeting}！刚才看到有人在Weverse给你专门写小长文安利了，超级治愈！今天也要元气满满地把练习室炸掉，Fighting！💃`,
+            `哈哈，昨天录音PD甚至夸我唱歌有进步咧！今晚一起在宿舍吃无盐轻食拌沙拉吧，我学了新的拌酱！🥣`,
+            `${greeting}听说明天电视台预录的时间提早了，我们千万别迟到，今晚记得调五个闹钟！⏰`,
+            `${greeting}！今晚我打算去排练室拍个翻跳短视频，你愿意当我的特约摄影师嘛？拍完请你喝零糖冰美式！🍦`
+          ];
+          // Select message by index to prevent identical greetings for different members
+          mateMsg = msgs[mateIdx % msgs.length];
+        } else {
+          const msgs = [
+            `${greeting}... 那个，这次主打歌中段的走位，我有一小段总是慢半拍，晚上练习完可以单独加练，能不能麻烦你提点一下我... 🥺`,
+            `在客厅桌上留了消肿大麦茶和维他命，出门练习前记得带上。今天称重考核，我们一定能全员通过的，加油。`,
+            `刚刚听说隔壁公司的竞品要推迟回归期了，我们的打歌夺冠机会突然变大了，哈哈。希望新主打能早点空降一位...`,
+            `宿舍的冰箱里我放了半个西柚，上面贴了你的名字，练习累了记得回去吃掉哦，可以迅速补充水分。🍊`,
+            `${greeting}，昨天看你有些疲惫，要注意休息。桌上放了蒸汽眼罩，睡前敷一个会舒服很多。🌙`,
+            `关于下次主打曲的副歌和声部分，我觉得我们的声音叠在一起效果特别温润，有空我们在琴房合一下音怎么样？🎹`
+          ];
+          // Select message by index to prevent identical greetings for different members
+          mateMsg = msgs[mateIdx % msgs.length];
+        }
 
-      let displayRole = mate.role ? mate.role.split(" ")[0] : "";
-      if (displayRole && !displayRole.startsWith("队内")) {
-        displayRole = `队内${displayRole}`;
-      }
+        let displayRole = mate.role ? mate.role.split(" ")[0] : "";
+        if (displayRole && !displayRole.startsWith("队内")) {
+          displayRole = `队内${displayRole}`;
+        }
 
-      contactList.push({
-        id: mate.id,
-        name: `${mate.name} (${displayRole})`,
-        avatar: mate.avatar,
-        role: "member",
-        mbti: mate.mbti,
-        lastMessage: mateMsg,
-        unread: true,
-        time: "刚刚",
-        favorability: mate.favorability
+        contactList.push({
+          id: mate.id,
+          name: `${mate.name} (${displayRole})`,
+          avatar: mate.avatar,
+          role: "member",
+          mbti: mate.mbti,
+          lastMessage: mateMsg,
+          unread: true,
+          time: "刚刚",
+          favorability: mate.favorability
+        });
       });
-    });
+    }
 
     // Include underground/secret romance lover contact if configured (Requirement 13)
     if (p.hasLover && p.loverName) {
@@ -1433,7 +1435,7 @@ ${contact.summary || "无"}`;
     setAiEndingMessage("");
     
     const partnerStr = persona.hasLover ? `地下眷侣 ${persona.loverName} (关系: ${persona.relationshipStatus === "dating" ? "执手相伴中" : "遗憾分手"})` : "单身无偶";
-    const teammatesStr = persona.style === "group" ? `与队友合力奋斗，队内人缘好感 ${persona.teammatesFavorability}` : "个人Solo路线";
+    const teammatesStr = persona.style === "group" ? `与队友合力奋斗，队内人缘好感 ${persona.teammatesFavorability}` : "个人Solo独立路线（全程无队友）";
     const skillsStr = `声乐 ${persona.vocalSkill}, 舞蹈 ${persona.danceSkill}, 说唱 ${persona.rapSkill}, 综艺 ${persona.varietySkill}`;
     const debtStr = activeEnding.debt > 0 ? `仍欠债务 ₩ ${activeEnding.debt} 万` : "无任何债务，完全财务自由";
 
@@ -1445,14 +1447,14 @@ ${contact.summary || "无"}`;
 - 最终所得现金及利润分红: ₩ ${activeEnding.money} 万
 - 最终账务核算: ${debtStr}
 - 当期伴侣状况: ${partnerStr}
-- 队友情况: ${teammatesStr}
+- 企划路线与队友情况: ${teammatesStr}
 - 最终声乐/舞蹈/说唱/综艺均值: ${skillsStr}
 - 主管闵室长最终态度: 好感 ${persona.managerFavorability}
 
 写作要求：
 1. 语言极其动人温柔，既有聚光灯下汗水与舞台呼吸的真实感，又有尘埃落定后对岁月的温柔释怀。
 2. 提及宿命年龄的递增（如从新秀阶段走向 ${activeEnding.age} 岁退役的实际感悟）。
-3. 融入具体的队友、闵主管或眷侣的动态反馈。
+3. ${persona.style === "solo" ? "艺人为【个人Solo独立歌手】，全程无任何组合队友，绝对禁止提及任何队友或团队互动，突出个人独立舞台与独闯演艺圈的坚韧与辉煌！" : "融入具体的队友、闵主管或眷侣的动态反馈。"}
 4. 绝对不要出现任何 AI 模版僵硬的废话或套话。直接输出信件正文。`;
 
     try {
@@ -1576,8 +1578,8 @@ ${contact.summary || "无"}`;
 
   // Checks if the event can apply to the current character style
   const pSpecialValidate = (evt: any): boolean => {
-    if (evt.id === "e_m1" && persona.style !== "group") {
-      return false; // MAMA double center only applies for group stans
+    if ((evt.id === "e_m1" || evt.id === "e_cp1" || evt.id === "e_c1" || evt.id === "e_s1") && persona.style !== "group") {
+      return false; // Group center/CP/teammate events only apply for group style
     }
     if (evt.id === "e_g1" && persona.nationality === "korean") {
       return false; // Green card bias only applies for green card stans
@@ -1927,30 +1929,24 @@ ${contact.summary || "无"}`;
 
               {/* Box 5: 本次版本更新内容 */}
               <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
-                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text flex items-center gap-2 mb-3">
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text flex items-center gap-2 mb-3">
                   <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
-                  🚀 最新迭代：V3.9 全能自适应与高对比体验优化版 (Changelog)
+                  🚀 最新迭代：V4.5 个人 Solo 独立歌手模式 & 纯享个人饭圈重构版 (Changelog)
                 </h2>
                 <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
-                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据玩家反馈，V3.9 重磅迭代加入以下突破及修复内容：</p>
+                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据主理人反馈，V4.5 重磅迭代加入以下突破及修复内容：</p>
                   <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
                     <li>
-                      <strong className="text-slate-200">🔍 全局字号等比例自适应缩放</strong>：在「设置」中引入全新的「无级字号缩放偏移算法」！当玩家调整字号时，系统内所有标准 Tailwind 字体大小（xs 至 5xl）及各模块自定义字号（从 6px 至 100px）均将在其原有默认大小上<strong>各自等量递增/递减</strong>，完美规避排版错折叠，舒适大字不挤压！
+                      <strong className="text-slate-200">🎤 个人 Solo 独立歌手模式 100% 纯享重构</strong>：彻底解绑 Solo 模式与组合/队友逻辑！在选择【个人 Solo 独立歌手】时，系统全域（包含 KakaoTalk、Weverse 官咖、W-Live 直播弹幕、TikTok 变装/舞蹈挑战、小红书私服笔记、粉丝来信等）将 100% 聚焦爱豆个人的舞台与生活，绝对不会虚构或误提及任何组合队友或团内争议！
                     </li>
                     <li>
-                      <strong className="text-slate-200">🇹🇼 全域繁体中文高保真实时转译</strong>：新增 Traditional Chinese 全场景转换支持！不仅完美汉化游戏内静态 UI，更集成了端侧实时 <code className="text-purple-300 bg-purple-950/50 px-1 rounded">MutationObserver</code> 动态监听器，对所有 AI 产生的内容、泡泡、Kakao 实时聊天及 input/textarea 输入提示 placeholder 进行 100% 繁体深度转译！
+                      <strong className="text-slate-200">📊 大健康 / 粉丝大盘 (Fandom Analytics) 逻辑适配</strong>：为 Solo 独立歌手重塑大盘模型！彻底移除「OT 团粉」与「团队毒唯」维度，自动平滑归集为「核心唯粉死忠」、「事业唯/成绩粉」与「跨界/合作 CP 粉」，呈现最真实的个人爱豆饭圈格局！
                     </li>
                     <li>
-                      <strong className="text-slate-200">📜 电脑端设置面板纵向滚动修复</strong>：完美解决了 PC 浏览器由于外层容器强制隐藏滚动条而导致「设置」选项卡下方隐藏功能无法触达的顽疾。现在电脑端设置栏已能完美顺滑滚动到底！
+                      <strong className="text-slate-200">💬 恋爱攻受定位 (Top/Bottom) & 身份称谓约束</strong>：深化了 KakaoTalk 地下恋人角色扮演中的左位（Gong/Top）与右位（Shou/Bottom）语气与娇嗔/霸气设定，并严格绑定玩家性别（欧尼/哥哥/欧巴），绝无穿帮与错位。
                     </li>
                     <li>
-                      <strong className="text-slate-202">💬 泡泡发信气泡高对比度优化</strong>：彻底解决了泡泡聊天界面中，玩家/粉丝发出的消息气泡「字色与气泡底色雷同、内容几乎隐形」的视觉易读性 Bug，保障阅读体验字字清晰。
-                    </li>
-                    <li>
-                      <strong className="text-slate-200">📱 社交媒体作品切换持久化机制</strong>：针对在小红书、TikTok 发布作品并离开选项卡后再折返导致作品突发性消失的数据丢失 Bug，加入了全生命周期的发布数据持久化策略，保障您的热点成就完好如初。
-                    </li>
-                    <li>
-                      <strong className="text-slate-200">🤝 经纪人双向动态命名纠偏</strong>：修正了当玩家性别为女性时，经纪人本应为「严室长」，但在剧情和 Kakao 回复中偶然被标注为「闵经纪人/闵室长」的身份称谓混淆 Bug，确保互动代入感完美契合。
+                      <strong className="text-slate-200">🔍 全局字号等比例自适应缩放</strong>：支持无级字号缩放偏移，全标准 Tailwind 字体大小（xs 至 5xl）及自定义字号各自等量递增/递减，舒适大字不挤压！
                     </li>
                   </ul>
                 </div>
@@ -2520,24 +2516,37 @@ ${contact.summary || "无"}`;
 
                         // 3. Random slowly shifting fan base distribution based on active day actions
                         let updatedFansDist = { ...(newPersona.fansDistribution || { otFans: 50, soloFans: 25, cpFans: 15, antiFans: 10 }) };
+                        if (newPersona.style === "solo") {
+                          updatedFansDist.otFans = 0;
+                        }
                         // Randomly shift 1-2 points from antiFans to otFans/soloFans if reputation is high, otherwise increase anti-fans!
                         if (newPersona.reputation >= 65) {
                           if (updatedFansDist.antiFans > 5) {
                             updatedFansDist.antiFans -= 1;
-                            updatedFansDist.otFans += 1;
+                            if (newPersona.style === "solo") {
+                              updatedFansDist.soloFans += 1;
+                            } else {
+                              updatedFansDist.otFans += 1;
+                            }
                           }
                         } else {
                           updatedFansDist.antiFans += 1;
-                          if (updatedFansDist.otFans > 20) {
-                            updatedFansDist.otFans -= 1;
+                          if (newPersona.style === "solo") {
+                            if (updatedFansDist.soloFans > 20) {
+                              updatedFansDist.soloFans -= 1;
+                            }
+                          } else {
+                            if (updatedFansDist.otFans > 20) {
+                              updatedFansDist.otFans -= 1;
+                            }
                           }
                         }
                         
                         // If style is solo, shift towards soloFans. If style is group, shift towards otFans
                         if (newPersona.style === "solo") {
-                          if (updatedFansDist.otFans > 10) {
-                            updatedFansDist.otFans -= 1;
-                            updatedFansDist.soloFans += 1;
+                          if (updatedFansDist.otFans > 0) {
+                            updatedFansDist.soloFans += updatedFansDist.otFans;
+                            updatedFansDist.otFans = 0;
                           }
                         } else {
                           if (updatedFansDist.soloFans > 10) {
@@ -2616,7 +2625,7 @@ ${contact.summary || "无"}`;
                             if (scandalRolled) {
                               const ceoPassed = newPersona.ceoFavorability >= 45;
                               const managerPassed = newPersona.managerFavorability >= 45;
-                              const teammatesPassed = newPersona.style === "solo" ? true : newPersona.teammatesFavorability >= 45;
+                              const teammatesPassed = newPersona.style === "group" && newPersona.teammatesFavorability >= 45;
                               const shielded = ceoPassed || managerPassed || teammatesPassed;
                               
                               let outcomeText = "";
@@ -2631,7 +2640,7 @@ ${contact.summary || "无"}`;
                                 outcomeText = `【🚨 绯闻漏风：闵室长启动‘肉身公关’完美化解！】`;
                                 details = `你的闵经纪人（好感度 ${newPersona.managerFavorability}）在业界人脉极广，在深夜截获了风声。她直接将该合照解释为‘深夜造型测试及公司工作便当品鉴会’。她带队连夜狂刷超话，把热度转移为其他八卦。虽然你被记过了一次并没收手机两天，但名誉保住了！没有增加半毛钱负债，爱死她了！`;
                                 updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 1);
-                              } else if (teammatesPassed && newPersona.style === "group") {
+                              } else if (teammatesPassed) {
                                 outcomeText = `【🚨 绯闻漏风：团魂爆发！队友们发布‘全员宿舍炸鸡围坐图’挡枪！】`;
                                 details = `患难见真情！你的队友们（集体好感度 ${newPersona.teammatesFavorability}）没有选择对你冷嘲热讽落井下石，而是立刻在官网上发布了整整一组嘻嘻哈哈 of 的晚间炸鸡自拍合照，配文‘当晚和亲爱的大家、编舞欧巴以及好朋友一起在排练喔！’ 成功让舆论相信这只是寻常的工作小聚！粉丝们松了一大口气，甚至磕起了你们的‘友情大团圆’！`;
                                 updatedFansDist.otFans = Math.min(100, updatedFansDist.otFans + 5);
@@ -2648,7 +2657,9 @@ ${contact.summary || "无"}`;
                                 updatedFansDist.otFans = Math.max(0, updatedFansDist.otFans - 13);
                                 
                                 outcomeText = `【🚨 致命泄露：D社重磅绯闻全国曝光！舆论全面失控！】`;
-                                details = `灾难发生了！你在公司上上下下塑料情谊，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力，队友更是对此视若无睹冷眼旁观。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`;
+                                details = newPersona.style === "solo"
+                                  ? `灾难发生了！你在公司内部孤立无援，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`
+                                  : `灾难发生了！你在公司上上下下塑料情谊，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力，队友更是对此视若无睹冷眼旁观。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`;
                               }
                               
                               newPersona.fansDistribution = updatedFansDist;
@@ -4193,15 +4204,30 @@ ${contact.summary || "无"}`;
               </div>
               <div>
                 <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (粉丝倾向梦系、经纪人专属定制、深夜恋爱互动)
+                  👑 企划社最新巨献公告 (V4.5 个人 Solo 独立歌手纯享重构 & 个人饭圈适配)
                 </h3>
                 <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 4.0 | FANDOM DEMOGRAPHICS & MANAGER PERSONALITY CUSTOMIZATION
+                  SYSTEM VERSION 4.5 | SOLO IDOL MODE REFACTOR & EXCLUSIVE SOLO FANDOM ECOLOGY
                 </p>
               </div>
             </div>
 
             <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+
+              {/* Feature 21: Solo Mode & Solo Fandom Ecology Refactor (BRAND NEW V4.5) */}
+              <div className="bg-gradient-to-r from-purple-900/40 via-indigo-900/40 to-pink-950/30 border border-purple-500/40 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
+                  <span>🎤 21. [重磅升级] V4.5 个人 Solo 独立歌手模式 & 纯享个人饭圈重构</span>
+                </div>
+                <p className="text-[11px] text-slate-300 leading-relaxed">
+                  应广大主理人对于 Solo 独立歌手真实感与纯享体验的期待，我们完成了底层 AI 提示词与大健康 / 粉丝大盘系统的彻底重塑：
+                </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/40 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🎤 <strong className="text-purple-200">Solo 独立歌手全域无队友纯享</strong>：当选择【个人 Solo 独立歌手】时，系统全域（包含 KakaoTalk、Weverse 官咖、W-Live 直播弹幕、TikTok 变装/舞蹈挑战、小红书私服笔记、粉丝来信等）将 100% 聚焦个人舞台与独处日常，绝对不再虚构或误提及任何组合队友！</p>
+                  <p>📊 <strong className="text-indigo-200">大健康 / 粉丝分析 (Fandom Analytics) 彻底适配</strong>：Solo 模式下彻底剔除「OT 团粉」与「团队毒唯」，自动平滑归集重构为「核心唯粉死忠」、「事业唯/成绩粉」与「跨界/合作 CP 粉」，带来最地道的个人 Solo 爱豆饭圈操盘体感！</p>
+                  <p>💬 <strong className="text-pink-200">恋人攻受定位 & 性别称谓全场景强校验</strong>：强化 KakaoTalk 地下恋人角色扮演中的左位（Gong/Top）与右位（Shou/Bottom）语气词，并严格根据玩家性别（女/男爱豆）防穿帮调用（欧尼/姐姐/哥哥/欧巴）。</p>
+                </div>
+              </div>
 
               {/* Feature 20: Fandom & Manager Customization (BRAND NEW V4.0) */}
               <div className="bg-gradient-to-r from-pink-900/40 via-purple-900/30 to-indigo-950/20 border border-pink-500/35 p-3.5 rounded-xl space-y-2 font-sans">

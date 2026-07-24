@@ -72,7 +72,10 @@ Do not write any markdown tags or other intro/outro.`;
 
 Delusional Fan Demographic Style:
 ${fanTypeGuidance}`;
-    if (personas && personas.length > 1) {
+    if (persona.style === "solo") {
+      systemInstruction += `\n\n【极其重要 Solo 模式限制】
+当前爱豆为【个人Solo独立歌手】，绝对没有组合队友！所有粉丝评论、弹幕、互动必须100%围绕爱豆个人的颜值、舞台、音乐作品、个人行程与性格，绝对禁止提及任何队友、团内CP、团内对比或团毒言论！`;
+    } else if (personas && personas.length > 1) {
       const gDesc = personas.map((p, idx) => `- 成员 ${idx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}, MBTI: ${p.mbti}`).join("\n");
       systemInstruction += `\n\n【重要：当前属于一个 ${personas.length} 人的自制高保真高定全明星组合 "${persona.groupName}"】
 组合成员如下：
@@ -234,7 +237,10 @@ ${gDesc}
 
 Delusional Fan Demographic Style:
 ${fanTypeGuidance}`;
-    if (personas && personas.length > 1) {
+    if (persona.style === "solo") {
+      sysInstruction += `\n\n【极其重要 Solo 模式限制】
+当前爱豆为【个人Solo独立歌手】，全过程绝无任何组合队友！直播间弹幕留言绝对禁止询问队友、其他成员或组合事宜！全部弹幕只能围绕爱豆个人及个人直播内容！`;
+    } else if (personas && personas.length > 1) {
       const gDesc = personas.map((p, idx) => `- 成员 ${idx + 1}: ${p.name} (艺名: ${p.stageName}), 担当: ${p.roleInGroup}`).join("\n");
       sysInstruction += `\n\n【重要：官方组合 "${persona.groupName}" 直播背景】
 本场直播属于组合官方频道。其余亲生姐妹/兄弟自创玩家输入角色是：

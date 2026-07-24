@@ -27,6 +27,12 @@ export interface IdolPersona {
   eyeShape: string;
   eyeColor: string;
   noseShape: string;
+  faceShape?: string;
+  skinTone?: string;
+  lipShape?: string;
+  makeupStyle?: string;
+  beautyMark?: string;
+  visualAura?: string;
   
   // Physical & Self-Care Stats (NEW)
   height: number; // in cm

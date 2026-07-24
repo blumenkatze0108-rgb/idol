@@ -171,16 +171,24 @@ export default function FandomAnalyticsApp({
 
   // Fandom makeup percentages bound dynamicaly to persona state
   const isTrainee = persona.startType === "trainee";
-  const otFandom = persona.fansDistribution?.otFans ?? (isTrainee ? 70 : 45);
-  const soloStan = persona.fansDistribution?.soloFans ?? (isTrainee ? 15 : 30);
+  const isSolo = persona.style === "solo";
+
+  const otFandom = isSolo ? 0 : (persona.fansDistribution?.otFans ?? (isTrainee ? 70 : 45));
+  const soloStan = isSolo
+    ? ((persona.fansDistribution?.soloFans ?? (isTrainee ? 15 : 30)) + (persona.fansDistribution?.otFans ?? 0))
+    : (persona.fansDistribution?.soloFans ?? (isTrainee ? 15 : 30));
   const cpShipper = persona.fansDistribution?.cpFans ?? (isTrainee ? 5 : 15);
   const antiFans = persona.fansDistribution?.antiFans ?? (isTrainee ? 10 : 10);
   const delusional = 5;
   const sasaengStalker = 3;
-  const evilStan = 8;
+  const evilStan = isSolo ? 0 : 8;
 
   // Chart Data for Recharts Radial Bar Chart
-  const chartData = [
+  const chartData = isSolo ? [
+    { name: "Solo Fans (核心唯粉)", value: soloStan, fill: "#3b82f6" },
+    { name: "CP Shippers (跨界CP粉)", value: cpShipper, fill: "#ec4899" },
+    { name: "Anti Fans (黑粉/私生)", value: antiFans + sasaengStalker, fill: "#ef4444" }
+  ] : [
     { name: "OT Fans (双向团粉)", value: otFandom, fill: "#a855f7" },
     { name: "Solo Fans (唯粉/毒唯)", value: soloStan + evilStan, fill: "#3b82f6" },
     { name: "CP Shippers (CP粉)", value: cpShipper, fill: "#ec4899" },
@@ -390,7 +398,7 @@ export default function FandomAnalyticsApp({
 
     if (newChews > 0 && !hasSharedWithTeammate && !isBustedByManager) {
       const roll = Math.random();
-      if (roll < 0.18 && teammates && teammates.length > 0) {
+      if (roll < 0.18 && persona.style === "group" && teammates && teammates.length > 0) {
         const randMate = teammates[Math.floor(Math.random() * teammates.length)];
         triggeredMate = randMate.name;
         setHasSharedWithTeammate(randMate.name);
@@ -489,7 +497,7 @@ export default function FandomAnalyticsApp({
       logs.push(`😋 [快速大嚼] ${n}`);
     });
 
-    if (roll < 0.15 && teammates && teammates.length > 0) {
+    if (roll < 0.15 && persona.style === "group" && teammates && teammates.length > 0) {
       const randMate = teammates[Math.floor(Math.random() * teammates.length)];
       finalW = parseFloat((food.weightGain / 2).toFixed(2));
       finalE = Math.round(food.energyRecover * 0.55);
@@ -566,7 +574,7 @@ export default function FandomAnalyticsApp({
       const promptContext = `
       Idol Profile:
       - Name: "${persona.name}" (Stage Name: "${persona.stageName || "无"}")
-      - Group: "${persona.groupName}"
+      - Group: "${isSolo ? "【个人Solo歌手（无团队/无队友）】" : persona.groupName}"
       - Gender: "${persona.gender === "female" ? "女" : "男"}"
       - MBTI: "${persona.mbti}"
       - Current Physical and Mental Stats:
@@ -575,9 +583,10 @@ export default function FandomAnalyticsApp({
         - Weight: ${persona.weight.toFixed(1)} kg, Height: ${persona.height} cm
         - Skin Condition: "${persona.skinCondition}"
       - Fandom Landscape:
-        - OT deadhard fans count: ${persona.fansCount} (${otFandom}%)
+        ${isSolo ? `- Solo deadhard fans count: ${persona.fansCount} (${soloStan}%)` : `- OT deadhard fans count: ${persona.fansCount} (${otFandom}%)`}
         - CP Shippers: ${cpShipper}%
         - Malicious Antifans & Sasaengs: ${antiFans + sasaengStalker}%
+        ${isSolo ? "- CRITICAL CONSTRAINT: This idol is a SOLO artist. Do NOT mention any group, teammates, or OT fans!" : ""}
       
       User's Currently Confessed Feeling / Problem:
       "${therapyInput}"
@@ -637,7 +646,11 @@ export default function FandomAnalyticsApp({
       const newStress = Math.min(100, Math.max(0, oldStress + fallbackDelta));
       p.stress = newStress;
 
-      setTherapyResult(`（助理温馨慰问 fallback）\n孩子，演艺圈的压力确实很重。不论黑粉恶意恶评如何中伤你，也别忘了那些手举灯牌、在台下撕心配裂喊你名字的团粉。在保姆车里吃饱饱，睡一觉吧。`);
+      setTherapyResult(
+        isSolo
+          ? `（助理温馨慰问 fallback）\n孩子，演艺圈的压力确实很重。不论黑粉恶意恶评如何中伤你，也别忘了那些手举灯牌、在台下撕心裂肺喊你名字的个人死忠歌迷。在保姆车里吃饱饱，睡一觉吧。`
+          : `（助理温馨慰问 fallback）\n孩子，演艺圈的压力确实很重。不论黑粉恶意恶评如何中伤你，也别忘了那些手举灯牌、在台下撕心配裂喊你名字的团粉。在保姆车里吃饱饱，睡一觉吧。`
+      );
       setStressDelta(fallbackDelta);
       onUpdatePersona(p);
       onAddLog(`【心理诊疗】深度倾诉结束。消耗 1 互动点，压力变动：-12%（降至 ${newStress}%）。今日剩余可用互动点：${p.interactionPoints} 点。`);
@@ -719,13 +732,15 @@ export default function FandomAnalyticsApp({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
                     <div className="flex justify-between text-[11px] text-slate-300">
-                      <span>👑 团粉死忠 (OT-fans)</span>
-                      <span className="font-mono text-purple-400 font-bold">{otFandom}%</span>
+                      <span>{isSolo ? "👑 核心唯粉死忠 (Solo-fans)" : "👑 团粉死忠 (OT-fans)"}</span>
+                      <span className="font-mono text-purple-400 font-bold">{isSolo ? soloStan : otFandom}%</span>
                     </div>
                     <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                      <div className="bg-purple-500 h-full" style={{ width: `${otFandom}%` }} />
+                      <div className="bg-purple-500 h-full" style={{ width: `${isSolo ? soloStan : otFandom}%` }} />
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">最核心、最稳固的团队力量，只买正规专辑、疯狂做数据打歌。</p>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">
+                      {isSolo ? "最核心、最稳固的个人舞台力量，全心为你一人打歌买专、组织应援大屏。" : "最核心、最稳固的团队力量，只买正规专辑、疯狂做数据打歌。"}
+                    </p>
                   </div>
 
                    <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
@@ -751,24 +766,28 @@ export default function FandomAnalyticsApp({
 
                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
                     <div className="flex justify-between text-[11px] text-slate-300">
-                      <span>🍭 邪典CP粉 (Shippers)</span>
+                      <span>{isSolo ? "🍭 跨界/合作CP粉 (Shippers)" : "🍭 邪典CP粉 (Shippers)"}</span>
                       <span className="font-mono text-blue-400 font-bold">{cpShipper}%</span>
                     </div>
                     <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
                       <div className="bg-blue-500 h-full" style={{ width: `${cpShipper}%` }} />
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">死命在你与队友、或者其他异性爱豆之间磕小糖。营销炒作顶梁柱。</p>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">
+                      {isSolo ? "死命在你与竞品对头、或合作异性爱豆之间磕小糖。营销话题热度顶梁柱。" : "死命在你与队友、或者其他异性爱豆之间磕小糖。营销炒作顶梁柱。"}
+                    </p>
                   </div>
 
                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5">
                     <div className="flex justify-between text-[11px] text-slate-300">
-                      <span>💀 团队毒唯 (Malicious Akgaes)</span>
-                      <span className="font-mono text-red-400 font-bold">{evilStan}%</span>
+                      <span>{isSolo ? "🔥 事业唯/成绩粉 (Career Stans)" : "💀 团队毒唯 (Malicious Akgaes)"}</span>
+                      <span className="font-mono text-red-400 font-bold">{isSolo ? 10 : evilStan}%</span>
                     </div>
                     <div className="w-full bg-slate-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
-                      <div className="bg-red-500 h-full" style={{ width: `${evilStan}%` }} />
+                      <div className="bg-red-500 h-full" style={{ width: `${isSolo ? 10 : evilStan}%` }} />
                     </div>
-                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">讨厌你以外的所有团员。经常在网上撕逼或者辱骂队友抢资源。</p>
+                    <p className="text-[9px] text-slate-400 mt-1 leading-relaxed">
+                      {isSolo ? "极度追求个人音源榜单与一位，对所有对立竞品与恶评黑粉高压出击。" : "讨厌你以外的所有团员。经常在网上撕逼或者辱骂队友抢资源。"}
+                    </p>
                   </div>
 
                   <div className="bg-[#1f293d]/30 p-2.5 rounded-xl border border-white/5 col-span-1 sm:col-span-2">
@@ -787,7 +806,7 @@ export default function FandomAnalyticsApp({
               <div className="lg:col-span-2 bg-slate-900/60 rounded-2xl p-4 border border-white/5 flex flex-col justify-between">
                 <div>
                   <span className="text-xs font-bold text-indigo-300 block mb-1">📊 粉丝形态比例环形图 (Radial Distribution)</span>
-                  <p className="text-[9px] text-slate-400">环形图展示 OT死忠粉 vs 唯粉/毒唯 vs 恶毒黑粉/私生 占比</p>
+                  <p className="text-[9px] text-slate-400">{isSolo ? "环形图展示 核心唯粉 vs 跨界CP粉 vs 恶毒黑粉/私生 占比" : "环形图展示 OT死忠粉 vs 唯粉/毒唯 vs 恶毒黑粉/私生 占比"}</p>
                 </div>
 
                 <div id="radial-chart-container" className="h-[150px] w-[150px] mx-auto flex items-center justify-center relative my-2">

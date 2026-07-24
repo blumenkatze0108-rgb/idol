@@ -117,10 +117,16 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [isMixed, setIsMixed] = useState(false);
   const [mixedCountries, setMixedCountries] = useState("中/韩 (Sino-Korean)");
 
-  // Eye shape, pupil color, nose shape
-  const [eyeShape, setEyeShape] = useState("瑞凤眼 (清冷俊雅)");
-  const [eyeColor, setEyeColor] = useState("琥珀浅晶茶棕");
-  const [noseShape, setNoseShape] = useState("直挺悬胆鼻 (经典立体)");
+  // Eye shape, pupil color, nose shape, face shape, skin tone, lip shape, makeup, beauty mark, visual aura
+  const [eyeShape, setEyeShape] = useState("瑞凤眼 (极其清美、高贵冷淡)");
+  const [eyeColor, setEyeColor] = useState("琥珀浅晶茶棕 (水润灵气)");
+  const [noseShape, setNoseShape] = useState("直挺悬胆鼻 (传统精雕神颜模板)");
+  const [faceShape, setFaceShape] = useState("鹅蛋精致脸 (上镜百搭神颜)");
+  const [skinTone, setSkinTone] = useState("冷白皮瓷白肌 (冷艳高贵透亮)");
+  const [lipShape, setLipShape] = useState("嘟嘟花瓣唇 (水润娇艳软萌)");
+  const [makeupStyle, setMakeupStyle] = useState("清纯伪素颜水光妆 (清冷纯欲原生感)");
+  const [beautyMark, setBeautyMark] = useState("眼角泪痣 (风情万种故事感)");
+  const [visualAura, setVisualAura] = useState("清冷高贵仙气 (疏离清绝不可方物)");
 
   // Live Body physical parameters configuration (Criterion 5 custom values)
   const [height, setHeight] = useState(167);
@@ -153,9 +159,15 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       specificNationality: "韩国首尔特别市江南区",
       isMixed: false,
       mixedCountries: "中/韩 (Sino-Korean)",
-      eyeShape: "瑞凤眼 (清冷俊雅)",
-      eyeColor: "琥珀浅晶茶棕",
-      noseShape: "直挺悬胆鼻 (经典立体)",
+      eyeShape: "瑞凤眼 (极其清美、高贵冷淡)",
+      eyeColor: "琥珀浅晶茶棕 (水润灵气)",
+      noseShape: "直挺悬胆鼻 (传统精雕神颜模板)",
+      faceShape: "鹅蛋精致脸 (上镜百搭神颜)",
+      skinTone: "冷白皮瓷白肌 (冷艳高贵透亮)",
+      lipShape: "嘟嘟花瓣唇 (水润娇艳软萌)",
+      makeupStyle: "清纯伪素颜水光妆 (清冷纯欲原生感)",
+      beautyMark: "眼角泪痣 (风情万种故事感)",
+      visualAura: "清冷高贵仙气 (疏离清绝不可方物)",
       height: 167,
       weight: 46.5,
       vocalSkill: 30,
@@ -191,6 +203,12 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       eyeShape: "桃花眼 (含情脉脉、男女莫辨)",
       eyeColor: "琥珀浅晶茶棕 (水润灵气)",
       noseShape: "圆润小翘鼻 (可爱自然亲切感)",
+      faceShape: "心形甜妹脸 (饱满幼态亲和)",
+      skinTone: "蜜桃粉白调 (甜美娇嫩粉气)",
+      lipShape: "嘟嘟花瓣唇 (水润娇艳软萌)",
+      makeupStyle: "果汁爆浆元气彩妆 (活泼活力绝佳爱豆)",
+      beautyMark: "迷人浅酒窝 (笑起来甜度爆表)",
+      visualAura: "甜美治愈幼态 (奶呼呼全网亲妈粉爆棚)",
       height: 165,
       weight: 45.0,
       vocalSkill: 35,
@@ -226,6 +244,12 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       eyeShape: "下垂狗狗眼 (极致无辜、人畜无害)",
       eyeColor: "曜石浓墨黑 (深沉吸粉)",
       noseShape: "直挺悬胆鼻 (传统精雕神颜模板)",
+      faceShape: "巴掌猫系小尖脸 (极致妖娆灵动)",
+      skinTone: "清透奶油肌 (水光通透无瑕)",
+      lipShape: "微笑含情唇 (天生亲和力笑颜)",
+      makeupStyle: "猫系小恶魔烟熏妆 (俏皮灵动暗黑吸睛)",
+      beautyMark: "鼻尖神颜小痣 (经典神颜标志)",
+      visualAura: "潮酷破次元Y2K (前卫怪诞潮流风向标)",
       height: 168,
       weight: 46.0,
       vocalSkill: 25,
@@ -274,6 +298,12 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       eyeShape,
       eyeColor,
       noseShape,
+      faceShape,
+      skinTone,
+      lipShape,
+      makeupStyle,
+      beautyMark,
+      visualAura,
       height,
       weight,
       vocalSkill,
@@ -329,9 +359,15 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     setSpecificNationality(data.specificNationality);
     setIsMixed(data.isMixed);
     setMixedCountries(data.mixedCountries);
-    setEyeShape(data.eyeShape);
-    setEyeColor(data.eyeColor);
-    setNoseShape(data.noseShape);
+    setEyeShape(data.eyeShape || "瑞凤眼 (极其清美、高贵冷淡)");
+    setEyeColor(data.eyeColor || "琥珀浅晶茶棕 (水润灵气)");
+    setNoseShape(data.noseShape || "直挺悬胆鼻 (传统精雕神颜模板)");
+    setFaceShape(data.faceShape || "鹅蛋精致脸 (上镜百搭神颜)");
+    setSkinTone(data.skinTone || "冷白皮瓷白肌 (冷艳高贵透亮)");
+    setLipShape(data.lipShape || "嘟嘟花瓣唇 (水润娇艳软萌)");
+    setMakeupStyle(data.makeupStyle || "清纯伪素颜水光妆 (清冷纯欲原生感)");
+    setBeautyMark(data.beautyMark || "眼角泪痣 (风情万种故事感)");
+    setVisualAura(data.visualAura || "清冷高贵仙气 (疏离清绝不可方物)");
     setHeight(data.height);
     setWeight(data.weight);
     setVocalSkill(data.vocalSkill);
@@ -447,6 +483,58 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
     "圆润小翘鼻 (可爱自然亲切感)",
     "驼峰艺术鼻 (高级厌世电影视觉)",
     "欧式高陡立体盒鼻 (混血硬骨相级)"
+  ];
+
+  const faceShapeOptions = [
+    "鹅蛋精致脸 (上镜百搭神颜)",
+    "冷艳小方圆脸 (高级超模气场)",
+    "心形甜妹脸 (饱满幼态亲和)",
+    "巴掌猫系小尖脸 (极致妖娆灵动)",
+    "硬朗雕塑冷峻脸 (线条分明男神/酷妹)",
+    "端庄鹅蛋长脸 (高贵优雅古典)"
+  ];
+
+  const skinToneOptions = [
+    "冷白皮瓷白肌 (冷艳高贵透亮)",
+    "暖调自然小麦肌 (健康野性力量)",
+    "蜜桃粉白调 (甜美娇嫩粉气)",
+    "冷调橄榄皮 (极具高级疏离感)",
+    "清透奶油肌 (水光通透无瑕)",
+    "阳光古铜肌 (张扬性感舞台风)"
+  ];
+
+  const lipShapeOptions = [
+    "嘟嘟花瓣唇 (水润娇艳软萌)",
+    "清冷薄唇 (疏离禁欲高冷)",
+    "微笑含情唇 (天生亲和力笑颜)",
+    "丰满性感唇 (欧美大主角存在感)",
+    "M字精致立体唇 (古典线条分明)"
+  ];
+
+  const makeupStyleOptions = [
+    "清纯伪素颜水光妆 (清冷纯欲原生感)",
+    "猫系小恶魔烟熏妆 (俏皮灵动暗黑吸睛)",
+    "奢华千金大女主妆 (贵气逼人冷艳压场)",
+    "潮酷Y2K复古色彩妆 (前卫先锋破次元)",
+    "果汁爆浆元气彩妆 (活泼活力绝佳爱豆)",
+    "极简无性别冷酷妆 (高级无性界线风)"
+  ];
+
+  const beautyMarkOptions = [
+    "眼角泪痣 (风情万种故事感)",
+    "鼻尖神颜小痣 (经典神颜标志)",
+    "唇边俏皮痣 (娇妩极具辨识度)",
+    "迷人浅酒窝 (笑起来甜度爆表)",
+    "高挺颧骨下巴沟 (英气极具电影感)",
+    "无瑕纯净面容 (纯净无瑕神颜模板)"
+  ];
+
+  const visualAuraOptions = [
+    "清冷高贵仙气 (疏离清绝不可方物)",
+    "甜美治愈幼态 (奶呼呼全网亲妈粉爆棚)",
+    "霸气冷艳大女主/大男主 (全场压制卡点杀手)",
+    "潮酷破次元Y2K (前卫怪诞潮流风向标)",
+    "性感野性蛊惑 (媚骨天成舞台火药包)"
   ];
 
   const bloodTypeOptions = ["A型", "B型", "AB型", "O型", "稀有Rh阴性 (熊猫血)"];
@@ -843,9 +931,15 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           specificNationality: m.specificNationality,
           isMixed: m.isMixed,
           mixedCountries: m.isMixed ? m.mixedCountries : "",
-          eyeShape: m.eyeShape,
-          eyeColor: m.eyeColor,
-          noseShape: m.noseShape,
+          eyeShape: m.eyeShape || "瑞凤眼 (极其清美、高贵冷淡)",
+          eyeColor: m.eyeColor || "琥珀浅晶茶棕 (水润灵气)",
+          noseShape: m.noseShape || "直挺悬胆鼻 (传统精雕神颜模板)",
+          faceShape: m.faceShape || "鹅蛋精致脸 (上镜百搭神颜)",
+          skinTone: m.skinTone || "冷白皮瓷白肌 (冷艳高贵透亮)",
+          lipShape: m.lipShape || "嘟嘟花瓣唇 (水润娇艳软萌)",
+          makeupStyle: m.makeupStyle || "清纯伪素颜水光妆 (清冷纯欲原生感)",
+          beautyMark: m.beautyMark || "眼角泪痣 (风情万种故事感)",
+          visualAura: m.visualAura || "清冷高贵仙气 (疏离清绝不可方物)",
           height: m.height,
           weight: m.weight,
           skinCondition: "perfect",
@@ -856,10 +950,10 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           stress: isTrainee ? 15 : 40,
           traineeDebt: debt,
           companySplit: actualSplit,
-          managerFavorability: isTrainee ? 12 : 35, 
-          teammatesFavorability: isTrainee ? 10 : 42, 
-          ceoFavorability: isTrainee ? 8 : 30, 
-          pdFavorability: isTrainee ? 15 : 45, 
+          managerFavorability: managerPersonality === "gentle" ? (isTrainee ? 75 : 88) : managerPersonality === "unreliable" ? (isTrainee ? 60 : 75) : managerPersonality === "money_minded" ? (isTrainee ? 45 : 60) : (isTrainee ? 45 : 65), 
+          teammatesFavorability: (m.style === "solo" || (playMode === "single" && m.style === "solo")) ? 100 : (isTrainee ? 65 : 80), 
+          ceoFavorability: isTrainee ? 45 : 60, 
+          pdFavorability: isTrainee ? 50 : 65, 
           popularity: startPopularity,
           reputation: startReputation,
           energy: 100,
@@ -887,13 +981,13 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           loverMood: m.hasLover ? 85 : undefined,
           romancePosition: m.hasLover ? (m.romancePosition || "right") : undefined,
           fansDistribution: isTrainee ? {
-            otFans: 70,
-            soloFans: 15,
+            otFans: m.style === "solo" ? 0 : 70,
+            soloFans: m.style === "solo" ? 85 : 15,
             cpFans: 5,
             antiFans: 10
           } : {
-            otFans: 45,
-            soloFans: 30,
+            otFans: m.style === "solo" ? 0 : 45,
+            soloFans: m.style === "solo" ? 75 : 30,
             cpFans: 15,
             antiFans: 10
           }
@@ -1755,6 +1849,19 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
                     <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">脸型骨相 (Face Shape & Bones)</label>
+                      <select 
+                        value={faceShape}
+                        onChange={(e) => setFaceShape(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {faceShapeOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
                       <label className="block text-[10px] font-semibold text-slate-400 mb-1">眼形细节精选 (Eye Shape)</label>
                       <select 
                         value={eyeShape}
@@ -1788,6 +1895,71 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                         className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
                       >
                         {noseShapeOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">唇形唇色 (Lip Contour & Shade)</label>
+                      <select 
+                        value={lipShape}
+                        onChange={(e) => setLipShape(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {lipShapeOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">肤色底妆 (Skin Tone & Texture)</label>
+                      <select 
+                        value={skinTone}
+                        onChange={(e) => setSkinTone(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {skinToneOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">妆容氛围 (Visual Makeup Vibe)</label>
+                      <select 
+                        value={makeupStyle}
+                        onChange={(e) => setMakeupStyle(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {makeupStyleOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">面部标志特征/痣 (Beauty Mark)</label>
+                      <select 
+                        value={beautyMark}
+                        onChange={(e) => setBeautyMark(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {beautyMarkOptions.map((opt) => (
+                          <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1">视觉气场 (Visual Aura & Vibe)</label>
+                      <select 
+                        value={visualAura}
+                        onChange={(e) => setVisualAura(e.target.value)}
+                        className="w-full bg-slate-950/80 border border-white/10 rounded-xl px-2 py-1.5 text-[11px] focus:outline-none focus:border-purple-500 text-slate-200"
+                      >
+                        {visualAuraOptions.map((opt) => (
                           <option className="bg-[#0b0e17] text-white" key={opt} value={opt}>{opt}</option>
                         ))}
                       </select>
@@ -2075,7 +2247,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                         <p>⚖️ <strong>身姿骨相</strong>: 身高 {height} cm / 初始体重 {weight} kg</p>
                         <p>🎂 <strong>生日星象</strong>: {birthday} / {zodiac} | 年龄: {age} 岁 ({bloodType})</p>
                         <p>🗺️ <strong>地缘与背景</strong>: {isMixed ? `【混血】${mixedCountries}` : "纯血本土"} | {specificNationality}</p>
-                        <p>👁️ <strong>外貌雕琢</strong>: {eyeShape} | 瞳色:{eyeColor} | 鼻型:{noseShape}</p>
+                        <p>👁️ <strong>面貌官能</strong>: 脸型:{faceShape.split(' ')[0]} | 眼型:{eyeShape.split(' ')[0]} | 瞳色:{eyeColor.split(' ')[0]} | 鼻型:{noseShape.split(' ')[0]} | 唇型:{lipShape.split(' ')[0]}</p>
+                        <p>✨ <strong>质感氛围</strong>: 肤色:{skinTone.split(' ')[0]} | 妆容:{makeupStyle.split(' ')[0]} | 特征:{beautyMark.split(' ')[0]} | 气场:{visualAura.split(' ')[0]}</p>
                         <p>💇 <strong>发型发色</strong>: {hairStyle} | {hairColor}</p>
                         <p>🎭 <strong>主概念回归</strong>: {conceptTheme}</p>
                       </div>
@@ -2084,7 +2257,7 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                     <div className="bg-purple-950/20 border border-purple-500/15 text-[10px] text-purple-300 p-2.5 rounded-xl leading-normal mt-3 flex items-start gap-1.5">
                       <Smile className="w-4 h-4 shrink-0 text-purple-400 mt-0.5" />
                       <span>
-                        团队好感度初始锁定为 <strong>从零开始的超度内讧地狱 5%-20%</strong>。由于好感数值极低，队友日常会冷淡不理人、经纪人冷血训话。准备去用行动捂热他们、或者把作风恶劣的内讧大喇叭说闲话孤立出局吧！
+                        关系数值提醒：初始好感度已由您的【经纪人人设】（选择温和型初始好感高且关怀体贴）及【出道模式】（选择Solo路线无队友压力）个性化设置！
                       </span>
                     </div>
                   </div>
