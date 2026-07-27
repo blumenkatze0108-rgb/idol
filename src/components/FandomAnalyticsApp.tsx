@@ -3,6 +3,7 @@ import { IdolPersona, SimulatedTeammate } from "../types";
 import { TrendingUp, User, ShieldAlert, Heart, Calendar, Activity, Zap, Coins, Sliders, Play, Brain, Sparkles, Smile, MessageSquare } from "lucide-react";
 import { RadialBarChart, RadialBar, Tooltip, ResponsiveContainer } from "recharts";
 import { safeFetch } from "./apiHelper";
+import { getManagerShortTitle } from "../utils/managerUtils";
 
 interface FandomAnalyticsProps {
   persona: IdolPersona;
@@ -406,7 +407,7 @@ export default function FandomAnalyticsApp({
       } else if (roll >= 0.18 && roll < 0.28 && persona.startType === "idol") {
         triggeredManager = true;
         setIsBustedByManager(true);
-        logs.push(`🚨 [危机降临] 完蛋！地板传来闵经纪人标志性冰冷的高跟鞋叩地声正迅速逼近！你冷汗直冒，必须手忙脚乱地把餐盒捂进被罩里...`);
+        logs.push(`🚨 [危机降临] 完蛋！地板传来${getManagerShortTitle(persona)}标志性冰冷的高跟鞋叩地声正迅速逼近！你冷汗直冒，必须手忙脚乱地把餐盒捂进被罩里...`);
       }
     }
 
@@ -514,7 +515,7 @@ export default function FandomAnalyticsApp({
       p.stress = Math.min(100, p.stress + 15);
       p.energy = Math.min(100, p.energy + finalE);
       
-      resultMsg = `😭 [落荒而逃] 正当飞速狼吞虎咽时，闵经纪人突然推门查寝！你大惊失色之下把餐盒踢进床底，没饱成，精神压力狂飙 (+15)，体力仅微弱感应恢复 (+${finalE})。`;
+      resultMsg = `😭 [落荒而逃] 正当飞速狼吞虎咽时，${getManagerShortTitle(persona)}突然推门查寝！你大惊失色之下把餐盒踢进床底，没饱成，精神压力狂飙 (+15)，体力仅微弱感应恢复 (+${finalE})。`;
     } else {
       p.weight = parseFloat(Math.min(80, Math.max(38, p.weight + finalW)).toFixed(2));
       p.energy = Math.min(100, p.energy + finalE);
@@ -1170,7 +1171,7 @@ export default function FandomAnalyticsApp({
                         <span className="text-[9px] text-slate-500 font-mono">
                           {isSolo
                             ? "* 嚼咽间可能引发香气蔓延或惊动经纪人查房突围！"
-                            : "* 嚼咽间可能引来舍友或惊动闵经纪人突围！"}
+                            : `* 嚼咽间可能引来舍友或惊动${getManagerShortTitle(persona)}突围！`}
                         </span>
                         {chewsRemaining > 0 && (
                           <button
@@ -1279,7 +1280,7 @@ export default function FandomAnalyticsApp({
                     id="therapy-feeling-input"
                     value={therapyInput}
                     onChange={(e) => setTherapyInput(e.target.value)}
-                    placeholder="例：最近感觉练习室跳得再好，闵经纪人依旧冷言嘲讽。网上还有黑粉散布恶意爆料，私生饭也频繁发送骚扰短信，卡路里控重在严重困扰我，非常空虚焦虑..."
+                    placeholder="例：最近感觉练习室跳得再好，室长主管依旧冷言嘲讽。网上还有黑粉散布恶意爆料，私生饭也频繁发送骚扰短信，卡路里控重在严重困扰我，非常空虚焦虑..."
                     className="w-full h-[110px] bg-slate-950 border border-slate-800 focus:border-indigo-600 rounded-xl p-3 text-xs text-slate-200 outline-none resize-none transition-all placeholder:text-slate-600 focus:ring-1 focus:ring-indigo-500/25"
                   />
                 </div>
@@ -1303,7 +1304,7 @@ export default function FandomAnalyticsApp({
                       },
                       {
                         label: "🥗 严酷至极的身材控重与绝食压力",
-                        text: "闵室长命令我今天必须把体重秤重压到41kg，哪怕高卡路里深夜偷吃一小勺雪冰，也会拉响极度严厉的查寝黑脸警告。全身酸痛却每天只准啃水煮鸡胸，我觉得脑部多巴胺干涸，好想放声大哭..."
+                        text: `${getManagerShortTitle(persona)}命令我今天必须把体重秤重压到41kg，哪怕高卡路里深夜偷吃一小勺雪冰，也会拉响极度严厉的查寝黑脸警告。全身酸痛却每天只准啃水煮鸡胸，我觉得脑部多巴胺干涸，好想放声大哭...`
                       },
                       {
                         label: "🎤 月度考核及打歌大盘恐慌情绪",

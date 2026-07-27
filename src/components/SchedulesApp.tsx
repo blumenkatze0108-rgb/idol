@@ -4,6 +4,7 @@ import { generateFallbackWeeklyDiaryEntry } from "./PersonalDiaryApp";
 import { SH_LIST } from "../mockData";
 import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame, AlertCircle, Moon, Coffee, Lock, Unlock, Heart, Users } from "lucide-react";
 import { safeFetch, getSeoulWeather } from "./apiHelper";
+import { getManagerShortTitle, replaceManagerPlaceholders } from "../utils/managerUtils";
 
 const MBTI_DORM_TALKS: Record<string, { monologue: string; insight: string }> = {
   INFJ: {
@@ -37,6 +38,38 @@ const MBTI_DORM_TALKS: Record<string, { monologue: string; insight: string }> = 
   INFP: {
     monologue: "「大家都在宿舍睡了，我偷偷把这首深夜写的歌 Demo 放给你听……其实歌词里的每一个句子，都是写关于我们一路走来的酸甜苦辣。只要你觉得好听，我就有信心拿到公司的企划会上去。」",
     insight: "INFP · 浪漫吟游诗人：感情细腻浪漫，习惯用创作寄托情绪。谈心后对方将你写入了心底最柔软的隐秘角落。"
+  },
+  ESTP: {
+    monologue: "「走！别闷在客厅里了，跟我去宿舍阳台吹吹夜风！虽然平时训练我总嫌麻烦，但只要是跟着你的节奏，多加练两小时舞我也心甘情愿！」",
+    insight: "ESTP · 极速践行者：直爽果敢、行动力极强。深夜谈心打破了距离感，将你当成了无话不谈的生死战友。"
+  },
+  ESFP: {
+    monologue: "「哈哈！我就知道你还没睡！你看我刚偷偷留的这两块马卡龙，绝对不能让控重督查发现！只要跟你在一起，宿舍的冷空气都变得热闹起来了！」",
+    insight: "ESFP · 舞台巨星：天生发光体，热烈奔放。谈心后对你产生了强烈的依赖感与特别关注。"
+  },
+  ESTJ: {
+    monologue: "「虽然我是队里的规则制定者，平时对大家严格要求……但今晚看到你这么刻苦，我也觉得自己的坚持是值得的。以后有困难随时找我，我帮你扛。」",
+    insight: "ESTJ · 铁血统帅：严以律己、重担当与原则。深夜谈心让对方认可了你的韧性，赋予你最高级别的信任。"
+  },
+  ESFJ: {
+    monologue: "「我给你热了杯热牛奶，放了微糖。大家这段时间都太累了，但我最担心的其实是你。有什么委屈别憋在心里，随时都可以来找我吐槽哦。」",
+    insight: "ESFJ · 贴心大家长：温柔体贴、无微不至。谈心后彻底将你揽入护短范围，给你无条件的情感支持。"
+  },
+  ISTP: {
+    monologue: "「我刚把练习室音响的音频线和宿舍电视接口重新修好了……其实我不擅长讲那些感人的客套话，但只要你需要，我随时在。」",
+    insight: "ISTP · 酷能手：话少实干、冷静敏锐。谈心后用独特的默默守护表达对你的绝对认可。"
+  },
+  INTP: {
+    monologue: "「我推算过我们组合在下一期打歌节目拿到一位的概率模型……虽然变量很多，但因为有你在 C 位，成功概率提升了 34.2%。今晚的交流很有价值。」",
+    insight: "INTP · 逻辑哲人：独立理性、深沉睿智。谈心后对你的领悟力刮目相看，将你视为智识交流的良伴。"
+  },
+  ENTJ: {
+    monologue: "「我们的目标绝不仅仅是国内音乐榜单，而是走向全球顶级舞台。今晚跟你敲定了后续的舞台战术，我更有底气了。我们要一起站上最高巅峰！」",
+    insight: "ENTJ · 雄心远见者：远见卓识、目标明确。深夜谈心建立了事业与情感的双重共鸣，视你为不可替代的顶尖搭档。"
+  },
+  ISFJ: {
+    monologue: "「我看你今天嗓子有点哑，特地炖了川贝枇杷雪梨放在冰箱里……只要能看到你在台上开心发光，我在幕后做再多准备都是值得的。」",
+    insight: "ISFJ · 守护天使：奉献内敛、温暖真诚。谈心后彻底卸下防备，倾注无私的关怀与爱护。"
   }
 };
 
@@ -263,9 +296,7 @@ export default function SchedulesApp({
     const mbtiKey = (tm.mbti || "INFJ").toUpperCase();
     const talkData = MBTI_DORM_TALKS[mbtiKey] || MBTI_DORM_TALKS["INFJ"];
 
-    const newFav = Math.min(100, (tm.favorability || 50) + favBoost);
-    const newTeamFav = Math.min(100, (p.teammatesFavorability || 50) + teamFavBoost);
-    p.teammatesFavorability = newTeamFav;
+    const newFav = Math.min(100, (tm.favorability ?? 50) + favBoost);
 
     const updatedTeammates = currentTms.map(t => {
       if (t.id === tm.id || t.name === tm.name) {
@@ -278,6 +309,12 @@ export default function SchedulesApp({
       }
       return t;
     });
+
+    const teamAvgFav = updatedTeammates.length > 0
+      ? Math.round(updatedTeammates.reduce((acc, t) => acc + (t.favorability ?? 50), 0) / updatedTeammates.length)
+      : Math.min(100, (p.teammatesFavorability || 50) + teamFavBoost);
+
+    p.teammatesFavorability = teamAvgFav;
 
     onUpdatePersona(p);
     if (onUpdateTeammates) {
@@ -785,89 +822,18 @@ export default function SchedulesApp({
       };
     }
 
-    // Dynamic replacement of manager name references based on player gender (female -> 严, male -> 闵)
-    if (mLabel === "严") {
-      if (parsedResult.narrative) {
-        parsedResult.narrative = parsedResult.narrative
-          .replace(/闵室长/g, "严室长")
-          .replace(/闵经理人/g, "严经理人")
-          .replace(/闵经理/g, "严经理")
-          .replace(/闵经纪人/g, "严经纪人")
-          .replace(/闵相勋/g, "严相勋")
-          .replace(/闵纪人/g, "严纪人")
-          .replace(/闵室/g, "严室");
-      }
-      if (parsedResult.managerMessage) {
-        parsedResult.managerMessage = parsedResult.managerMessage
-          .replace(/闵室长/g, "严室长")
-          .replace(/闵经理人/g, "严经理人")
-          .replace(/闵经理/g, "严经理")
-          .replace(/闵经纪人/g, "严经纪人")
-          .replace(/闵相勋/g, "严相勋")
-          .replace(/闵纪人/g, "严纪人")
-          .replace(/闵室/g, "严室");
-      }
-      if (parsedResult.weversePostContent) {
-        parsedResult.weversePostContent = parsedResult.weversePostContent
-          .replace(/闵室长/g, "严室长")
-          .replace(/闵经理人/g, "严经理人")
-          .replace(/闵经理/g, "严经理")
-          .replace(/闵经纪人/g, "严经纪人")
-          .replace(/闵相勋/g, "严相勋")
-          .replace(/闵纪人/g, "严纪人")
-          .replace(/闵室/g, "严室");
-      }
-      if (parsedResult.proactiveMessage && parsedResult.proactiveMessage.text) {
-        parsedResult.proactiveMessage.text = parsedResult.proactiveMessage.text
-          .replace(/闵室长/g, "严室长")
-          .replace(/闵经理人/g, "严经理人")
-          .replace(/闵经理/g, "严经理")
-          .replace(/闵经纪人/g, "严经纪人")
-          .replace(/闵相勋/g, "严相勋")
-          .replace(/闵纪人/g, "严纪人")
-          .replace(/闵室/g, "严室");
-      }
-    } else if (mLabel === "闵") {
-      if (parsedResult.narrative) {
-        parsedResult.narrative = parsedResult.narrative
-          .replace(/严室长/g, "闵室长")
-          .replace(/严经理人/g, "闵经理人")
-          .replace(/严经理/g, "闵经理")
-          .replace(/严经纪人/g, "闵经纪人")
-          .replace(/严相勋/g, "闵相勋")
-          .replace(/严纪人/g, "闵纪人")
-          .replace(/严室/g, "闵室");
-      }
-      if (parsedResult.managerMessage) {
-        parsedResult.managerMessage = parsedResult.managerMessage
-          .replace(/严室长/g, "闵室长")
-          .replace(/严经理人/g, "闵经理人")
-          .replace(/严经理/g, "闵经理")
-          .replace(/严经纪人/g, "闵经纪人")
-          .replace(/严相勋/g, "闵相勋")
-          .replace(/严纪人/g, "闵纪人")
-          .replace(/严室/g, "闵室");
-      }
-      if (parsedResult.weversePostContent) {
-        parsedResult.weversePostContent = parsedResult.weversePostContent
-          .replace(/严室长/g, "闵室长")
-          .replace(/严经理人/g, "闵经理人")
-          .replace(/严经理/g, "闵经理")
-          .replace(/严经纪人/g, "闵经纪人")
-          .replace(/严相勋/g, "闵相勋")
-          .replace(/严纪人/g, "闵纪人")
-          .replace(/严室/g, "闵室");
-      }
-      if (parsedResult.proactiveMessage && parsedResult.proactiveMessage.text) {
-        parsedResult.proactiveMessage.text = parsedResult.proactiveMessage.text
-          .replace(/严室长/g, "闵室长")
-          .replace(/严经理人/g, "闵经理人")
-          .replace(/严经理/g, "闵经理")
-          .replace(/严经纪人/g, "闵经纪人")
-          .replace(/严相勋/g, "闵相勋")
-          .replace(/严纪人/g, "闵纪人")
-          .replace(/严室/g, "闵室");
-      }
+    // Dynamic replacement of manager name references using managerUtils helper
+    if (parsedResult.narrative) {
+      parsedResult.narrative = replaceManagerPlaceholders(parsedResult.narrative, persona);
+    }
+    if (parsedResult.managerMessage) {
+      parsedResult.managerMessage = replaceManagerPlaceholders(parsedResult.managerMessage, persona);
+    }
+    if (parsedResult.weversePostContent) {
+      parsedResult.weversePostContent = replaceManagerPlaceholders(parsedResult.weversePostContent, persona);
+    }
+    if (parsedResult.proactiveMessage && parsedResult.proactiveMessage.text) {
+      parsedResult.proactiveMessage.text = replaceManagerPlaceholders(parsedResult.proactiveMessage.text, persona);
     }
 
     // Map scheduled results cleanly to app schedules formats
@@ -1151,9 +1117,25 @@ export default function SchedulesApp({
           </div>
         </div>
 
+        {/* Time System Logic Guidance Card */}
+        <div className="bg-gradient-to-r from-blue-950/40 via-indigo-950/40 to-purple-950/40 border border-blue-500/25 rounded-xl p-3 mb-3.5 space-y-1.5 text-xs shadow-sm shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-blue-300 font-bold text-[11.5px]">
+              <span>💡 回合制点数与行程消耗机制</span>
+            </div>
+            <span className="text-[9px] bg-blue-500/20 text-blue-200 border border-blue-500/30 px-2 py-0.5 rounded font-mono font-bold">
+              当前第 {persona.dayNumber} 天 (剩余 {typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18}/18 互动点)
+            </span>
+          </div>
+          <p className="text-[10.5px] text-slate-300 leading-relaxed">
+            • <strong>时间与行程机制</strong>：本游戏为<strong>回合制点数驱动</strong>。顶部状态栏时钟为现实生活中的实时壁钟参考，与行程无关。<br />
+            • <strong>点数消耗与判定</strong>：每天拥有 18 个互动点。下方各行程已直接清晰标示<strong>所需点数</strong>以及你<strong>当前剩余点数是否足够</strong>。消耗完 18 点或在宿舍休整后将自动结算进入下一天（Day {persona.dayNumber + 1}）。
+          </p>
+        </div>
+
         {/* Trainee Debt Widget (Requirement 4) */}
         {persona.startType === "trainee" && (
-          <div className="bg-red-950/15 border border-red-500/20 rounded-xl p-3 mb-3.5 flex items-center justify-between">
+          <div className="bg-red-950/15 border border-red-500/20 rounded-xl p-3 mb-3.5 flex items-center justify-between shrink-0">
             <div>
               <span className="text-[9px] text-red-400 uppercase font-mono block">未结算债务余额 (Leftover Trainee Debt)</span>
               <span className="text-sm font-bold text-red-300 font-mono mt-0.5 block flex items-center gap-1">
@@ -1168,7 +1150,7 @@ export default function SchedulesApp({
         )}
 
         {/* Daily selectable energy recovery program (NEW V3.3) */}
-        <div className="bg-slate-950/60 border border-purple-500/15 rounded-xl p-3 mb-3.5 space-y-2">
+        <div className="bg-slate-950/60 border border-purple-500/15 rounded-xl p-3 mb-3.5 space-y-2 shrink-0">
           <div className="flex items-center justify-between">
             <h4 className="text-xs font-bold text-transparent bg-gradient-to-r from-purple-400 to-[#e9b872] bg-clip-text flex items-center gap-1.5">
               <span>🌸 每日自选修护计划 (Action Refills)</span>
@@ -1246,26 +1228,26 @@ export default function SchedulesApp({
 
         {/* Dorm Late-Night Heart-to-Heart Section (Team Mode Only) */}
         {persona.style !== "solo" && (
-          <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-950/60 border border-purple-500/25 rounded-xl p-3 mb-3.5 relative overflow-hidden shadow-lg">
+          <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-950/60 border border-purple-500/25 rounded-xl p-3 mb-3.5 relative overflow-hidden shadow-lg shrink-0">
             <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-400/30">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-start sm:items-center gap-2 min-w-0">
+                <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-400/30 shrink-0 mt-0.5 sm:mt-0">
                   <Moon className="w-4 h-4 text-purple-300" />
                 </div>
-                <div>
-                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs font-bold text-white flex flex-wrap items-center gap-1.5">
                     <span>🌙 宿舍深夜谈心 (Dorm Heart-to-Heart)</span>
                     <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full font-mono font-medium border border-purple-400/30">
                       团队模式专属
                     </span>
                   </h4>
-                  <p className="text-[10px] text-purple-200/70 mt-0.5">
+                  <p className="text-[10px] text-purple-200/70 mt-0.5 leading-snug">
                     消耗 1 互动点，与指定队友盘腿长谈，提升好感度与团魂，解锁隐藏 MBTI 人格侧写
                   </p>
                 </div>
               </div>
-              <div className="text-right shrink-0">
+              <div className="text-left sm:text-right shrink-0">
                 <span className="text-[10px] text-purple-300/80 font-mono block">
                   剩余互动点: <strong className="text-amber-300 text-xs">{persona.interactionPoints ?? 18}</strong>
                 </span>
@@ -1284,46 +1266,75 @@ export default function SchedulesApp({
         )}
 
         {/* Schedules list */}
-        <div className="space-y-1.5 pr-1 mt-3.5">
-          {schedules.map((sch) => (
-            <div
-              key={sch.id}
-              className={`p-3 rounded-xl border flex items-center justify-between transition-all ${sch.completed ? 'bg-slate-900/40 border-slate-800 text-slate-500' : 'bg-slate-950/80 border-white/5 hover:border-purple-500/20'}`}
-            >
-              <div className="min-w-0 pr-2">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono font-bold uppercase ${sch.completed ? 'bg-slate-800 text-slate-500' : 'bg-purple-900/30 text-purple-300 border border-purple-500/10'}`}>
-                    {sch.category}
-                  </span>
-                  <span className="text-[10px] text-slate-400 font-mono">{sch.time}</span>
-                </div>
-                <p className={`text-xs font-semibold mt-1 truncate ${sch.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
-                  {sch.title}
-                </p>
-                <div className="flex gap-2 items-center text-[9px] text-slate-450 mt-1 font-mono flex-wrap">
-                  <span className="text-teal-400">魅力: +{sch.rewardPopularity}</span>
-                  <span className="text-indigo-400">名气: +{sch.rewardReputation}</span>
-                  <span className="text-amber-500">消耗: {sch.energyCost}⚡️</span>
-                  <span className="text-emerald-400 font-bold bg-emerald-900/20 border border-emerald-500/10 px-1 rounded">🎯 {sch.category === "vocal_lesson" || sch.category === "practice" || sch.category === "clinical_dermatology" || sch.category === "restrictive_diet" || sch.category === "rest_sleep" ? 1 : 2} 互动点</span>
-                </div>
-              </div>
+        <div className="space-y-1.5 pr-1 mt-3.5 shrink-0">
+          {schedules.map((sch) => {
+            const pointCost = (sch.category === "vocal_lesson" || sch.category === "practice" || sch.category === "clinical_dermatology" || sch.category === "restrictive_diet" || sch.category === "rest_sleep") ? 1 : 2;
+            const currentPts = typeof persona.interactionPoints === 'number' ? persona.interactionPoints : 18;
+            const isEnough = currentPts >= pointCost;
 
-              <button
-                onClick={() => handlePerformSchedule(sch.id)}
-                disabled={sch.completed}
-                className={`p-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-0.5 shrink-0 ${sch.completed ? 'bg-slate-800 text-slate-500 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500 text-white cursor-pointer active:scale-95 shadow-sm'}`}
+            return (
+              <div
+                key={sch.id}
+                className={`p-3 rounded-xl border flex items-center justify-between transition-all ${sch.completed ? 'bg-slate-900/40 border-slate-800 text-slate-500' : 'bg-slate-950/80 border-white/5 hover:border-purple-500/20'}`}
               >
-                {sch.completed ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                ) : (
-                  <>
-                    <span>进行行程</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </>
-                )}
-              </button>
-            </div>
-          ))}
+                <div className="min-w-0 pr-2 flex-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded font-mono font-bold uppercase ${sch.completed ? 'bg-slate-800 text-slate-500' : 'bg-purple-900/30 text-purple-300 border border-purple-500/10'}`}>
+                      {sch.category}
+                    </span>
+                    {sch.completed ? (
+                      <span className="text-[9.5px] text-slate-500 font-mono bg-slate-900/80 border border-slate-800 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-slate-500" />
+                        已打卡完成
+                      </span>
+                    ) : isEnough ? (
+                      <span className="text-[9.5px] text-emerald-300 font-mono bg-emerald-950/60 border border-emerald-500/30 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+                        🎯 需 {pointCost} 互动点 (当前剩余 {currentPts} 点 · 足够)
+                      </span>
+                    ) : (
+                      <span className="text-[9.5px] text-rose-300 font-mono bg-rose-950/60 border border-rose-500/30 px-1.5 py-0.5 rounded font-bold flex items-center gap-1">
+                        ⚠️ 需 {pointCost} 互动点 (当前仅剩 {currentPts} 点 · 点数不足)
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-xs font-semibold mt-1.5 truncate ${sch.completed ? 'line-through text-slate-500' : 'text-slate-100'}`}>
+                    {sch.title}
+                  </p>
+                  <div className="flex gap-2.5 items-center text-[9.5px] text-slate-400 mt-1.5 font-mono flex-wrap">
+                    <span className="text-teal-400 font-medium">魅力 +{sch.rewardPopularity}</span>
+                    <span className="text-indigo-400 font-medium">名气 +{sch.rewardReputation}</span>
+                    <span className="text-amber-400 font-medium">消耗 {sch.energyCost}⚡️</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => handlePerformSchedule(sch.id)}
+                  disabled={sch.completed || !isEnough}
+                  className={`p-2 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shrink-0 ${
+                    sch.completed 
+                      ? 'bg-slate-800/80 text-slate-500 cursor-not-allowed border border-slate-700/50' 
+                      : !isEnough 
+                        ? 'bg-rose-950/40 text-rose-300/80 border border-rose-500/30 cursor-not-allowed opacity-80' 
+                        : 'bg-purple-600 hover:bg-purple-500 text-white cursor-pointer active:scale-95 shadow-sm'
+                  }`}
+                >
+                  {sch.completed ? (
+                    <>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>已完成</span>
+                    </>
+                  ) : !isEnough ? (
+                    <span>点数不足</span>
+                  ) : (
+                    <>
+                      <span>执行行程</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </>
+                  )}
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -1590,9 +1601,9 @@ export default function SchedulesApp({
 
       {/* Dorm Talk Teammate Selection Modal */}
       {isDormTalkSelectionOpen && (
-        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[310] p-4 animate-fade-in select-none">
-          <div className="bg-[#0f0b1e] border-2 border-purple-500/40 rounded-3xl max-w-md w-full p-6 shadow-[0_0_60px_rgba(168,85,247,0.25)] relative overflow-hidden text-slate-100">
-            <div className="flex items-center justify-between border-b border-purple-500/20 pb-4 mb-4">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[310] p-3 md:p-4 animate-fade-in select-none overflow-y-auto">
+          <div className="bg-[#0f0b1e] border-2 border-purple-500/40 rounded-3xl max-w-md w-full p-4 md:p-6 shadow-[0_0_60px_rgba(168,85,247,0.25)] relative text-slate-100 my-auto max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-purple-500/20 pb-3 mb-3 shrink-0">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-purple-500/20 text-purple-300 rounded-xl border border-purple-400/30">
                   <Moon className="w-5 h-5 text-purple-300" />
@@ -1608,17 +1619,17 @@ export default function SchedulesApp({
               </div>
               <button
                 onClick={() => setIsDormTalkSelectionOpen(false)}
-                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded-lg bg-slate-800/60"
+                className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/50 cursor-pointer"
               >
                 ✕ 关闭
               </button>
             </div>
 
-            <p className="text-xs text-purple-200/90 mb-4 leading-relaxed bg-purple-950/40 border border-purple-500/20 p-3 rounded-xl">
+            <p className="text-xs text-purple-200/90 mb-3 leading-relaxed bg-purple-950/40 border border-purple-500/20 p-3 rounded-xl shrink-0">
               🌙 夜深人静的宿舍客厅，暖黄的落地灯微微摇曳。选择一位队友倾听彼此内心深处的脆弱与执念，不仅能提升羁绊好感，还能解锁隐藏的 MBTI 性格侧写。
             </p>
 
-            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1 mb-5">
+            <div className="space-y-2.5 overflow-y-auto pr-1 mb-3 flex-1 custom-scrollbar">
               {getEffectiveTeammates(persona, teammates).map((tm) => (
                 <div
                   key={tm.id || tm.name}
@@ -1626,13 +1637,20 @@ export default function SchedulesApp({
                   className="p-3 rounded-2xl bg-slate-900/80 border border-purple-500/20 hover:border-purple-400/60 hover:bg-purple-950/30 transition-all cursor-pointer flex items-center justify-between group active:scale-98"
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src={tm.avatar}
-                      alt={tm.name}
-                      className="w-11 h-11 rounded-full object-cover border-2 border-purple-500/30 group-hover:border-amber-400 transition-all"
-                    />
-                    <div>
-                      <div className="flex items-center gap-1.5">
+                    {tm.avatar ? (
+                      <img
+                        src={tm.avatar}
+                        alt={tm.name}
+                        className="w-11 h-11 rounded-full object-cover border-2 border-purple-500/30 group-hover:border-amber-400 transition-all shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div className="w-11 h-11 rounded-full bg-purple-900/60 text-amber-300 font-extrabold text-xs flex items-center justify-center border-2 border-purple-500/30 shrink-0">
+                        {tm.name.substring(0, 1)}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
                           {tm.name} ({tm.stageName})
                         </span>
@@ -1640,7 +1658,7 @@ export default function SchedulesApp({
                           {tm.role}
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
                         <span className="text-[10px] text-slate-400 font-mono">
                           好感度: <strong className="text-pink-300">{tm.favorability || 50}/100</strong>
                         </span>
@@ -1656,14 +1674,14 @@ export default function SchedulesApp({
                       </div>
                     </div>
                   </div>
-                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow transition-all shrink-0">
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow transition-all shrink-0 ml-2">
                     深夜谈心 💬
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="text-center text-[10px] text-slate-400 font-mono">
+            <div className="text-center text-[10px] text-slate-400 font-mono shrink-0 pt-2 border-t border-purple-500/10">
               💡 谈心后将自动更新团魂好感与队友个人关系链
             </div>
           </div>
@@ -1672,30 +1690,45 @@ export default function SchedulesApp({
 
       {/* Dorm Talk Result Modal */}
       {dormTalkResult && (
-        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[320] p-4 select-none animate-fade-in">
-          <div className="bg-[#0b0818] border-2 border-purple-500/50 rounded-3xl max-w-md w-full p-6 shadow-[0_0_80px_rgba(168,85,247,0.35)] relative overflow-hidden text-slate-100">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[320] p-3 md:p-4 select-none animate-fade-in overflow-y-auto">
+          <div className="bg-[#0b0818] border-2 border-purple-500/50 rounded-3xl max-w-md w-full p-4 md:p-6 shadow-[0_0_80px_rgba(168,85,247,0.35)] relative text-slate-100 my-auto max-h-[90vh] flex flex-col overflow-y-auto custom-scrollbar">
             <div className="absolute -top-12 -right-12 w-44 h-44 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="flex items-center gap-3 border-b border-purple-500/30 pb-4 mb-4">
-              <img
-                src={dormTalkResult.teammate.avatar}
-                alt={dormTalkResult.teammate.name}
-                className="w-12 h-12 rounded-full object-cover border-2 border-amber-400/80 shadow-lg"
-              />
-              <div>
-                <span className="text-[10px] font-black uppercase font-mono tracking-widest text-amber-400 flex items-center gap-1">
-                  🌙 DORM HEART-TO-HEART · 深夜长谈
-                </span>
-                <h3 className="text-sm font-black text-white tracking-wide">
-                  与 {dormTalkResult.teammate.name} 的深夜敞开心扉
-                </h3>
+            <div className="flex items-center justify-between border-b border-purple-500/30 pb-3 mb-3 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                {dormTalkResult.teammate.avatar ? (
+                  <img
+                    src={dormTalkResult.teammate.avatar}
+                    alt={dormTalkResult.teammate.name}
+                    className="w-11 h-11 md:w-12 md:h-12 rounded-full object-cover border-2 border-amber-400/80 shadow-lg shrink-0"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="w-11 h-11 md:w-12 md:h-12 rounded-full bg-purple-900/80 text-amber-300 font-black text-sm flex items-center justify-center border-2 border-amber-400/80 shadow-lg shrink-0">
+                    {dormTalkResult.teammate.name.substring(0, 1)}
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <span className="text-[9.5px] font-black uppercase font-mono tracking-wider text-amber-400 flex items-center gap-1">
+                    🌙 DORM HEART-TO-HEART · 深夜长谈
+                  </span>
+                  <h3 className="text-xs md:text-sm font-black text-white tracking-wide truncate">
+                    与 {dormTalkResult.teammate.name} 的深夜敞开心扉
+                  </h3>
+                </div>
               </div>
+              <button
+                onClick={() => setDormTalkResult(null)}
+                className="text-slate-400 hover:text-white text-xs px-2.5 py-1 rounded-lg bg-slate-800/80 border border-slate-700/50 cursor-pointer shrink-0 ml-2"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="bg-slate-900/90 border border-purple-500/30 rounded-2xl p-4 mb-4 relative shadow-inner">
-              <div className="text-3xl text-purple-400/30 font-serif leading-none absolute top-2 left-3 select-none">“</div>
-              <p className="text-xs text-purple-100 leading-relaxed font-sans italic pl-5 pr-2 pt-1 mb-2">
+            <div className="bg-slate-900/90 border border-purple-500/30 rounded-2xl p-3.5 md:p-4 mb-3 relative shadow-inner shrink-0">
+              <div className="text-2xl md:text-3xl text-purple-400/30 font-serif leading-none absolute top-2 left-2.5 select-none">“</div>
+              <p className="text-xs md:text-sm text-purple-100 leading-relaxed font-sans italic pl-4 md:pl-5 pr-1 pt-1 mb-2 select-text max-h-48 overflow-y-auto custom-scrollbar">
                 {dormTalkResult.monologue}
               </p>
               <div className="text-right text-[10px] font-bold text-amber-300/90 font-mono pr-1">
@@ -1703,26 +1736,26 @@ export default function SchedulesApp({
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border border-purple-400/40 rounded-2xl p-3.5 mb-5 shadow-lg">
+            <div className="bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border border-purple-400/40 rounded-2xl p-3 md:p-3.5 mb-3 shadow-lg shrink-0">
               <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300 mb-1.5">
-                <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
+                <Sparkles className="w-4 h-4 text-amber-300 shrink-0" />
                 <span>【隐藏 MBTI 性格侧写已解锁】: <strong className="text-white font-mono text-sm">{dormTalkResult.teammate.mbti}</strong></span>
               </div>
-              <p className="text-[11px] text-purple-100/90 leading-normal pl-1 font-sans">
+              <p className="text-[11px] md:text-xs text-purple-100/90 leading-relaxed pl-1 font-sans select-text max-h-40 overflow-y-auto custom-scrollbar">
                 {dormTalkResult.mbtiInsight}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-5">
-              <div className="bg-purple-950/60 border border-purple-500/30 rounded-xl p-2.5 text-center">
+            <div className="grid grid-cols-2 gap-2 mb-3.5 shrink-0">
+              <div className="bg-purple-950/60 border border-purple-500/30 rounded-xl p-2 md:p-2.5 text-center">
                 <span className="text-[9px] text-purple-300/80 block font-bold">个人好感提升</span>
-                <span className="text-sm font-black text-pink-300 font-mono">
+                <span className="text-xs md:text-sm font-black text-pink-300 font-mono">
                   +{dormTalkResult.favorabilityBoost} <span className="text-[10px] text-slate-400">({dormTalkResult.teammate.favorability}/100)</span>
                 </span>
               </div>
-              <div className="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-2.5 text-center">
+              <div className="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-2 md:p-2.5 text-center">
                 <span className="text-[9px] text-indigo-300/80 block font-bold">团队凝聚力提升</span>
-                <span className="text-sm font-black text-amber-300 font-mono">
+                <span className="text-xs md:text-sm font-black text-amber-300 font-mono">
                   +{dormTalkResult.teamFavorabilityBoost} <span className="text-[10px] text-slate-400">({persona.teammatesFavorability}/100)</span>
                 </span>
               </div>
@@ -1730,7 +1763,7 @@ export default function SchedulesApp({
 
             <button
               onClick={() => setDormTalkResult(null)}
-              className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 text-white font-bold text-xs shadow-lg hover:brightness-110 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+              className="w-full py-2.5 md:py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 text-white font-bold text-xs shadow-lg hover:brightness-110 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0"
             >
               <Moon className="w-4 h-4 text-amber-300" />
               记在心里，互道晚安 🌙

@@ -414,9 +414,9 @@ ${gDesc}
             <p className="text-xs text-slate-200 leading-relaxed font-sans whitespace-pre-line">
               {selectedPost.content}
             </p>
-            {selectedPost.image && (
+            {Boolean(selectedPost.image) ? (
               <img src={selectedPost.image} alt="post_img" className="w-full max-h-[140px] object-cover rounded-lg mt-3 border border-white/5" referrerPolicy="no-referrer" />
-            )}
+            ) : null}
             <div className="flex items-center gap-3 mt-3.5 text-xs text-slate-400 font-mono">
               <span className="flex items-center gap-1"><Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> {selectedPost.likes}</span>
               <span className="flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5 text-purple-400" /> {selectedPost.comments.length} 个粉丝讨论</span>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { IdolPersona, PersonalDiaryEntry, getCalendarPeriod } from "../types";
 import { BookOpen, Sparkles, Heart, Flame, Calendar, Plus, RefreshCw, MessageSquare, Tag, PenTool, CheckCircle2, Award, Smile, ShieldAlert } from "lucide-react";
 import { safeFetch } from "./apiHelper";
+import { getManagerShortTitle } from "../utils/managerUtils";
 
 interface PersonalDiaryAppProps {
   persona: IdolPersona;
@@ -53,7 +54,7 @@ export function generateFallbackWeeklyDiaryEntry(persona: IdolPersona, weekNumbe
   } else if (!isSolo && (persona.teammatesFavorability || 0) >= 60) {
     relationshipMilestone = `与队内成员完成宿舍深夜客厅长谈，团魂好感攀升至 ${persona.teammatesFavorability || 60}/100！彼此卸下防备，解锁了隐藏 MBTI 侧写与深层默契。`;
   } else {
-    relationshipMilestone = `与严室长和经纪团队保持了高度专业的业务信任（室长好感 ${persona.managerFavorability || 50}/100），并凭借精湛的直拍在全网唯粉与路人圈中树立了敬业口碑。`;
+    relationshipMilestone = `与${getManagerShortTitle(persona)}和经纪团队保持了高度专业的业务信任（室长好感 ${persona.managerFavorability || 50}/100），并凭借精湛的直拍在全网唯粉与路人圈中树立了敬业口碑。`;
   }
 
   const diaryContent = `【第 ${weekNumber} 周星途私密手记 · 写给首尔深夜的自己】

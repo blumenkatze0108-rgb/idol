@@ -1052,16 +1052,17 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       let companions = numCompanionsNeeded > 0 ? (customTeammates.length > 0 ? customTeammates : generateRandomTeammates(gender, numCompanionsNeeded)) : [];
       const targetTeammateFav = finalPersonas[0]?.teammatesFavorability ?? initTeammatesFavorability;
       
+      const favOffsets = [0, 5, -4, 3, -2];
       if (numCompanionsNeeded === 4 && companions.length === 4 && finalPersonas.length > 0) {
         const playerRole = finalPersonas[0].roleInGroup;
-        companions = ensureUniqueTeammateRoles(companions, playerRole, gender).map((t) => ({
+        companions = ensureUniqueTeammateRoles(companions, playerRole, gender).map((t, idx) => ({
           ...t,
-          favorability: targetTeammateFav
+          favorability: Math.max(0, Math.min(100, targetTeammateFav + (favOffsets[idx % favOffsets.length] || 0)))
         }));
       } else {
-        companions = companions.map(t => ({
+        companions = companions.map((t, idx) => ({
           ...t,
-          favorability: targetTeammateFav
+          favorability: Math.max(0, Math.min(100, targetTeammateFav + (favOffsets[idx % favOffsets.length] || 0)))
         }));
       }
 

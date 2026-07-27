@@ -368,7 +368,7 @@ export default function KakaoTalkApp({
 
       // Create character instruction context (Requirement 13 & 15)
       const effectiveFavorability = contact.role === "member"
-        ? (persona.teammatesFavorability ?? contact.favorability ?? 50)
+        ? (contact.favorability ?? persona.teammatesFavorability ?? 50)
         : (contact.id === "manager" || contact.role === "manager")
           ? (persona.managerFavorability ?? contact.favorability ?? 50)
           : (contact.favorability ?? 50);
@@ -563,15 +563,40 @@ ${groupDesc}
           }
         }
 
-        // Update contact last message
-        const idx = updatedContacts.findIndex((c) => c.id === contact.id);
-        if (idx !== -1) {
-          updatedContacts[idx] = {
-            ...updatedContacts[idx],
-            lastMessage: replyText.substring(0, 30) + (replyText.length > 30 ? "..." : ""),
-            unread: true,
-            time: "刚刚"
-          };
+        if (contact.role === "member") {
+          let memberShift = 2; // Default +2 favorability per conversation turn with member
+          const positiveKeywords = ["谢谢", "辛苦", "加油", "赞", "爱", "抱", "一起", "棒", "好懂你", "厉害", "别担心", "陪你"];
+          const negativeKeywords = ["讨厌", "烦", "走开", "笨", "退团", "抢", "自私", "装", "冷漠"];
+          if (positiveKeywords.some(k => userFullQuery.includes(k))) memberShift += 4;
+          if (negativeKeywords.some(k => userFullQuery.includes(k))) memberShift -= 8;
+
+          const currentFav = contact.favorability ?? persona.teammatesFavorability ?? 50;
+          const newFav = Math.max(0, Math.min(100, currentFav + memberShift));
+
+          const idx = updatedContacts.findIndex((c) => c.id === contact.id);
+          if (idx !== -1) {
+            updatedContacts[idx] = {
+              ...updatedContacts[idx],
+              favorability: newFav,
+              lastMessage: replyText.substring(0, 30) + (replyText.length > 30 ? "..." : ""),
+              unread: true,
+              time: "刚刚"
+            };
+          }
+          if (memberShift > 0 && newFav >= 80 && currentFav < 80) {
+            onAddLog(`💖 【成员单独好感突破】你与队友【${contact.name}】的小窗热聊使好感攀升至 ${newFav}/100！达到了极度倾心与独占求爱线！`);
+          }
+        } else {
+          // Update contact last message
+          const idx = updatedContacts.findIndex((c) => c.id === contact.id);
+          if (idx !== -1) {
+            updatedContacts[idx] = {
+              ...updatedContacts[idx],
+              lastMessage: replyText.substring(0, 30) + (replyText.length > 30 ? "..." : ""),
+              unread: true,
+              time: "刚刚"
+            };
+          }
         }
       } catch (err) {
         console.error(err);
@@ -625,7 +650,22 @@ ${groupDesc}
                         <span className="text-xs font-bold text-slate-800 truncate">{c.name}</span>
                         <span className="text-[8px] text-amber-800 bg-amber-500/10 font-mono px-1 rounded ml-1 font-bold shrink-0">{getContactAge(c.id)}岁</span>
                       </div>
-                      <span className="text-[9px] text-slate-400 font-mono shrink-0">{c.time}</span>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {c.id === "lover" ? (
+                          <span className="text-[8px] font-mono font-bold px-1 rounded bg-pink-100 text-pink-700 border border-pink-200">
+                            好感 {persona.loverMood ?? 80}
+                          </span>
+                        ) : (
+                          <span className={`text-[8px] font-mono font-bold px-1 rounded ${
+                            (c.favorability ?? 50) >= 80 ? 'bg-pink-500/15 text-pink-700 border border-pink-500/20 font-extrabold' :
+                            (c.favorability ?? 50) >= 60 ? 'bg-purple-500/15 text-purple-700 border border-purple-500/20' :
+                            'bg-amber-500/10 text-amber-800 border border-amber-500/20'
+                          }`}>
+                            好感 {c.favorability ?? 50}
+                          </span>
+                        )}
+                        <span className="text-[9px] text-slate-400 font-mono">{c.time}</span>
+                      </div>
                     </div>
                     <p className="text-[10px] text-slate-500 truncate mt-0.5">
                       {hasQueued ? (
@@ -697,13 +737,16 @@ ${groupDesc}
                 ) : (
                   (() => {
                     const activeFav = selectedContact.role === "member"
-                      ? (persona.teammatesFavorability ?? selectedContact.favorability ?? 50)
+                      ? (selectedContact.favorability ?? persona.teammatesFavorability ?? 50)
                       : (selectedContact.id === "manager" || selectedContact.role === "manager")
                         ? (persona.managerFavorability ?? selectedContact.favorability ?? 50)
                         : (selectedContact.favorability ?? 50);
                     return (
                       <>
-                        <span className="shrink-0">好感:</span> <strong className="text-purple-600 shrink-0">{activeFav}/100</strong> {activeFav < 35 ? " (态度极其冷淡)" : activeFav >= 80 ? " ✨ (亲密极度贴心)" : activeFav >= 60 ? " 😊 (友好热情)" : ""}
+                        <span className="shrink-0">成员好感:</span> <strong className="text-purple-600 shrink-0">{activeFav}/100</strong> {activeFav < 35 ? " (态度极其冷淡)" : activeFav >= 80 ? " ✨ (亲密极度贴心/独占追求)" : activeFav >= 60 ? " 😊 (友好热情)" : ""}
+                        {selectedContact.role === "member" && (
+                          <span className="text-[8px] text-amber-800 bg-amber-500/10 font-mono px-1 rounded ml-1 font-bold shrink-0">全队团魂均值: {persona.teammatesFavorability}</span>
+                        )}
                       </>
                     );
                   })()

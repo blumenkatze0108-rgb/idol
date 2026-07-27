@@ -23,6 +23,7 @@ import {
   getInitialBubbleMessages,
   getInitialTikTokVideos
 } from "./mockData";
+import { getManagerShortTitle, getManagerFullName } from "./utils/managerUtils";
 import IdolProfileSetup from "./components/IdolProfileSetup";
 import BirthdayGameModal from "./components/BirthdayGameModal";
 import KakaoTalkApp from "./components/KakaoTalkApp";
@@ -962,41 +963,28 @@ ${contact.summary || "无"}`;
     }
   }, []);
 
-  // Keep chatContacts and teammates favorability in sync with persona.teammatesFavorability
+  // Keep chatContacts member favorabilities in sync with individual teammates' favorability
   useEffect(() => {
     if (!persona) return;
-    const targetFav = persona.teammatesFavorability;
-    if (typeof targetFav === "number") {
-      setChatContacts(conts => {
-        let changed = false;
-        const next = conts.map(c => {
-          if (c.role === "member" && c.favorability !== targetFav) {
-            changed = true;
-            return { ...c, favorability: targetFav };
-          }
-          return c;
-        });
-        return changed ? next : conts;
-      });
+    const activeTms = personasTeammates[activePersonaIdx] || [];
+    if (!activeTms || activeTms.length === 0) return;
 
-      setPersonasTeammates(prevArr => {
-        if (!Array.isArray(prevArr)) return prevArr;
-        const activeTms = prevArr[activePersonaIdx] || [];
-        let changed = false;
-        const nextTms = activeTms.map(t => {
-          if (t.favorability !== targetFav) {
+    setChatContacts(conts => {
+      let changed = false;
+      const next = conts.map(c => {
+        if (c.role === "member") {
+          const matchedTm = activeTms.find(t => t.id === c.id || (t.name && c.name.includes(t.name)));
+          const tmFav = matchedTm?.favorability ?? persona.teammatesFavorability ?? 50;
+          if (c.favorability !== tmFav) {
             changed = true;
-            return { ...t, favorability: targetFav };
+            return { ...c, favorability: tmFav };
           }
-          return t;
-        });
-        if (!changed) return prevArr;
-        const nextArr = [...prevArr];
-        nextArr[activePersonaIdx] = nextTms;
-        return nextArr;
+        }
+        return c;
       });
-    }
-  }, [persona?.teammatesFavorability, activePersonaIdx]);
+      return changed ? next : conts;
+    });
+  }, [personasTeammates, activePersonaIdx, persona?.teammatesFavorability]);
 
   // Propose a customized chat list based on generated teammates (Requirement 9, 15)
   const generateSubContacts = (p: IdolPersona, tm: SimulatedTeammate[], currHist: Record<string, ChatMessage[]> = chatHistories): ChatContact[] => {
@@ -1005,7 +993,7 @@ ${contact.summary || "无"}`;
     // 1. Procedural randomized openers based on personality & favorability (Requirement 13 & 15)
     let managerMsg = "";
     const mPersonality = p.managerPersonality || "strict";
-    const mName = p.managerCustomName || (p.gender === "female" ? "严相勋" : "闵相勋");
+    const mName = getManagerFullName(p);
     
     if (mPersonality === "strict") {
       if (p.managerFavorability < 25) {
@@ -1099,7 +1087,7 @@ ${contact.summary || "无"}`;
         
         if (isExtrovert) {
           const msgs = [
-            `${greeting}！刚才舞蹈集训完，我偷偷买了两杯清潭洞清晨限定冰美式，在新宿舍门口呢，等会儿匀你一杯！别让闵室长发现喔！☕️🤫`,
+            `${greeting}！刚才舞蹈集训完，我偷偷买了两杯清潭洞清晨限定冰美式，在新宿舍门口呢，等会儿匀你一杯！别让经纪人发现喔！☕️🤫`,
             `嘿嘿！听说昨晚代表在代表室夸起你的声乐咬字了，看来下张专辑你的 killing part 要拿满了！下午美容室等我，一起点鸡胸肉沙拉！🥑`,
             `${greeting}！刚才看到有人在Weverse给你专门写小长文安利了，超级治愈！今天也要元气满满地把练习室炸掉，Fighting！💃`,
             `哈哈，昨天录音PD甚至夸我唱歌有进步咧！今晚一起在宿舍吃无盐轻食拌沙拉吧，我学了新的拌酱！🥣`,
@@ -1135,7 +1123,7 @@ ${contact.summary || "无"}`;
           lastMessage: mateMsg,
           unread: true,
           time: "刚刚",
-          favorability: p.teammatesFavorability ?? mate.favorability ?? 50
+          favorability: mate.favorability ?? p.teammatesFavorability ?? 50
         });
       });
     }
@@ -1606,7 +1594,10 @@ ${contact.summary || "无"}`;
       
       let processedEvent = { ...selected };
       if (teammates && teammates.length > 0) {
-        const replacementName = teammates[0].name;
+        const highFavTm = teammates.find(t => (t.favorability ?? 0) >= 80)
+          || teammates.reduce((max, t) => ((t.favorability ?? 0) > (max.favorability ?? 0) ? t : max), teammates[0]);
+        const replacementName = highFavTm ? highFavTm.name : teammates[0].name;
+
         processedEvent.title = processedEvent.title.replace(/智雅/g, replacementName);
         processedEvent.description = processedEvent.description.replace(/智雅/g, replacementName);
         processedEvent.choices = processedEvent.choices.map(choice => ({
@@ -1626,8 +1617,11 @@ ${contact.summary || "无"}`;
     if (evt.id === "e_manager_pursuit" && (persona.managerFavorability || 0) < 80) {
       return false; // Manager pursuit event only triggers if manager favorability > 80
     }
-    if (evt.id === "e_teammate_pursuit" && (persona.style === "solo" || (persona.teammatesFavorability || 0) < 80)) {
-      return false; // Teammate pursuit event only triggers in group mode with favorability > 80
+    if (evt.id === "e_teammate_pursuit") {
+      if (persona.style === "solo") return false;
+      const activeTms = personasTeammates[activePersonaIdx] || teammates || [];
+      const has80FavTeammate = activeTms.some(t => (t.favorability ?? 0) >= 80) || (persona.teammatesFavorability || 0) >= 80;
+      if (!has80FavTeammate) return false; // Teammate pursuit event only triggers if at least one teammate favorability >= 80
     }
     if ((evt.id === "e_m1" || evt.id === "e_cp1" || evt.id === "e_c1" || evt.id === "e_s1") && persona.style !== "group") {
       return false; // Group center/CP/teammate events only apply for group style
@@ -1672,12 +1666,30 @@ ${contact.summary || "无"}`;
     p.managerFavorability = Math.max(0, Math.min(100, p.managerFavorability + managerEff));
     p.teammatesFavorability = Math.max(0, Math.min(100, p.teammatesFavorability + teammateEff));
 
+    if (teammateEff !== 0) {
+      setPersonasTeammates(prevArr => {
+        if (!Array.isArray(prevArr)) return prevArr;
+        const activeTms = prevArr[activePersonaIdx] || [];
+        const nextTms = activeTms.map(t => ({
+          ...t,
+          favorability: Math.max(0, Math.min(100, (t.favorability ?? p.teammatesFavorability) + teammateEff))
+        }));
+        const nextArr = [...prevArr];
+        nextArr[activePersonaIdx] = nextTms;
+        return nextArr;
+      });
+    }
+
     setPersona(p);
     
-    // Update contact favorability representation dynamically (Requirement 13)
+    // Update contact favorability representation dynamically
     const nextContacts = chatContacts.map((c) => {
       if (c.id === "manager") return { ...c, favorability: p.managerFavorability };
-      if (c.role === "member") return { ...c, favorability: p.teammatesFavorability };
+      if (c.role === "member") {
+        const activeTms = personasTeammates[activePersonaIdx] || [];
+        const matchedTm = activeTms.find(t => t.id === c.id || (t.name && c.name.includes(t.name)));
+        return { ...c, favorability: matchedTm ? Math.max(0, Math.min(100, (matchedTm.favorability ?? 50) + teammateEff)) : p.teammatesFavorability };
+      }
       return c;
     });
     setChatContacts(nextContacts);
@@ -2492,7 +2504,7 @@ ${contact.summary || "无"}`;
                     <span className="text-[9px] block text-slate-400 uppercase font-mono mb-1">团队主管与成员关系度</span>
                     <div className="space-y-1 text-[10px] text-slate-300">
                       <div className="flex justify-between">
-                        <span>👔 {persona.gender === "female" ? "严" : "闵"}室长:</span>
+                        <span>👔 {getManagerShortTitle(persona)}:</span>
                         <span className="font-bold font-mono text-purple-400">{persona.managerFavorability}/100</span>
                       </div>
                       {persona.style === "group" && (
@@ -2693,8 +2705,9 @@ ${contact.summary || "无"}`;
                                 details = `你平素勤恳的表现与高达 ${newPersona.ceoFavorability} 的高管认可度发挥了关键作用！社长得到D社长焦照密函后大发雷霆，但也明白你现阶段是Aether Label的绝对摇钱树。代表直接动用 ₩1,500w 黄金公关基金，赶在新闻排版前私了并买断了全部母带！虽然逃过一劫，但代表冷笑着给你记了账：新增 ₩1,500w 危机公关公摊债务！下次注意点！`;
                                 updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 3);
                               } else if (managerPassed) {
-                                outcomeText = `【🚨 绯闻漏风：闵室长启动‘肉身公关’完美化解！】`;
-                                details = `你的闵经纪人（好感度 ${newPersona.managerFavorability}）在业界人脉极广，在深夜截获了风声。她直接将该合照解释为‘深夜造型测试及公司工作便当品鉴会’。她带队连夜狂刷超话，把热度转移为其他八卦。虽然你被记过了一次并没收手机两天，但名誉保住了！没有增加半毛钱负债，爱死她了！`;
+                                const mTitle = getManagerShortTitle(newPersona);
+                                outcomeText = `【🚨 绯闻漏风：${mTitle}启动‘肉身公关’完美化解！】`;
+                                details = `你的${mTitle}（好感度 ${newPersona.managerFavorability}）在业界人脉极广，在深夜截获了风声。直接将该合照解释为‘深夜造型测试及公司工作便当品鉴会’。带队连夜狂刷超话，把热度转移为其他八卦。虽然你被记过了一次并没收手机两天，但名誉保住了！没有增加半毛钱负债！`;
                                 updatedFansDist.antiFans = Math.min(100, updatedFansDist.antiFans + 1);
                               } else if (teammatesPassed) {
                                 outcomeText = `【🚨 绯闻漏风：团魂爆发！队友们发布‘全员宿舍炸鸡围坐图’挡枪！】`;
@@ -2712,10 +2725,11 @@ ${contact.summary || "无"}`;
                                 updatedFansDist.soloFans = Math.max(0, updatedFansDist.soloFans - 12);
                                 updatedFansDist.otFans = Math.max(0, updatedFansDist.otFans - 13);
                                 
+                                const mTitle = getManagerShortTitle(newPersona);
                                 outcomeText = `【🚨 致命泄露：D社重磅绯闻全国曝光！舆论全面失控！】`;
                                 details = newPersona.style === "solo"
-                                  ? `灾难发生了！你在公司内部孤立无援，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`
-                                  : `灾难发生了！你在公司上上下下塑料情谊，关键时刻不仅没有得到李代表公关经费支持，闵室长表示无能为力，队友更是对此视若无睹冷眼旁观。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`;
+                                  ? `灾难发生了！你在公司内部孤立无援，关键时刻不仅没有得到李代表公关经费支持，${mTitle}表示无能为力。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`
+                                  : `灾难发生了！你在公司上上下下塑料情谊，关键时刻不仅没有得到李代表公关经费支持，${mTitle}表示无能为力，队友更是对此视若无睹冷眼旁观。你和秘密交往的 ${newPersona.loverName.split(" - ").pop() || newPersona.loverName} 的高清深夜牵手拥抱长焦大图，口子一旦漏底，直接登上娱乐新闻爆词首位！\n\n粉丝圈发生大地震，大量死忠脱粉回踩、大开黑号！全网怒控‘拿青春应援结果养你在温香软玉里泡茶！’ 好感代表性雪崩，你的名誉度暴跌 30 点，精神压力几近红区极限！`;
                               }
                               
                               newPersona.fansDistribution = updatedFansDist;
@@ -2966,7 +2980,7 @@ ${contact.summary || "无"}`;
                             setBirthdayPersonaIndices(celebratingBdayDateIndices);
                             setShowBirthdayEvent(true);
                             const celebratingNames = celebratingBdayDateIndices.map(idx => (idx === activePersonaIdx ? newPersona.stageName : personas[idx].stageName)).join(" & ");
-                            handleAddSystemLog(`🎂 【联合生日限定特别剧情】天呐！今天正好逢着组合本命成员 [${celebratingNames}] 在档案中设定的专属生日公历日期！全社队友、闵室长已在保姆车中为您筹划联合重磅惊喜现场，生日限定大礼包已上线！`);
+                            handleAddSystemLog(`🎂 【联合生日限定特别剧情】天呐！今天正好逢着组合本命成员 [${celebratingNames}] 在档案中设定的专属生日公历日期！全社队友、${getManagerShortTitle(newPersona)}已在保姆车中为您筹划联合重磅惊喜现场，生日限定大礼包已上线！`);
                             triggerToast("🎂 Happy Birthday!", `今天到达了 [${celebratingNames}] 的专属生日，联合生日限定庆典游戏已被唤醒！`, "success");
                           }
 
@@ -3018,7 +3032,32 @@ ${contact.summary || "无"}`;
                       customApiEndpoint={customApiEndpoint}
                       onUpdateHistories={(hist, conts) => {
                         setChatHistories(hist);
-                        setChatContacts(conts);
+                        if (conts) {
+                          setChatContacts(conts);
+                          setPersonasTeammates(prevArr => {
+                            if (!Array.isArray(prevArr)) return prevArr;
+                            const activeTms = prevArr[activePersonaIdx] || [];
+                            let changed = false;
+                            const nextTms = activeTms.map(t => {
+                              const matchedContact = conts.find(c => c.id === t.id || (c.name && c.name.includes(t.name)));
+                              if (matchedContact && matchedContact.favorability !== undefined && matchedContact.favorability !== t.favorability) {
+                                changed = true;
+                                return { ...t, favorability: matchedContact.favorability };
+                              }
+                              return t;
+                            });
+                            if (!changed) return prevArr;
+                            const nextArr = [...prevArr];
+                            nextArr[activePersonaIdx] = nextTms;
+
+                            const avgFav = nextTms.length > 0
+                              ? Math.round(nextTms.reduce((acc, tm) => acc + (tm.favorability ?? 50), 0) / nextTms.length)
+                              : persona.teammatesFavorability;
+                            setPersona(p => ({ ...p, teammatesFavorability: avgFav }));
+
+                            return nextArr;
+                          });
+                        }
                         triggerAutoSave(persona, teammates, hist);
                       }}
                       onAddLog={handleAddSystemLog}
@@ -3877,10 +3916,10 @@ ${contact.summary || "无"}`;
                 </div>
                 <div>
                   <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                    👑 企划社最新巨献公告 (V5.0 星途私密手记 & 舞台气场爆裂重塑)
+                    👑 企划社最新巨献公告 (V5.1 系统体验重塑与底层逻辑优化)
                   </h3>
                   <p className="text-[10px] text-purple-400 font-mono tracking-wider mt-0.5">
-                    RELEASE DATE: 2026-07-26 | SYSTEM VERSION 5.0 ULTIMATE
+                    RELEASE DATE: 2026-07-27 | SYSTEM VERSION 5.1 ULTIMATE
                   </p>
                 </div>
               </div>
@@ -3894,25 +3933,42 @@ ${contact.summary || "无"}`;
 
             <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
 
-              {/* TODAY RELEASE: V5.0 (2026-07-26) */}
+              {/* TODAY RELEASE: V5.1 (2026-07-27) */}
               <div className="bg-gradient-to-r from-purple-900/50 via-pink-900/40 to-indigo-950/40 border-2 border-amber-400/50 p-4 rounded-xl space-y-2 font-sans shadow-lg">
                 <div className="flex items-center justify-between text-amber-300 font-black text-[13px]">
                   <span className="flex items-center gap-2">
-                    🌟 22. 【今日最新发版】V5.0 偶像星途私密手记 & 舞台气场爆裂升级
+                    🌟 23. 【今日最新发版】V5.1 行程点数、室长交互、宿舍与KakaoTalk队友好感系统全面重塑
                   </span>
                   <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full font-mono">
-                    2026-07-26
+                    2026-07-27
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-200 leading-relaxed font-bold">
-                  企划社今日重磅呈献全新高奢演艺体验！涵盖独立周度手记、Solo纯享与宿谈心等深度维度：
+                  企划社今日呈献系统核心体验优化与全新演艺沉浸细节升级：
                 </p>
                 <div className="space-y-2 pl-3 border-l-2 border-amber-400/50 text-[11px] text-slate-300 leading-snug">
-                  <p>📖 <strong className="text-amber-200">【首发】偶像星途私密周度手记 (Personal Diary)</strong>：系统每满 7 天（第 7、14、21...天）自动生成第一人称星途小结，包含难忘高光瞬间、压力极值记录与感情里程碑，支持主界面独立研读与加笔感悟！</p>
-                  <p>🎤 <strong className="text-purple-200">【重构】Solo 独立歌手 100% 纯享模式</strong>：彻底解绑 Solo 模式与组合/队友逻辑，全域应用（KakaoTalk、Weverse、Live弹幕、TikTok、小红书、粉丝来信等）100% 聚焦个人舞台与日常，绝不提及虚构队友！</p>
-                  <p>🏰 <strong className="text-pink-200">【新增】宿舍深度夜话谈心 (Heart-to-Heart) & MBTI 揭秘</strong>：在宿舍模块新增深夜全团谈心机制，不仅能极大拉升团队凝聚力与好感，还能逐步揭开队友隐藏的 MBTI 性格侧写！</p>
-                  <p>🔮 <strong className="text-cyan-200">【极值】舞台气场爆裂觉醒 (Stage Burst)</strong>：业务行程中爆发出极致高光时触发大能气场觉醒，瞬间斩获高额粉丝盘翻倍与全网热搜爆捧！</p>
-                  <p>🎬 <strong className="text-emerald-200">【规范】企划社高奢视觉图标升级</strong>：更新公告与系统视效图标，全站严格移除国旗等非企划类元素，换装为大厂娱乐企划感极佳的高级风格符号！</p>
+                  <p>💡 <strong className="text-amber-200">【行程点数】行程消耗提示重构</strong>：将原本行程卡片后方无意义的时间标注更名为直观的互动点/精力消耗提示（如 1 点 / 2 点），行程规划更清晰直观！</p>
+                  <p>👔 <strong className="text-purple-200">【室长机制】室长级经纪人动态交互与称谓优化</strong>：升级室长（管理团队）的自定义称谓解析、聊天话术逻辑与好感度分支，鞭策管教与私下关怀更贴合选择！</p>
+                  <p>🏰 <strong className="text-pink-200">【宿舍系统】宿舍深夜夜话谈心体验与视效升级</strong>：重构宿舍客厅夜话 (Heart-to-Heart) 界面与 MBTI 性格侧写展示，优化移动端长对白滚动与布局适配！</p>
+                  <p>💬 <strong className="text-emerald-200">【KakaoTalk】队友独立好感展示与告白事件同步</strong>：KakaoTalk 聊天列表中精准展示各队友个人独立好感度与全队团魂均值，单聊动态提升个人好感，好感突破 80 可精准触发特定队友的私下告白与追求突发事件！</p>
+                  <p>🧠 <strong className="text-cyan-200">【提示词优化】全站 AI 底层提示词全面优化</strong>：对全站系统提示词进行深度调优，增强角色真实感、对话流畅度与人设一致性！</p>
+                </div>
+              </div>
+
+              {/* PAST RELEASE: V5.0 (2026-07-26) */}
+              <div className="bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-pink-950/20 border border-purple-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center justify-between text-purple-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    🌟 22. V5.0 偶像星途私密手记 & 舞台气场爆裂升级
+                  </span>
+                  <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-26
+                  </span>
+                </div>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/40 text-[10.5px] text-slate-400 leading-snug">
+                  <p>📖 <strong className="text-amber-200">【首发】偶像星途私密周度手记 (Personal Diary)</strong>：系统每满 7 天自动生成第一人称星途小结。</p>
+                  <p>🎤 <strong className="text-purple-200">【重构】Solo 独立歌手 100% 纯享模式</strong>：彻底解绑 Solo 模式与组合/队友逻辑，100% 聚焦个人舞台与日常。</p>
+                  <p>🏰 <strong className="text-pink-200">【新增】宿舍深度夜话谈心 (Heart-to-Heart) & MBTI 揭秘</strong>：新增深夜全团谈心机制并揭开队友隐藏的 MBTI 性格侧写。</p>
                 </div>
               </div>
 
@@ -4094,7 +4150,7 @@ ${contact.summary || "无"}`;
                 </span>
               </div>
               <div className="p-2 border border-slate-800 rounded-xl bg-slate-900/30 flex flex-col justify-between">
-                <span className="text-[10px] text-slate-400 block">闵室长好感 (Manager):</span>
+                <span className="text-[10px] text-slate-400 block">{getManagerShortTitle(persona)}好感 (Manager):</span>
                 <span className={`font-bold font-mono mt-0.5 ${persona.managerFavorability >= 45 ? 'text-emerald-400' : 'text-rose-400'}`}>
                   {persona.managerFavorability} / 45
                 </span>
