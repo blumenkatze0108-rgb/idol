@@ -96,6 +96,24 @@ export interface IdolPersona {
   managerCustomTitle?: string;
   managerCustomIntro?: string;
   lastEmergencyDay?: number; // Day number of the last triggered sasaeng or big fan event to enforce cooldown
+  diaryEntries?: PersonalDiaryEntry[];
+}
+
+export interface PersonalDiaryEntry {
+  id: string;
+  weekNumber: number;
+  startDay: number;
+  endDay: number;
+  dateStr: string;
+  title: string;
+  content: string; // The stylized blog/diary summary
+  memorableMoments: string[]; // Highlights of the week
+  stressPeak: string; // Detail about stress levels / peak stress moment
+  relationshipMilestone: string; // Milestone regarding lover, teammates, fans, or manager
+  moodEmoji: string; // e.g. "✨", "🔥", "💔", "🌟", "🌧️"
+  moodTag: string; // e.g. "破茧微光", "狂热登顶", "疲惫蜕变"
+  userNote?: string; // Optional user personal note appended
+  createdAt: string;
 }
 
 // Generated teammates list for groups
@@ -110,6 +128,8 @@ export interface SimulatedTeammate {
   trait: string; // e.g. "Arrogant genius", "Clumsy vocal", "Quiet listener"
   avatar: string;
   age?: number;
+  mbtiUnlocked?: boolean;
+  mbtiInsight?: string;
 }
 
 export interface ChatContact {

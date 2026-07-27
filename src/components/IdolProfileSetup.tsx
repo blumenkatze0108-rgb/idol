@@ -3,6 +3,46 @@ import { IdolPersona, SimulatedTeammate } from "../types";
 import { generateRandomTeammates, generateCoreStaff } from "../mockData";
 import { Sparkles, ArrowRight, User, Star, Briefcase, Smile, ShieldAlert, Eye, Heart } from "lucide-react";
 
+export const ROLES_OPTIONS_BY_GENDER = {
+  female: [
+    "队长 & 主舞 & 门面担当",
+    "主唱 & 高音担当",
+    "全能ACE & 舞台核心爆点",
+    "忙内 (Maknae) & 领舞 & 团宠",
+    "主Rapper & 酷女孩 (Girl Crush) 担当",
+  ],
+  male: [
+    "队长 & 主唱 & 创作制作人担当",
+    "领舞 & 副主唱 & 核心颜值担当",
+    "主Rapper & 酷盖ACE担当",
+    "忙内 (Maknae) & 主舞 & 热力团宠",
+    "门面 Center & 综艺才气爆笑担当",
+  ],
+};
+
+export function ensureUniqueTeammateRoles(
+  teammates: SimulatedTeammate[],
+  playerRole: string,
+  gender: "female" | "male"
+): SimulatedTeammate[] {
+  const allRoles = ROLES_OPTIONS_BY_GENDER[gender] || ROLES_OPTIONS_BY_GENDER.female;
+  const availableRoles = allRoles.filter(r => r !== playerRole);
+  const usedRoles = new Set<string>();
+
+  return teammates.map((tm, idx) => {
+    if (tm.role && tm.role !== playerRole && availableRoles.includes(tm.role) && !usedRoles.has(tm.role)) {
+      usedRoles.add(tm.role);
+      return tm;
+    }
+    const nextFreeRole = availableRoles.find(r => !usedRoles.has(r)) || availableRoles[idx % availableRoles.length] || tm.role;
+    usedRoles.add(nextFreeRole);
+    return {
+      ...tm,
+      role: nextFreeRole
+    };
+  });
+}
+
 interface SetupProps {
   onComplete: (personas: IdolPersona[], teammates: SimulatedTeammate[]) => void;
 }
@@ -100,11 +140,16 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   const [managerCustomName, setManagerCustomName] = useState<string>("");
   const [managerCustomTitle, setManagerCustomTitle] = useState<string>("室长级经纪人");
   const [managerCustomIntro, setManagerCustomIntro] = useState<string>("极其严厉，负责全队体重、日程及业务能力监督考核。");
+  const [initManagerFavorability, setInitManagerFavorability] = useState<number>(50);
+  const [initTeammatesFavorability, setInitTeammatesFavorability] = useState<number>(50);
 
-  // Update customTeammates when gender changes or on mount
+  // Update customTeammates when gender changes or on mount or when roleInGroup changes
   useEffect(() => {
-    setCustomTeammates(generateRandomTeammates(gender, 4));
-  }, [gender]);
+    setCustomTeammates(prev => {
+      const base = prev.length === 4 ? prev : generateRandomTeammates(gender, 4);
+      return ensureUniqueTeammateRoles(base, roleInGroup, gender);
+    });
+  }, [gender, roleInGroup]);
 
   const [nationality, setNationality] = useState<"korean" | "chinese_green" | "japanese_green" | "thai_green" | "western_green">("korean");
   const [birthday, setBirthday] = useState("2006-11-23");
@@ -455,11 +500,11 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
   }, [nationality]);
 
   const nationalityLabels = {
-    korean: "🇰🇷 韩国本土国籍 (Native Korean)",
-    chinese_green: "🇨🇳 华裔外籍绿卡 (Chinese Green Card - 易受网暴排挤)",
-    japanese_green: "🇯🇵 日裔外籍绿卡 (Japanese Green Card - 历史或发言容易无限放大)",
-    thai_green: "🇹🇭 泰裔外籍绿卡 (Thai Green Card - 商业价值极高但分词少)",
-    western_green: "🇺🇸 欧美/澳洲绿卡 (Western/Aussie Green Card - 舞蹈好文化存在壁垒)"
+    korean: "🏛️ 韩国本土国籍 (Native Korean)",
+    chinese_green: "🌏 华裔外籍绿卡 (Chinese Green Card - 易受网暴排挤)",
+    japanese_green: "🏯 日裔外籍绿卡 (Japanese Green Card - 历史或发言容易无限放大)",
+    thai_green: "🌴 泰裔外籍绿卡 (Thai Green Card - 商业价值极高但分词少)",
+    western_green: "🏙️ 欧美/澳洲绿卡 (Western/Aussie Green Card - 舞蹈好文化存在壁垒)"
   };
 
   const eyeShapeOptions = [
@@ -950,8 +995,8 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
           stress: isTrainee ? 15 : 40,
           traineeDebt: debt,
           companySplit: actualSplit,
-          managerFavorability: managerPersonality === "gentle" ? (isTrainee ? 75 : 88) : managerPersonality === "unreliable" ? (isTrainee ? 60 : 75) : managerPersonality === "money_minded" ? (isTrainee ? 45 : 60) : (isTrainee ? 45 : 65), 
-          teammatesFavorability: (m.style === "solo" || (playMode === "single" && m.style === "solo")) ? 100 : (isTrainee ? 65 : 80), 
+          managerFavorability: initManagerFavorability, 
+          teammatesFavorability: (m.style === "solo" || (playMode === "single" && m.style === "solo")) ? 100 : initTeammatesFavorability, 
           ceoFavorability: isTrainee ? 45 : 60, 
           pdFavorability: isTrainee ? 50 : 65, 
           popularity: startPopularity,
@@ -1005,25 +1050,18 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
       // If single and group: generate companions (4 companions to make 5 total). If duo/trio, keep 0 companion teammates as K-pop has 2-3 member group debuts.
       const numCompanionsNeeded = playMode === "single" ? (style === "group" ? 4 : 0) : 0;
       let companions = numCompanionsNeeded > 0 ? (customTeammates.length > 0 ? customTeammates : generateRandomTeammates(gender, numCompanionsNeeded)) : [];
+      const targetTeammateFav = finalPersonas[0]?.teammatesFavorability ?? initTeammatesFavorability;
       
       if (numCompanionsNeeded === 4 && companions.length === 4 && finalPersonas.length > 0) {
         const playerRole = finalPersonas[0].roleInGroup;
-        const allRoles = rolesOptionsByGender[gender] || [];
-        // Extract 4 companion roles separate from the chosen player's role
-        const companionAvailableRoles = allRoles.filter(r => r !== playerRole);
-        
-        companions = companions.map((t, idx) => {
-          const assignedRole = t.role || companionAvailableRoles[idx] || t.role;
-          return {
-            ...t,
-            role: assignedRole,
-            favorability: isTrainee ? 10 : 42
-          };
-        });
+        companions = ensureUniqueTeammateRoles(companions, playerRole, gender).map((t) => ({
+          ...t,
+          favorability: targetTeammateFav
+        }));
       } else {
         companions = companions.map(t => ({
           ...t,
-          favorability: isTrainee ? 10 : 42
+          favorability: targetTeammateFav
         }));
       }
 
@@ -1595,24 +1633,24 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
 
                       {/* Left/Right Position selection */}
                       <div className="pt-1 border-t border-white/5">
-                        <label className="text-[10px] text-pink-300 font-bold block mb-1">💑 双人合照偏好：玩家在恋爱剧情中偏好什么定位？</label>
+                        <label className="text-[10px] text-pink-300 font-bold block mb-1">💑 玩家（主角你）在恋爱剧情中的左右攻受定位：</label>
                         <div className="grid grid-cols-2 gap-2">
                           <button
                             type="button"
                             onClick={() => setRomancePosition("left")}
                             className={`py-1.5 rounded-lg border text-xs font-bold text-center transition-all ${romancePosition === "left" ? "bg-purple-950/40 border-purple-500 text-purple-300 shadow-md" : "bg-slate-900 border-white/5 text-slate-400"}`}
                           >
-                            左位 (左 / 攻 / Top / 主动保护)
+                            左位 (主角为 攻/Top，恋人为 受/Bottom)
                           </button>
                           <button
                             type="button"
                             onClick={() => setRomancePosition("right")}
                             className={`py-1.5 rounded-lg border text-xs font-bold text-center transition-all ${romancePosition === "right" ? "bg-pink-950/40 border-pink-500 text-pink-300 shadow-md" : "bg-slate-900 border-white/10 text-slate-400"}`}
                           >
-                            右位 (右 / 受 / Bottom / 被宠依恋)
+                            右位 (主角为 受/Bottom，恋人为 攻/Top)
                           </button>
                         </div>
-                        <p className="text-[8px] text-slate-500 mt-1 leading-tight">不同的定位不仅会改变恋爱提示词，还会极大影响恋爱倾诉的感情基调与互动甜度！</p>
+                        <p className="text-[8px] text-slate-400 mt-1 leading-tight">（提示：此项设置的是【主角你】的左右位。选左位/攻，恋人AI会自动扮演娇软依恋的右位；选右位/受，恋人AI会自动扮演霸道护短的左位）</p>
                       </div>
                     </div>
                   )}
@@ -1736,20 +1774,69 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                       rows={2}
                       className="mt-1.5 w-full bg-slate-900/60 border border-amber-500/20 rounded-xl p-2 text-[10px] text-amber-300 focus:outline-none focus:border-amber-500/50 leading-relaxed font-sans"
                     />
+
+                    {/* Initial Manager Favorability Slider */}
+                    <div className="mt-3 pt-2 border-t border-white/5">
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-[10px] text-amber-300 font-bold block">
+                          👔 经纪人/室长 初始对你的好感度:
+                        </label>
+                        <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${initManagerFavorability > 80 ? 'bg-pink-950 text-pink-300 border border-pink-500/50' : initManagerFavorability > 50 ? 'bg-amber-950 text-amber-300 border border-amber-500/40' : 'bg-slate-900 text-slate-400 border border-white/10'}`}>
+                          {initManagerFavorability} / 100 {initManagerFavorability > 80 ? '💖 (追求恋慕状态)' : initManagerFavorability > 50 ? '✨ (挺有厚爱)' : '💼 (偏严肃公事)'}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={initManagerFavorability}
+                        onChange={(e) => setInitManagerFavorability(Number(e.target.value))}
+                        className="w-full accent-amber-500 bg-slate-900 h-1.5 rounded-lg cursor-pointer"
+                      />
+                      <p className="text-[8px] text-slate-400 mt-0.5 leading-tight">
+                        （提示：当好感度设置高于 <strong className="text-pink-300">80</strong> 时，经纪人不仅言谈温柔偏袒，极大概率会触发被经纪人/室长私下告白与追求的突发浪漫事件！）
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-
-                {(style === "group" || playMode !== "single") && (
-                  <div className="animate-in fade-in slide-in-from-top-1.5">
-                    <label className="block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase font-mono">组合团体企划代号 (Group Project Code)</label>
-                    <input 
-                      type="text" 
-                      value={groupName} 
-                      onChange={(e) => setGroupName(e.target.value)}
-                      placeholder="e.g., ECLIPSE, NEWWAVE"
-                      className="w-full bg-slate-955/70 border border-white/10 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-purple-500 font-bold uppercase tracking-widest text-white font-mono"
+                {/* Initial Teammates Favorability Slider for Group Mode */}
+                {(style === "group" || playMode !== "single") ? (
+                  <div className="p-3 bg-purple-950/20 border border-purple-500/20 rounded-xl space-y-2 animate-in fade-in slide-in-from-top-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[11px] font-bold text-purple-300 block">
+                        👯‍♀️ 组合队友（5人团）初始对你的好感度:
+                      </label>
+                      <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded-full ${initTeammatesFavorability > 80 ? 'bg-pink-950 text-pink-300 border border-pink-500/50' : 'bg-purple-900/40 text-purple-300 border border-purple-500/30'}`}>
+                        {initTeammatesFavorability} / 100 {initTeammatesFavorability > 80 ? '💘 (深情依恋追求)' : '🤝 (和谐战友)'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={initTeammatesFavorability}
+                      onChange={(e) => setInitTeammatesFavorability(Number(e.target.value))}
+                      className="w-full accent-purple-500 bg-slate-900 h-1.5 rounded-lg cursor-pointer"
                     />
+                    <p className="text-[8px] text-slate-400 leading-tight">
+                      （提示：当好感度高于 <strong className="text-pink-300">80</strong> 时，队内C位队友可能会在深夜练习室里对你展开强烈独占欲的追求告白！）
+                    </p>
+
+                    <div>
+                      <label className="block text-[10px] font-semibold text-slate-400 mb-1 uppercase font-mono">组合团体企划代号 (Group Project Code)</label>
+                      <input 
+                        type="text" 
+                        value={groupName} 
+                        onChange={(e) => setGroupName(e.target.value)}
+                        placeholder="e.g., ECLIPSE, NEWWAVE"
+                        className="w-full bg-slate-955/70 border border-white/10 rounded-xl px-4 py-1.5 text-xs focus:outline-none focus:border-purple-500 font-bold uppercase tracking-widest text-white font-mono"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-indigo-950/30 border border-indigo-500/20 rounded-xl text-[10px] text-indigo-300 font-medium leading-relaxed">
+                    🎤 <strong>【Solo 个人独立歌手模式】</strong>：系统将 100% 屏蔽队友概念与团内好感纠纷，全图场景仅保留个人演艺与 Solo 舞台！
                   </div>
                 )}
               </div>
@@ -2328,17 +2415,49 @@ export default function IdolProfileSetup({ onComplete }: SetupProps) {
                               </select>
                             </div>
                             <div>
-                              <label className="text-[10px] text-slate-400 block mb-1 font-semibold">定位担当 (Group Role)</label>
-                              <input
-                                type="text"
+                              <label className="text-[10px] text-slate-400 block mb-1 font-semibold flex items-center justify-between">
+                                <span>定位担当 (Group Role)</span>
+                                <span className="text-[8px] text-purple-400 font-mono">🔒固定下拉·不可重复</span>
+                              </label>
+                              <select
                                 value={tm.role}
                                 onChange={(e) => {
+                                  const newRole = e.target.value;
+                                  const oldRole = tm.role;
                                   const updated = [...customTeammates];
-                                  updated[idx] = { ...tm, role: e.target.value };
+                                  const swapIdx = updated.findIndex((t, i) => i !== idx && t.role === newRole);
+                                  if (swapIdx !== -1) {
+                                    updated[swapIdx] = { ...updated[swapIdx], role: oldRole };
+                                  }
+                                  updated[idx] = { ...tm, role: newRole };
                                   setCustomTeammates(updated);
                                 }}
-                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-2.5 py-1 text-xs text-indigo-300 focus:outline-none focus:border-purple-500 font-semibold"
-                              />
+                                className="w-full bg-slate-900 border border-white/10 rounded-lg px-2 py-1 text-xs text-indigo-300 focus:outline-none focus:border-purple-500 font-semibold cursor-pointer"
+                              >
+                                {(ROLES_OPTIONS_BY_GENDER[gender] || ROLES_OPTIONS_BY_GENDER.female).map((rOpt) => {
+                                  const isPlayer = rOpt === roleInGroup;
+                                  const otherTmIdx = customTeammates.findIndex((t, i) => i !== idx && t.role === rOpt);
+                                  const isOtherTm = otherTmIdx !== -1;
+
+                                  let suffix = "";
+                                  if (isPlayer) {
+                                    suffix = " 🚫 (主控主角已占用)";
+                                  } else if (isOtherTm) {
+                                    suffix = ` 🔄 (队友 #${otherTmIdx + 1} 占用·自动对调)`;
+                                  }
+
+                                  return (
+                                    <option
+                                      key={rOpt}
+                                      value={rOpt}
+                                      disabled={isPlayer}
+                                      className={isPlayer ? "text-slate-500 bg-slate-950 font-sans" : "text-slate-100 bg-[#0b0e17] font-sans"}
+                                    >
+                                      {rOpt}{suffix}
+                                    </option>
+                                  );
+                                })}
+                              </select>
                             </div>
                           </div>
 

@@ -166,7 +166,7 @@ const PRESET_FAN_LETTERS = [
 export function generateRandomFanLetter(persona: IdolPersona, dayNum = 1): FanLetter {
   const isTrainee = persona.startType === "trainee";
   const pool = persona.style === "solo" 
-    ? PRESET_FAN_LETTERS.filter(l => l.fanType !== "OT_fan") 
+    ? PRESET_FAN_LETTERS.filter(l => l.fanType !== "OT_fan" && l.fanType !== "shipper") 
     : PRESET_FAN_LETTERS;
   const numMatches = pool.length;
   const picked = pool[Math.floor(Math.random() * numMatches)];
@@ -179,9 +179,21 @@ export function generateRandomFanLetter(persona: IdolPersona, dayNum = 1): FanLe
 
   if (persona.style === "solo") {
     processedContent = processedContent
-      .replace(/队友/g, "对头/伴舞")
+      .replace(/绿卡队友/g, "对立对头")
+      .replace(/队友的/g, "竞品的")
+      .replace(/队友/g, "同行竞争者")
+      .replace(/抱团孤立/g, "恶性竞争")
       .replace(/抢镜头的别家粉丝/g, "对立粉圈")
-      .replace(/双生花/g, "你和绯闻对象");
+      .replace(/双生花/g, "舞台天花板")
+      .replace(/全团/g, "个人")
+      .replace(/回宿舍/g, "回公寓");
+  }
+
+  let processedTitle = picked.title
+    .replace(/神颜/g, persona.stageName)
+    .replace(/团队/g, "个人舞台");
+  if (persona.style === "solo") {
+    processedTitle = processedTitle.replace(/在宿舍/g, "私下");
   }
 
   // Create unique ID
@@ -191,10 +203,10 @@ export function generateRandomFanLetter(persona: IdolPersona, dayNum = 1): FanLe
     id: idValue,
     sender: picked.sender,
     fanType: picked.fanType,
-    fanTypeName: picked.fanTypeName,
+    fanTypeName: persona.style === "solo" && picked.fanType === "solo_stan" ? "🔥 狂热事业粉 (Solo Dedicated)" : picked.fanTypeName,
     senderAvatar: `MAIL_${Math.floor(Math.random() * 4) + 1}`,
     receivedDay: dayNum,
-    title: picked.title.replace(/神颜/g, persona.stageName),
+    title: processedTitle,
     content: processedContent,
     isRead: false,
     themeColor: picked.themeColor,

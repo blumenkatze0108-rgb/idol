@@ -18,7 +18,10 @@ import {
   INITIAL_WEVERSE_POSTS,
   INITIAL_BUBBLE_MESSAGES,
   SH_LIST,
-  ENHANCED_RANDOM_EVENTS
+  ENHANCED_RANDOM_EVENTS,
+  getInitialWeversePosts,
+  getInitialBubbleMessages,
+  getInitialTikTokVideos
 } from "./mockData";
 import IdolProfileSetup from "./components/IdolProfileSetup";
 import BirthdayGameModal from "./components/BirthdayGameModal";
@@ -31,6 +34,7 @@ import SuddenEventModal from "./components/SuddenEventModal";
 import TikTokApp from "./components/TikTokApp";
 import XiaohongshuApp from "./components/XiaohongshuApp";
 import FanMailApp, { FanLetter, generateRandomFanLetter } from "./components/FanMailApp";
+import PersonalDiaryApp from "./components/PersonalDiaryApp";
 import { safeFetch, triggerToast, getSeoulWeather, convertToTraditional } from "./components/apiHelper";
 import { motion, AnimatePresence } from "motion/react";
 
@@ -39,7 +43,7 @@ import {
   Settings as SettingsIcon, Calendar, MessageSquare, 
   User, Activity, Flame, ShieldAlert, Coins, 
   Download, Upload, Heart, Info, MonitorCheck, Award,
-  Film, Image, Mail, CheckCircle2, AlertCircle, ChevronRight
+  Film, Image, Mail, CheckCircle2, AlertCircle, ChevronRight, BookOpen
 } from "lucide-react";
 
 const themeStyles: Record<string, {
@@ -159,7 +163,7 @@ export default function App() {
   // State synchronization setters that transparently update the correct active index
   const setPersona = (val: IdolPersona | ((p: IdolPersona) => IdolPersona)) => {
     setPersonas(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || DEFAULT_PERSONA);
@@ -172,7 +176,7 @@ export default function App() {
 
   const setTeammates = (val: SimulatedTeammate[] | ((p: SimulatedTeammate[]) => SimulatedTeammate[])) => {
     setPersonasTeammates(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || []);
@@ -185,7 +189,7 @@ export default function App() {
 
   const setChatContacts = (val: ChatContact[] | ((p: ChatContact[]) => ChatContact[])) => {
     setPersonasChatContacts(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || []);
@@ -198,7 +202,7 @@ export default function App() {
 
   const setChatHistories = (val: Record<string, ChatMessage[]> | ((p: Record<string, ChatMessage[]>) => Record<string, ChatMessage[]>)) => {
     setPersonasChatHistories(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || {});
@@ -211,7 +215,7 @@ export default function App() {
 
   const setWeversePosts = (val: WeversePost[] | ((p: WeversePost[]) => WeversePost[])) => {
     setPersonasWeversePosts(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || INITIAL_WEVERSE_POSTS);
@@ -224,7 +228,7 @@ export default function App() {
 
   const setBubbleMessages = (val: BubbleMessage[] | ((p: BubbleMessage[]) => BubbleMessage[])) => {
     setPersonasBubbleMessages(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || INITIAL_BUBBLE_MESSAGES);
@@ -237,7 +241,7 @@ export default function App() {
 
   const setSchedules = (val: IdolSchedule[] | ((p: IdolSchedule[]) => IdolSchedule[])) => {
     setPersonasSchedules(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || SH_LIST);
@@ -250,7 +254,7 @@ export default function App() {
 
   const setFanLetters = (val: any[] | ((p: any[]) => any[])) => {
     setPersonasFanLetters(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || []);
@@ -263,7 +267,7 @@ export default function App() {
 
   const setTiktokVideos = (val: any[] | ((p: any[]) => any[])) => {
     setPersonasTiktokVideos(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || []);
@@ -276,7 +280,7 @@ export default function App() {
 
   const setXiaohongshuPosts = (val: any[] | ((p: any[]) => any[])) => {
     setPersonasXiaohongshuPosts(prev => {
-      const arr = [...prev];
+      const arr = Array.isArray(prev) ? [...prev] : [];
       const idx = activePersonaIdx;
       if (typeof val === "function") {
         arr[idx] = val(arr[idx] || []);
@@ -958,6 +962,42 @@ ${contact.summary || "无"}`;
     }
   }, []);
 
+  // Keep chatContacts and teammates favorability in sync with persona.teammatesFavorability
+  useEffect(() => {
+    if (!persona) return;
+    const targetFav = persona.teammatesFavorability;
+    if (typeof targetFav === "number") {
+      setChatContacts(conts => {
+        let changed = false;
+        const next = conts.map(c => {
+          if (c.role === "member" && c.favorability !== targetFav) {
+            changed = true;
+            return { ...c, favorability: targetFav };
+          }
+          return c;
+        });
+        return changed ? next : conts;
+      });
+
+      setPersonasTeammates(prevArr => {
+        if (!Array.isArray(prevArr)) return prevArr;
+        const activeTms = prevArr[activePersonaIdx] || [];
+        let changed = false;
+        const nextTms = activeTms.map(t => {
+          if (t.favorability !== targetFav) {
+            changed = true;
+            return { ...t, favorability: targetFav };
+          }
+          return t;
+        });
+        if (!changed) return prevArr;
+        const nextArr = [...prevArr];
+        nextArr[activePersonaIdx] = nextTms;
+        return nextArr;
+      });
+    }
+  }, [persona?.teammatesFavorability, activePersonaIdx]);
+
   // Propose a customized chat list based on generated teammates (Requirement 9, 15)
   const generateSubContacts = (p: IdolPersona, tm: SimulatedTeammate[], currHist: Record<string, ChatMessage[]> = chatHistories): ChatContact[] => {
     const staff = generateCoreStaff(p.gender, p);
@@ -1095,7 +1135,7 @@ ${contact.summary || "无"}`;
           lastMessage: mateMsg,
           unread: true,
           time: "刚刚",
-          favorability: mate.favorability
+          favorability: p.teammatesFavorability ?? mate.favorability ?? 50
         });
       });
     }
@@ -1260,7 +1300,12 @@ ${contact.summary || "无"}`;
           });
         }
       });
-      const tms = [...otherPlayers, ...generatedTeammatesInput];
+      const tms = [...otherPlayers, ...generatedTeammatesInput].map(tm => ({
+        ...tm,
+        favorability: tm.favorability && tm.favorability !== 10 && tm.favorability !== 42
+          ? tm.favorability
+          : (p.teammatesFavorability ?? 50)
+      }));
 
       // 2. Chat contacts
       const contactList = generateSubContacts(p, tms);
@@ -1284,11 +1329,11 @@ ${contact.summary || "无"}`;
       finalTeammatesList.push(tms);
       finalChatContactsList.push(contactList);
       finalChatHistoriesList.push(initialHist);
-      finalWeversePostsList.push([...INITIAL_WEVERSE_POSTS]);
-      finalBubbleMessagesList.push([...INITIAL_BUBBLE_MESSAGES]);
-      finalSchedulesList.push([...SH_LIST]);
+      finalWeversePostsList.push(getInitialWeversePosts(p));
+      finalBubbleMessagesList.push(getInitialBubbleMessages(p));
+      finalSchedulesList.push(getFixedSkillSchedules(1, 36, p.style === "solo"));
       finalFanLettersList.push(initLetters);
-      finalTiktokVideosList.push([]);
+      finalTiktokVideosList.push(getInitialTikTokVideos(p));
       finalXiaohongshuPostsList.push([]);
     });
 
@@ -1578,6 +1623,12 @@ ${contact.summary || "无"}`;
 
   // Checks if the event can apply to the current character style
   const pSpecialValidate = (evt: any): boolean => {
+    if (evt.id === "e_manager_pursuit" && (persona.managerFavorability || 0) < 80) {
+      return false; // Manager pursuit event only triggers if manager favorability > 80
+    }
+    if (evt.id === "e_teammate_pursuit" && (persona.style === "solo" || (persona.teammatesFavorability || 0) < 80)) {
+      return false; // Teammate pursuit event only triggers in group mode with favorability > 80
+    }
     if ((evt.id === "e_m1" || evt.id === "e_cp1" || evt.id === "e_c1" || evt.id === "e_s1") && persona.style !== "group") {
       return false; // Group center/CP/teammate events only apply for group style
     }
@@ -1929,24 +1980,24 @@ ${contact.summary || "无"}`;
 
               {/* Box 5: 本次版本更新内容 */}
               <div className="bg-white/5 border border-white/5 rounded-2xl p-5 relative">
-                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-pink-400 via-purple-400 to-indigo-400 bg-clip-text flex items-center gap-2 mb-3">
-                  <span className="font-mono text-xs px-1.5 py-0.5 bg-pink-500/10 rounded border border-pink-500/20">05</span>
-                  🚀 最新迭代：V4.5 个人 Solo 独立歌手模式 & 纯享个人饭圈重构版 (Changelog)
+                <h2 className="text-base font-bold text-transparent bg-gradient-to-r from-amber-300 via-purple-300 to-pink-300 bg-clip-text flex items-center gap-2 mb-3">
+                  <span className="font-mono text-xs px-1.5 py-0.5 bg-amber-500/10 text-amber-300 rounded border border-amber-500/20">05</span>
+                  🌟 最新迭代：V5.0 偶像星途私密手记 & 舞台气场爆裂升级 (2026-07-26)
                 </h2>
                 <div className="text-xs text-slate-300 leading-relaxed font-sans space-y-2">
-                  <p className="font-bold text-purple-300">本系统已全量推送到主服务器。根据主理人反馈，V4.5 重磅迭代加入以下突破及修复内容：</p>
+                  <p className="font-bold text-amber-300">本系统已全量推送到主服务器。根据主理人反馈，V5.0 重磅迭代加入以下突破及更新内容：</p>
                   <ul className="list-disc pl-5 space-y-1.5 text-slate-400">
                     <li>
-                      <strong className="text-slate-200">🎤 个人 Solo 独立歌手模式 100% 纯享重构</strong>：彻底解绑 Solo 模式与组合/队友逻辑！在选择【个人 Solo 独立歌手】时，系统全域（包含 KakaoTalk、Weverse 官咖、W-Live 直播弹幕、TikTok 变装/舞蹈挑战、小红书私服笔记、粉丝来信等）将 100% 聚焦爱豆个人的舞台与生活，绝对不会虚构或误提及任何组合队友或团内争议！
+                      <strong className="text-amber-200">📖 偶像星途私密周度手记 (2026-07-26)</strong>：每 7 天自动整理第一人称星途小结，包含难忘高光瞬间、压力极值记录与感情里程碑，支持主界面独立研读与加笔感悟！
                     </li>
                     <li>
-                      <strong className="text-slate-200">📊 大健康 / 粉丝大盘 (Fandom Analytics) 逻辑适配</strong>：为 Solo 独立歌手重塑大盘模型！彻底移除「OT 团粉」与「团队毒唯」维度，自动平滑归集为「核心唯粉死忠」、「事业唯/成绩粉」与「跨界/合作 CP 粉」，呈现最真实的个人爱豆饭圈格局！
+                      <strong className="text-purple-200">🎤 个人 Solo 独立歌手 100% 纯享重构 (2026-07-25)</strong>：彻底解绑 Solo 模式与组合/队友逻辑，全域应用 100% 聚焦个人舞台与日常，绝无虚构队友！
                     </li>
                     <li>
-                      <strong className="text-slate-200">💬 恋爱攻受定位 (Top/Bottom) & 身份称谓约束</strong>：深化了 KakaoTalk 地下恋人角色扮演中的左位（Gong/Top）与右位（Shou/Bottom）语气与娇嗔/霸气设定，并严格绑定玩家性别（欧尼/哥哥/欧巴），绝无穿帮与错位。
+                      <strong className="text-pink-200">🏰 宿舍深夜夜话谈心 & MBTI 深度发现 (2026-07-26)</strong>：宿舍模块新增深夜全团夜话谈心机制，拉升团队凝聚力并揭开队友隐秘 MBTI 性格侧写！
                     </li>
                     <li>
-                      <strong className="text-slate-200">🔍 全局字号等比例自适应缩放</strong>：支持无级字号缩放偏移，全标准 Tailwind 字体大小（xs 至 5xl）及自定义字号各自等量递增/递减，舒适大字不挤压！
+                      <strong className="text-cyan-200">🔮 舞台气场爆裂觉醒 Stage Burst (2026-07-26)</strong>：业务行程中爆发出极致高光时触发大能气场觉醒，斩获高额粉丝盘翻倍与全网爆捧！
                     </li>
                   </ul>
                 </div>
@@ -2489,11 +2540,16 @@ ${contact.summary || "无"}`;
                     <SchedulesApp
                       persona={persona}
                       personas={personas}
+                      teammates={teammates}
                       schedules={schedules}
                       weversePosts={weversePosts}
                       customApiKey={customApiKey}
                       customModel={customModel}
                       customApiEndpoint={customApiEndpoint}
+                      onUpdateTeammates={(tms) => {
+                        setTeammates(tms);
+                        triggerAutoSave(persona, tms, chatHistories, weversePosts, bubbleMessages, schedules);
+                      }}
                       onUpdatePersona={(p) => {
                         setPersona(p);
                         triggerAutoSave(p, teammates, chatHistories, weversePosts, bubbleMessages, schedules);
@@ -2734,7 +2790,7 @@ ${contact.summary || "无"}`;
                             if (idx === activePersonaIdx) {
                               return newSchedules;
                             } else {
-                              return getFixedSkillSchedules(newPersona.dayNumber);
+                              return getFixedSkillSchedules(newPersona.dayNumber, newPersona.cycleDays || 36, newPersona.style === "solo");
                             }
                           }));
 
@@ -3083,6 +3139,19 @@ ${contact.summary || "无"}`;
                     />
                   )}
 
+                  {activeApp === "diary" && (
+                    <PersonalDiaryApp
+                      persona={persona}
+                      customApiKey={customApiKey}
+                      customApiEndpoint={customApiEndpoint}
+                      onUpdatePersona={(p) => {
+                        setPersona(p);
+                        triggerAutoSave(p, teammates, chatHistories, weversePosts, bubbleMessages, schedules, fanLetters, tiktokVideos, xiaohongshuPosts);
+                      }}
+                      onAddLog={handleAddSystemLog}
+                    />
+                  )}
+
                   {activeApp === "settings" && (
                     <div id="settings-view" className="primary-app-container scrollable-desktop bg-slate-900 border border-white/5 rounded-2xl p-5 space-y-4">
                       
@@ -3092,6 +3161,35 @@ ${contact.summary || "无"}`;
                           系统高保真设置与 AI 接口接入 Panel (Requirement 10)
                         </h4>
                         <p className="text-[10px] text-slate-400 mt-0.5">您可以配置自定义的 LLM 代理，输入对应的 Api Key 和端口网关来实现高恢复回复。</p>
+                      </div>
+
+                      {/* Personal Diary Embedded Section in Settings */}
+                      <div className="bg-slate-950/80 p-4 rounded-xl border border-purple-500/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] block font-mono text-purple-400 uppercase font-bold tracking-wide flex items-center gap-1.5">
+                            📖 偶像星途私密周度手记 (Weekly Personal Diary)
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleSwitchApp("diary")}
+                            className="text-[10px] text-amber-300 hover:underline font-mono cursor-pointer flex items-center gap-1"
+                          >
+                            <span>打开手记主界面 ↗</span>
+                          </button>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-relaxed">
+                          系统每满 7 天（第 7、14、21...天）会自动为您整理第一人称星途小结，包含难忘高光瞬间、压力极值记录与感情里程碑：
+                        </p>
+                        <PersonalDiaryApp
+                          persona={persona}
+                          customApiKey={customApiKey}
+                          customApiEndpoint={customApiEndpoint}
+                          onUpdatePersona={(p) => {
+                            setPersona(p);
+                            triggerAutoSave(p, teammates, chatHistories, weversePosts, bubbleMessages, schedules, fanLetters, tiktokVideos, xiaohongshuPosts);
+                          }}
+                          onAddLog={handleAddSystemLog}
+                        />
                       </div>
 
                       {/* Romance Position settings panel (Requirement: switch left/right in settings, changes prompts) */}
@@ -3376,7 +3474,7 @@ ${contact.summary || "无"}`;
                           {/* Traditional Chinese Localization Toggle Section */}
                           <div className="space-y-2">
                             <label className="block text-[11px] font-semibold text-slate-300">
-                              🇹🇼 繁體中文切換 (Traditional Chinese Toggle)
+                              🌐 繁體中文切換 (Traditional Chinese Toggle)
                             </label>
                             <p className="text-[9px] text-slate-500 leading-tight">
                               開啟後，全系統 UI 與後續 AI 模型輸出、模擬對話均會自動實時轉換為繁體中文。
@@ -3517,6 +3615,15 @@ ${contact.summary || "无"}`;
                   {fanLetters.some((l) => !l.isRead) && (
                     <span className="absolute top-1 right-1 w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-[#f44e73] animate-pulse border border-[#0e111a]" />
                   )}
+                </button>
+
+                {/* 5e. Personal Diary (星途私密手记) */}
+                <button
+                  onClick={() => { handleSwitchApp("diary"); }}
+                  className={`p-1 xs:p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl transition-all relative cursor-pointer outline-none shrink-0 ${activeApp === "diary" ? "bg-amber-600 text-white shadow-lg scale-105" : "text-slate-400 hover:text-white"}`}
+                  title="星途私密手记"
+                >
+                  <BookOpen className="w-3.5 h-3.5 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
                 </button>
 
                 {/* Divider */}
@@ -3759,259 +3866,191 @@ ${contact.summary || "无"}`;
       {/* Update and Debug notification modal */}
       {showUpdateModal && (
         <div id="update-notification-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[250] p-4">
-          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-lg w-full shadow-[0_0_50px_rgba(147,51,234,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-xl w-full shadow-[0_0_50px_rgba(147,51,234,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl font-sans"></div>
             <div className="absolute bottom-0 left-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl font-sans"></div>
             
-            <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4.5">
-              <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
-                <Sparkles className="w-5 h-5 animate-pulse" />
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4.5">
+              <div className="flex items-center gap-3">
+                <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
+                  <Sparkles className="w-5 h-5 animate-pulse" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
+                    👑 企划社最新巨献公告 (V5.0 星途私密手记 & 舞台气场爆裂重塑)
+                  </h3>
+                  <p className="text-[10px] text-purple-400 font-mono tracking-wider mt-0.5">
+                    RELEASE DATE: 2026-07-26 | SYSTEM VERSION 5.0 ULTIMATE
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (粉丝倾向梦系、经纪人专属定制、深夜恋爱互动)
-                </h3>
-                <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 4.0 | FANDOM DEMOGRAPHICS & MANAGER PERSONALITY CUSTOMIZATION
-                </p>
-              </div>
+              <button
+                onClick={() => setShowUpdateModal(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg bg-white/5 hover:bg-white/10 transition cursor-pointer text-xs"
+              >
+                ✕
+              </button>
             </div>
 
-            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
+            <div className="space-y-4 max-h-[420px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
 
-              {/* Feature 20: Fandom & Manager Customization (BRAND NEW V4.0) */}
-              <div className="bg-gradient-to-r from-pink-900/40 via-purple-900/30 to-indigo-950/20 border border-pink-500/35 p-3.5 rounded-xl space-y-2 font-sans">
-                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
-                  <span>✨ 20. [全能定制] 粉丝属性梦男/梦女偏向设定、经纪人专属MBTI人设与深夜秘密电话</span>
+              {/* TODAY RELEASE: V5.0 (2026-07-26) */}
+              <div className="bg-gradient-to-r from-purple-900/50 via-pink-900/40 to-indigo-950/40 border-2 border-amber-400/50 p-4 rounded-xl space-y-2 font-sans shadow-lg">
+                <div className="flex items-center justify-between text-amber-300 font-black text-[13px]">
+                  <span className="flex items-center gap-2">
+                    🌟 22. 【今日最新发版】V5.0 偶像星途私密手记 & 舞台气场爆裂升级
+                  </span>
+                  <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/40 px-2 py-0.5 rounded-full font-mono">
+                    2026-07-26
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-200 leading-relaxed font-bold">
+                  企划社今日重磅呈献全新高奢演艺体验！涵盖独立周度手记、Solo纯享与宿谈心等深度维度：
+                </p>
+                <div className="space-y-2 pl-3 border-l-2 border-amber-400/50 text-[11px] text-slate-300 leading-snug">
+                  <p>📖 <strong className="text-amber-200">【首发】偶像星途私密周度手记 (Personal Diary)</strong>：系统每满 7 天（第 7、14、21...天）自动生成第一人称星途小结，包含难忘高光瞬间、压力极值记录与感情里程碑，支持主界面独立研读与加笔感悟！</p>
+                  <p>🎤 <strong className="text-purple-200">【重构】Solo 独立歌手 100% 纯享模式</strong>：彻底解绑 Solo 模式与组合/队友逻辑，全域应用（KakaoTalk、Weverse、Live弹幕、TikTok、小红书、粉丝来信等）100% 聚焦个人舞台与日常，绝不提及虚构队友！</p>
+                  <p>🏰 <strong className="text-pink-200">【新增】宿舍深度夜话谈心 (Heart-to-Heart) & MBTI 揭秘</strong>：在宿舍模块新增深夜全团谈心机制，不仅能极大拉升团队凝聚力与好感，还能逐步揭开队友隐藏的 MBTI 性格侧写！</p>
+                  <p>🔮 <strong className="text-cyan-200">【极值】舞台气场爆裂觉醒 (Stage Burst)</strong>：业务行程中爆发出极致高光时触发大能气场觉醒，瞬间斩获高额粉丝盘翻倍与全网热搜爆捧！</p>
+                  <p>🎬 <strong className="text-emerald-200">【规范】企划社高奢视觉图标升级</strong>：更新公告与系统视效图标，全站严格移除国旗等非企划类元素，换装为大厂娱乐企划感极佳的高级风格符号！</p>
+                </div>
+              </div>
+
+              {/* PAST RELEASE: V4.5 (2026-07-25) */}
+              <div className="bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-pink-950/20 border border-purple-500/35 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center justify-between text-purple-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    🎤 21. V4.5 个人 Solo 独立歌手模式 & 纯享个人饭圈重构
+                  </span>
+                  <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-25
+                  </span>
                 </div>
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为提供更完美的沉浸式爱豆追梦之旅，我们在创角 setup 阶段重磅呈献粉丝与经纪人全方位定制底座：
+                  底层 AI 提示词与大健康 / 粉丝大盘系统的彻底重塑：
                 </p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/40 text-[10.5px] text-slate-400 leading-snug">
+                  <p>🎤 <strong className="text-purple-200">Solo 独立歌手全域无队友纯享</strong>：选【个人 Solo 独立歌手】时全域 100% 聚焦个人舞台与独处日常。</p>
+                  <p>📊 <strong className="text-indigo-200">大健康 / 粉丝分析 (Fandom Analytics) 彻底适配</strong>：Solo 模式彻底剔除「OT 团粉」与「团队毒唯」，重构为「核心唯粉死忠」、「事业唯」与「CP 粉」。</p>
+                  <p>💬 <strong className="text-pink-200">恋人攻受定位 & 性别称谓全场景强校验</strong>：强化 KakaoTalk 地下恋人角色扮演中的左位/右位语气与性别防穿帮。</p>
+                </div>
+              </div>
+
+              {/* PAST RELEASE: V4.0 (2026-07-22) */}
+              <div className="bg-gradient-to-r from-pink-900/30 via-purple-900/25 to-indigo-950/20 border border-pink-500/30 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center justify-between text-pink-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    ✨ 20. V4.0 粉丝梦系偏向设定、经纪人专属MBTI与深夜秘密电话
+                  </span>
+                  <span className="text-[10px] bg-pink-500/20 text-pink-300 border border-pink-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-22
+                  </span>
+                </div>
                 <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🔮 <strong className="text-pink-200">梦男梦女比例自由定制</strong>：在建档时可自由设定你狂热梦系受众倾向（混合、梦女女粉为主、梦男男粉为主）。这将直接重构 W-Live 直播弹幕、Weverse 评论和手写信，定制专属浪漫及称呼！</p>
-                  <p>🤝 <strong className="text-amber-200">专属经纪人人设 (ESTJ/ISFJ/ENTJ/ENFP)</strong>：可自由定制随行经纪人的姓名、职称与 MBTI 性格侧写，不仅会在每日日程结算清晨点评中展示，还会重塑 KakaoTalk 的发信语气与态度！</p>
-                  <p>📞 <strong className="text-cyan-200">深夜煲电话粥与专属 Lovestagram</strong>：在 KakaoTalk 恋人互动中新增「深夜煲电话粥」与「私密 Bubble 空间」，不惊动狗仔的前提下，大幅拉近彼此的秘密地下恋心境！</p>
-                  <p>🚨 <strong className="text-red-300">突发骚扰降噪冷却</strong>：大大降低了私生粉和毒站姐的突发频率（降至15%），并增加 <strong>5天严格冷却期</strong>，防堵骚扰过频，保卫主理人健康！</p>
+                  <p>🔮 <strong className="text-pink-200">梦男梦女比例自由定制</strong>：在建档时自由设定狂热梦系受众倾向（混合、梦女为主、梦男为主）。</p>
+                  <p>🤝 <strong className="text-amber-200">专属经纪人人设 (ESTJ/ISFJ/ENTJ/ENFP)</strong>：定制随行经纪人姓名、职称与 MBTI 性格侧写。</p>
+                  <p>📞 <strong className="text-cyan-200">深夜煲电话粥与专属 Lovestagram</strong>：在 KakaoTalk 恋人互动中新增「深夜煲电话粥」与「私密 Bubble 空间」。</p>
+                  <p>🚨 <strong className="text-red-300">突发骚扰降噪冷却</strong>：降低私生粉和毒站姐突发频率并增加 5 天严格冷却期。</p>
                 </div>
               </div>
 
-              {/* Feature 18: Global Font Size Adjustment & Traditional Chinese All-Field Toggle (BRAND NEW V3.8) */}
-              <div className="bg-gradient-to-r from-amber-600/20 via-orange-600/20 to-yellow-600/10 border border-amber-500/35 p-3.5 rounded-xl space-y-2 font-sans">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>🌐 18. [重磅升级] 全局字号等比例自适应缩放 & 繁体中文全域高保真转译</span>
+              {/* PAST RELEASE: V3.8 (2026-07-18) */}
+              <div className="bg-gradient-to-r from-amber-600/15 via-orange-600/15 to-yellow-600/10 border border-amber-500/30 p-3.5 rounded-xl space-y-2 font-sans">
+                <div className="flex items-center justify-between text-amber-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    🔤 18. V3.8 全局字号等比例自适应缩放 & 繁体中文全域转译
+                  </span>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-18
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应大中华区及海外主理人对于无障碍辅助与多语言阅读的极致呼声，我们在【设置】面板中隆重呈献全新无级自适应算法：
-                </p>
                 <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🔍 <strong className="text-amber-200">全局字号等比例独立放大</strong>：摆脱单一根节点缩放，新增智能字号偏移算法！系统内所有 Tailwind 标准字号（<code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-xs</code> ~ <code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-5xl</code>）与各模块细微自定字号（从 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">7px</code> 到 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">80px</code>）均会根据所选档位（小、中、大、特大）在原有大底字号上<strong>分别等量递增/递减</strong>。排版完美无缝，绝无错位或遮挡！</p>
-                  <p>🇹🇼 <strong className="text-orange-200">3880+ 词条 OpenCC 繁体字典完美转译</strong>：全面集成官方高保真繁体中文对照表，不单能够一键动态切换全部静态 UI，更配合端侧实时 <code className="text-orange-300 bg-orange-950/65 px-1 rounded">MutationObserver</code> 嗅探器，对所有 AI 输出及实时聊天互动进行即时深层繁体转译，实现 100% 繁体化视觉沉浸！</p>
+                  <p>🔍 <strong className="text-amber-200">全局字号等比例独立放大</strong>：Tailwind 标准字号与细微自定字号在原有大底字号上分别等量递增/递减。</p>
+                  <p>🔠 <strong className="text-orange-200">3880+ 词条 OpenCC 繁体字典完美转译</strong>：集成高保真繁体中文对照表，配合同步 MutationObserver 嗅探器。</p>
                 </div>
               </div>
 
-              {/* Feature 15: Mobile Viewport Adaptive Scroll Optimization (BRAND NEW V3.6) */}
-              <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
-                  <span>📱 15. [重要优化] 移动端竖屏自适应与防截断全局滚动适配</span>
+              {/* PAST RELEASE: V3.6 (2026-07-15) */}
+              <div className="bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border border-blue-500/30 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between text-blue-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    📱 15. V3.6 移动端竖屏自适应、地下恋人身份自定义与攻受定位
+                  </span>
+                  <span className="text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-15
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了让各位主理人在手机、iPad等小屏竖屏设备上获得顺滑不截断的完美演艺体验，我们重构了核心容器：
-                </p>
                 <div className="space-y-1.5 pl-3 border-l-2 border-blue-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>📱 <strong className="text-blue-200">手机竖屏安全区域自适应</strong>：新增了统一 of 自适应视口高度计算类 <code className="text-blue-300 bg-blue-950/65 px-1 rounded">primary-app-container</code>，彻底解决了移动端原生导航栏/底部栏遮挡或组件溢出被截断导致无法触达底部操作的顽疾。</p>
-                  <p>📜 <strong className="text-indigo-200">主应用多终端独立弹性逻辑</strong>：在手机竖屏上自动切换为柔和的局部自适应滑动视口，确保按钮与数据仪表盘触手可得；在平板/电脑宽屏下保持无缝的高阶分栏非切割布局，享受大开大合的完美主理操盘体验！</p>
+                  <p>📱 <strong className="text-blue-200">手机竖屏安全区域自适应</strong>：新增 primary-app-container 计算类，解决原生导航栏遮挡或组件溢出问题。</p>
+                  <p>🎭 <strong className="text-pink-200">地下恋人身份背景九大行业与自定义</strong>：自由定制恋人姓名、性别、MBTI、真实年龄与社会行业。</p>
+                  <p>💘 <strong className="text-purple-200">恋人攻受定位切换与私聊语调回馈</strong>：支持随时在左位 (Gong/Top) 与右位 (Shou/Bottom) 间切线转换。</p>
                 </div>
               </div>
 
-              {/* Feature 16: Custom Underground Lover Backstory (BRAND NEW V3.6) */}
-              <div className="bg-gradient-to-r from-pink-900/40 to-rose-900/40 border border-pink-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
-                  <span>💖 16. [重磅新特] 地下秘密情人身份背景多字段深度自定义</span>
+              {/* PAST RELEASE: V3.5 (2026-07-10) */}
+              <div className="bg-gradient-to-r from-emerald-900/30 to-teal-900/30 border border-emerald-500/30 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between text-emerald-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    🕒 14. V3.5 18点每日互动点数制 与 极限制裁/身体保护机制
+                  </span>
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-10
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应纯爱与剧情脑补玩家的极致热烈呼声，我们在创角 setup 环节上线了全套的<strong>“地下秘密恋人身份卡”自定义生成器</strong>：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🎭 <strong className="text-pink-200">九大内置行业身份与纯自定义职业</strong>：不仅可以选择大势爱豆、顶级模特、同公司练习生队友、公司 CEO 社长、编舞总监等九大内置光鲜亮丽的职业圈层，更能选择“自定义输入”，随心所欲定制对方的社会行当！</p>
-                  <p>🚻 <strong className="text-rose-200">全链字段参数自由构建</strong>：完美定制恋人的 <strong>姓名/艺名、性别、MBTI、真实年龄</strong>。随同携带恋人开局，将解锁专属的「秘密恋人KakaoTalk私密聊天通道」，随时应对由于粉圈亏欠感、D社暗雷而引发的破防冷静分手危机！</p>
-                </div>
-              </div>
-
-              {/* Feature 17: Romance Position Alignment & Personality Tone Dynamic Shifting (BRAND NEW V3.6) */}
-              <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-pink-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>💘 17. [首创] 地下恋人情感攻受定位切换与动态私聊语调自适应</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  不再是死板的固定回复，恋爱对话的攻受属性与主导地位现在掌握在您的手中：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>↕️ <strong className="text-purple-200">攻受定位设定随心调整</strong>：在【设置】面板中，当您拥有地下恋人时，可随时在 <strong>左位 (左 / 攻 / Top / 保护方)</strong> 或是 <strong>右位 (右 / 受 / Bottom / 被宠爱)</strong> 之间相互切线转换！</p>
-                  <p>🗣️ <strong className="text-pink-250">恋人心境私聊完美回馈</strong>：
-                    <br />• <strong>切换为左位 (您是主攻/保护者) 时</strong>：对方的 KakaoTalk 回复与对话文本将转变倾向为<strong>偏受(温柔依恋依顺、体贴退让、甜腻缠人)</strong> 的受方风格；
-                    <br />• <strong>切换为右位 (您是主受/被宠爱者) 时</strong>：恋人的私密安抚和过夜大纲等动作将倾斜至<strong>偏攻(霸道宠溺、强有力护短、富有强欲与占有欲)</strong> 的攻方调性，极尽温柔，极致纯爱！
-                  </p>
-                </div>
-              </div>
-
-              {/* Feature 14: 18-Point Interaction System and Stamina/Stress Protection Lock (BRAND NEW V3.5) */}
-              <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
-                  <span>🕒 14. [重磅] 18点每日互动点数制 与 极限制裁/身体保护机制</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了给大家提供极高主理人自由度和真实的养组合体感，我们对日常演艺体系进行了重构升级：
-                </p>
                 <div className="space-y-1.5 pl-3 border-l-2 border-emerald-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>⚜️ <strong className="text-emerald-200">全新的 18 点每日互动点数系统 (Interaction Points)</strong>：摒弃了之前繁琐的时间流逝体制！现在，每一项大型业务日程或主动生活互动（如去清潭洞皮肤管理、普拉提私教、深夜大餐密谋、甚至呼叫 Dr. Kim 医生心理咨询）都改为精准扣减 <strong>1~2 个互动点</strong>。每天的规划量和自主支配频次瞬间翻倍，不再因为单一活动草草换天！</p>
-                  <p>🚨 <strong className="text-rose-300">首创 极低体力与爆表压力强制休整挂锁</strong>：有血有肉有神经的爱豆绝非无情的打卡机器！当爱豆体力濒临彻底枯竭（<strong>低于或等于 10⚡</strong>）或心理压力近乎爆表崩溃（<strong>大于或等于 95%</strong>）时，除了进行大口大嚼干饭、去宿舍/保姆车休息大睡、自选修护绿汁SPA等<strong>恢复体力/释放压力</strong>的操作外，其余所有高体力消耗训练、侵入式治疗美化（水光针、热玛吉）、地狱极速断食、各种大型业务日程<strong>均会被强行锁定挂红中止</strong>，督促您优先科学调理，打通爱豆大健康双轨制！</p>
+                  <p>⚜️ <strong className="text-emerald-200">18 点每日互动点数系统 (Interaction Points)</strong>：业务日程与生活互动精准扣减 1~2 个互动点。</p>
+                  <p>🚨 <strong className="text-rose-300">极低体力与爆表压力强制休整挂锁</strong>：体力低于10⚡或压力高于95%时强行锁定高消耗行程。</p>
                 </div>
               </div>
 
-              {/* Feature 13: 24-Day Cycle Setup (BRAND NEW V3.3) */}
-              <div className="bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-indigo-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
-                  <span>⚡ 13. [新增] 24天特快合约年与12个月上下半分期方案</span>
+              {/* PAST RELEASE: V3.3 (2026-07-05) */}
+              <div className="bg-gradient-to-r from-purple-950/40 to-indigo-950/40 border border-indigo-500/30 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between text-indigo-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    ⚡ 13. V3.3 24天特快合约年 & 日程表“今日精神压力值”精细可视
+                  </span>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-07-05
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应部分希望快节奏推演和急于晋升殿堂级大前辈玩家的反馈：我们在创角界面新增了<strong>【合约年度日历周期】</strong>选择！你可以随时开启 24 天制特快神颜档（12个月，每月分上半月、下半月各一天完成流转），资历计算与全局合同周期均会精准自动计算，尽情享受特快飞跃的爽快感！
-                </p>
-              </div>
-
-              {/* Feature 10: Visual Stress Indicator (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-rose-950/40 to-amber-950/40 border border-rose-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
-                  <span>🤯 10. [首创] 行程面板“今日精神压力值”直接精细可视</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应各位爱豆运营官热烈要求，在【日常日程表】顶部紧邻体力条的绝佳位置，我们增设了实时动态同步的<strong>“🤯 压力: XX/100”指示牌成分</strong>。不用切换面板即可一气宏图统筹规划调理了！
-                </p>
-              </div>
-
-              {/* Feature 11: Persistent API settings (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-teal-950/40 to-blue-950/40 border border-teal-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-teal-300 font-bold text-[12.5px]">
-                  <span>💾 11. [省心] API 配置游离态 LocalStorage 终身固化</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  现在，<strong>您的个人 API Key、自定义微调模型名、自定义端点</strong>全部被直接剥离缓存于独立且稳健的浏览器本地 LocalStorage 中。不管进退存，一次填完终身顺畅！
-                </p>
-              </div>
-
-              {/* Feature 12: Career Solo and Scandal Decoupling (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-indigo-950/40 to-purple-950/40 border border-indigo-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
-                  <span>🔒 12. [独美] 纯正事业型单身流与恋爱绯闻危机绝绝对分立</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  对于在创角 setup 时选择<strong>不谈地下恋、保持零绯闻母胎单身</strong>路线的搞事业纯血爱豆，系统判定逻辑现已彻底物理遮罩并静默切除“D社深夜江边曝光密会约会”等高危风暴，让您搞起事业来畅通无阻，绝对专注！
-                </p>
-              </div>
-
-              {/* Feature 9: K-Pop Ageing Factor (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-purple-950/40 to-pink-950/40 border border-purple-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>👑 9. [首发巨献] K-Pop 演艺资历 (Ageing Factor) 与 AI 动态语气自适应语调</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  打破成见！合约周期性演进深刻改变你与配角（经纪人、对头、队友、社长）的长期交际态势与叙事：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>📅 <strong className="text-purple-200">行当资历分层</strong>：以 36 天为一个合约周期，资历属性由 <strong>Ageing Factor</strong> 实时折算（0 新人，1 一周年熟手，2+ 资深大前辈，顶峰大势）。</p>
-                  <p>🗣️ <strong className="text-pink-350">AI 智能语气千人千面蜕变</strong>：
-                    <br />• <strong>Ageing Factor = 0 时</strong>：配角对你严格敲打，闵纪人更是高频吩咐点拨、言谈稍带挑剔刻薄；
-                    <br />• <strong>Ageing Factor = 1 时</strong>：经过积累蜕变，闵经理人、社长对你的专业成熟表现出真正的职业赏识，关照并认可你为成熟中坚；
-                    <br />• <strong>Ageing Factor &ge; 2 时</strong>：话语完全过渡到与同行大前辈/合伙人平视的体面、老到、沉稳和高端商务嘱托，告别毛躁。
-                  </p>
-                  <p>📱 <strong className="text-cyan-300">深度交融私聊与次日结算</strong>：本规则已全面写合 KakaoTalk 私聊引擎、次日过夜深度 AI 行程决策（且无 Key 地下高保真本地 fallback 中也获得一致支持）！</p>
+                <div className="space-y-1.5 pl-3 border-l-2 border-indigo-500/30 text-[10.5px] text-slate-400 leading-snug">
+                  <p>⚡ <strong className="text-indigo-200">24天特快合约年</strong>：创角界面新增合约年度日历周期选择。</p>
+                  <p>🤯 <strong className="text-rose-300">今日精神压力值精细指示牌</strong>：日程表顶部增设“🤯 压力: XX/100”指示牌。</p>
                 </div>
               </div>
 
-              {/* Feature 8: Snacking Simulator (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-amber-950/40 to-indigo-950/40 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>🍲 8. [全新巨献] “深夜偷吃食堂” 偷吃特工作战趣味模拟</span>
+              {/* PAST RELEASE: V3.0 (2026-06-28) */}
+              <div className="bg-gradient-to-r from-amber-950/30 to-indigo-950/30 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
+                <div className="flex items-center justify-between text-amber-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    🍲 8. V3.0 深夜偷吃食堂模拟 & K-Pop 演艺资历 (Ageing Factor)
+                  </span>
+                  <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-06-28
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  不再是单纯的数值点击！在【属性】数据版块下正式新增了极具代入感的互动加餐游戏系统：
-                </p>
                 <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🍱 <strong className="text-amber-200">六大特色深夜膳食</strong>：包括 🍗 宿舍深夜炸鸡、🥩 顶级炭火韩牛、🥤 高卡碳水燕麦奶昔、🍧 辛辣年糕雪冰、🥗 水煮鸡胸肉挣扎餐、🍜 便利店芝士拉面。各具特殊奇妙效果！</p>
-                  <p>👄 <strong className="text-amber-200">大口咀嚼物理反馈</strong>：伴随细腻生吞、大口大嚼叙事动画以及倒计时物理咀嚼条。可长嚼，亦可一键“快速三口闷完”！</p>
-                  <p>👀 <strong className="text-pink-300">突发事件一 [舍友撞破分食]</strong>：18% 的几率遭遇室友深夜贴脸抢食！被迫分一口，能量热量减半，但大幅增加与队友的集体好感度 (+7)！</p>
-                  <p>🚨 <strong className="text-red-400">突发事件二 [闵室长查寝]</strong>：10% 几率听到门外高跟鞋咚咚逼近！塞进床底下仓促过关，饱食度暴损，心理压力巨额飙升 (+15)！</p>
-                  <p>🎒 <strong className="text-emerald-300">特殊健康补偿反馈</strong>：吃干瘪鸡胸肉甚至能由于身体轻灵无水肿负担，直接爆出永久 <strong className="text-emerald-300">声乐/舞蹈技能 +2 点 </strong> 的练习回报！而高端韩牛更能极速滋养被压力受损干枯暴痘的疲惫肌，恢复红润面色！但在深夜暴食大辛大辣拉面年糕则有高达 30% 晨起满面油脂、脸部极度浮肿的毁容风险哦！</p>
+                  <p>🍱 <strong className="text-amber-200">深夜偷吃食堂</strong>：六大特色深夜膳食、大口咀嚼物理反馈、舍友抢食与室长查寝突发事件。</p>
+                  <p>👑 <strong className="text-purple-200">K-Pop 演艺资历 (Ageing Factor)</strong>：以36天为周期折算资历，配角语气千人千面蜕变。</p>
                 </div>
               </div>
 
-              {/* Feature 1: Name Duplicate filtering */}
+              {/* PAST RELEASE: V2.0 (2026-06-12) */}
               <div className="bg-purple-950/20 border border-purple-500/20 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>🛡️ 1. 爱豆重名/冲突规避校验系统</span>
+                <div className="flex items-center justify-between text-purple-300 font-bold text-[12.5px]">
+                  <span className="flex items-center gap-2">
+                    🛡️ 1. V2.0 爱豆重名规避、BMI黄金调理与泡泡真实队友连线
+                  </span>
+                  <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded font-mono">
+                    2026-06-12
+                  </span>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了从底层彻底切断重名引起的通信乱流：自建多槽位间限制重合本名或艺名，更自动屏蔽了经纪人、董事会NPC及宿命队友（智雅、香橙、樱子等）等同名撞车。
-                </p>
-              </div>
-
-              {/* Feature 2: BMI and health */}
-              <div className="bg-emerald-950/20 border border-emerald-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
-                  <span>📏 2. 体重/身高联动 BMI 与黄金调理机制</span>
+                <div className="space-y-1 pl-3 border-l-2 border-purple-500/20 text-[10.5px] text-slate-400">
+                  <p>🛡️ 重名冲突规避校验系统。</p>
+                  <p>📏 体重/身高联动 BMI 与黄金调理机制。</p>
+                  <p>💬 泡泡 (Bubble) 评论真实队友精准连线。</p>
+                  <p>💖 练习生暗线恋爱启动与姓名补全。</p>
                 </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  重构了身体质量指数（BMI）物理学公式，由设定的身高与体重科学共算。彻底推倒了“任何时刻都无理贬斥极其消瘦”的单调舆论——当您打理营养使BMI恢复健康区间时，饭圈论坛将会爆发全网最高赞的吹捧，让爱豆越养越美！
-                </p>
-              </div>
-
-              {/* Feature 3: Stamina restore */}
-              <div className="bg-blue-950/20 border border-blue-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
-                  <span>🔋 3. 清晨复盘结算体力延迟读取修正</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  纠正了AI次日结算流程中，对能量体力更新滞后一天的时序Bug。清晨复盘评价中会实时采用最健康的早间饱满回复精力数据，让AI再也不会毫无缘由地唠叨你极其劳累。
-                </p>
-              </div>
-
-              {/* Feature 4: bubble names alignment */}
-              <div className="bg-sky-950/20 border border-sky-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-sky-300 font-bold text-[12.5px]">
-                  <span>💬 4. 泡泡 (Bubble) 评论真实队友精准连线</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  优化泡泡营业生成，杜绝了系统偶尔无脑编造英文与虚构队友回复。前排营业最后一贴凡是出现队友打趣时，均100%连线至真实的组合名册（包含您的多槽卡和队内既定担当）。
-                </p>
-              </div>
-
-              {/* Feature 5: Trainee Romance */}
-              <div className="bg-rose-950/20 border border-rose-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
-                  <span>💖 5. 练习生暗线恋爱启动与姓名补全</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  练习生时期全面接入情感选项，空白时会周全自动配置极赞的伴侣名字（如 韩熙珍/宋承泽）并解锁温存的短信交流，练习生再不是毫无爱情互动的枯槁旅途！
-                </p>
-              </div>
-
-              {/* Feature 6: Responsive scroll container */}
-              <div className="bg-amber-950/20 border border-amber-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>📺 6. PC浏览器自适应 iPad 窗体与纵向滚动</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  修缮了平板外壳外框高度，设定 dynamic 限高，强制溢出时内部容器自适应，允许全域独立双向滚动！杜绝了PC电脑浏览器下底部控制栏、侧边栏溢出导致无法点击的问题。
-                </p>
-              </div>
-
-              {/* Feature 7: Lockdown */}
-              <div className="bg-red-950/20 border border-red-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-red-300 font-bold text-[12.5px]">
-                  <span>🔒 7. 重大危机/复盘选项强制切线锁定</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  重修了切线逃脱决策惩罚的空子：在早结算复牌、私生饭骚扰大考等事件处于活动态时，左上角成员切线通道、底部快捷 Dock 都会被牢牢物理遮罩锁定，直至您智勇了结！
-                </p>
               </div>
 
             </div>
@@ -4019,9 +4058,9 @@ ${contact.summary || "无"}`;
             <div className="flex justify-end gap-2.5 text-xs mt-6 pt-3.5 border-t border-white/10">
               <button 
                 onClick={() => setShowUpdateModal(false)}
-                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
+                className="w-full py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
               >
-                开始健康调理，进入爱豆计划
+                开始演艺之旅，进入 IdolPad™
               </button>
             </div>
           </div>
@@ -4191,308 +4230,7 @@ ${contact.summary || "无"}`;
         </div>
       )}
 
-      {/* Update and Debug notification modal */}
-      {showUpdateModal && (
-        <div id="update-notification-modal" className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-[250] p-4">
-          <div className="bg-[#0b0e17] border-2 border-purple-500/30 rounded-2xl p-5.5 max-w-lg w-full shadow-[0_0_50px_rgba(147,51,234,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-rose-500/10 rounded-full blur-2xl"></div>
-            
-            <div className="flex items-center gap-3 border-b border-white/10 pb-3 mb-4.5">
-              <div className="bg-purple-500/20 text-purple-400 p-2 rounded-xl">
-                <Sparkles className="w-5 h-5 animate-pulse" />
-              </div>
-              <div>
-                <h3 className="text-sm font-black text-slate-100 flex items-center gap-1.5 font-sans">
-                  👑 企划社最新巨献公告 (V4.5 个人 Solo 独立歌手纯享重构 & 个人饭圈适配)
-                </h3>
-                <p className="text-[10px] text-slate-400 font-mono tracking-wider mt-0.5">
-                  SYSTEM VERSION 4.5 | SOLO IDOL MODE REFACTOR & EXCLUSIVE SOLO FANDOM ECOLOGY
-                </p>
-              </div>
-            </div>
 
-            <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1 text-slate-200 font-sans text-xs">
-
-              {/* Feature 21: Solo Mode & Solo Fandom Ecology Refactor (BRAND NEW V4.5) */}
-              <div className="bg-gradient-to-r from-purple-900/40 via-indigo-900/40 to-pink-950/30 border border-purple-500/40 p-3.5 rounded-xl space-y-2 font-sans">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>🎤 21. [重磅升级] V4.5 个人 Solo 独立歌手模式 & 纯享个人饭圈重构</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应广大主理人对于 Solo 独立歌手真实感与纯享体验的期待，我们完成了底层 AI 提示词与大健康 / 粉丝大盘系统的彻底重塑：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/40 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🎤 <strong className="text-purple-200">Solo 独立歌手全域无队友纯享</strong>：当选择【个人 Solo 独立歌手】时，系统全域（包含 KakaoTalk、Weverse 官咖、W-Live 直播弹幕、TikTok 变装/舞蹈挑战、小红书私服笔记、粉丝来信等）将 100% 聚焦个人舞台与独处日常，绝对不再虚构或误提及任何组合队友！</p>
-                  <p>📊 <strong className="text-indigo-200">大健康 / 粉丝分析 (Fandom Analytics) 彻底适配</strong>：Solo 模式下彻底剔除「OT 团粉」与「团队毒唯」，自动平滑归集重构为「核心唯粉死忠」、「事业唯/成绩粉」与「跨界/合作 CP 粉」，带来最地道的个人 Solo 爱豆饭圈操盘体感！</p>
-                  <p>💬 <strong className="text-pink-200">恋人攻受定位 & 性别称谓全场景强校验</strong>：强化 KakaoTalk 地下恋人角色扮演中的左位（Gong/Top）与右位（Shou/Bottom）语气词，并严格根据玩家性别（女/男爱豆）防穿帮调用（欧尼/姐姐/哥哥/欧巴）。</p>
-                </div>
-              </div>
-
-              {/* Feature 20: Fandom & Manager Customization (BRAND NEW V4.0) */}
-              <div className="bg-gradient-to-r from-pink-900/40 via-purple-900/30 to-indigo-950/20 border border-pink-500/35 p-3.5 rounded-xl space-y-2 font-sans">
-                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
-                  <span>✨ 20. [全能定制] 粉丝属性梦男/梦女偏向设定、经纪人专属MBTI人设与深夜秘密电话</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为提供更完美的沉浸式爱豆追梦之旅，我们在创角 setup 阶段重磅呈献粉丝与经纪人全方位定制底座：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🔮 <strong className="text-pink-200">梦男梦女比例自由定制</strong>：在建档时可自由设定你狂热梦系受众倾向（混合、梦女女粉为主、梦男男粉为主）。这将直接重构 W-Live 直播弹幕、Weverse 评论和手写信，定制专属浪漫及称呼！</p>
-                  <p>🤝 <strong className="text-amber-200">专属经纪人人设 (ESTJ/ISFJ/ENTJ/ENFP)</strong>：可自由定制随行经纪人的姓名、职称与 MBTI 性格侧写，不仅会在每日日程结算清晨点评中展示，还会重塑 KakaoTalk 的发信语气与态度！</p>
-                  <p>📞 <strong className="text-cyan-200">深夜煲电话粥与专属 Lovestagram</strong>：在 KakaoTalk 恋人互动中新增「深夜煲电话粥」与「私密 Bubble 空间」，不惊动狗仔的前提下，大幅拉近彼此的秘密地下恋心境！</p>
-                  <p>🚨 <strong className="text-red-300">突发骚扰降噪冷却</strong>：大大降低了私生粉和毒站姐的突发频率（降至15%），并增加 <strong>5天严格冷却期</strong>，防堵骚扰过频，保卫主理人健康！</p>
-                </div>
-              </div>
-
-              {/* Feature 19: Recent Hotfixes (BRAND NEW V3.9) */}
-              <div className="bg-gradient-to-r from-purple-900/30 via-indigo-900/30 to-purple-950/20 border border-purple-500/35 p-3.5 rounded-xl space-y-2 font-sans">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>🛠️ 19. [热点修复] V3.9 热点问题修复与全设备体感增筑</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应主理人们反馈，我们连夜攻坚完成了以下数个核心系统体验修复与底层优化：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>📜 <strong className="text-purple-200">PC端设置面板纵向滚动</strong>：修复了在电脑宽屏下，设置面板被外层容器限制而无法滚动的Bug，现在隐藏功能和长文导入一拉到底！</p>
-                  <p>💬 <strong className="text-indigo-200">泡泡发信气泡高对比度</strong>：玩家发信消息气泡完美重塑！调整前景和背景色彩对比，绝无白字隐形，确保泡泡对话清晰易读。</p>
-                  <p>📱 <strong className="text-pink-300">社媒作品切换持久化</strong>：重构了小红书和TikTok作品管理器。离开当前App再切回时，已发布作品将100%永久保留，永不消失！</p>
-                  <p>🤝 <strong className="text-cyan-300">经纪人身份命名智能纠偏</strong>：完善了性别称谓逻辑。当玩家性别为女（经纪人为「严室长」）时，彻底消除偶尔将消息标签误判为「闵经纪人」的幽灵时序Bug。</p>
-                </div>
-              </div>
-
-              {/* Feature 18: Global Font Size Adjustment & Traditional Chinese All-Field Toggle (BRAND NEW V3.8) */}
-              <div className="bg-gradient-to-r from-amber-600/20 via-orange-600/20 to-yellow-600/10 border border-amber-500/35 p-3.5 rounded-xl space-y-2 font-sans">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>🌐 18. [重磅升级] 全局字号等比例自适应缩放 & 繁体中文全域高保真转译</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应大中华区及海外主理人对于无障碍辅助与多语言阅读的极致呼声，我们在【设置】面板中隆重呈献全新无级自适应算法：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🔍 <strong className="text-amber-200">全局字号等比例独立放大</strong>：摆脱单一根节点缩放，新增智能字号偏移算法！系统内所有 Tailwind 标准字号（<code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-xs</code> ~ <code className="text-amber-300 bg-amber-950/65 px-1 rounded">text-5xl</code>）与各模块细微自定字号（从 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">7px</code> 到 <code className="text-amber-300 bg-amber-950/65 px-1 rounded">80px</code>）均会根据所选档位（小、中、大、特大）在原有大底字号上<strong>分别等量递增/递减</strong>。排版完美无缝，绝无错位或遮挡！</p>
-                  <p>🇹🇼 <strong className="text-orange-200">3880+ 词条 OpenCC 繁体字典完美转译</strong>：全面集成官方高保真繁体中文对照表，不单能够一键动态切换全部静态 UI，更配合端侧实时 <code className="text-orange-300 bg-orange-950/65 px-1 rounded">MutationObserver</code> 嗅探器，对所有 AI 输出及实时聊天互动进行即时深层繁体转译，实现 100% 繁体化视觉沉浸！</p>
-                </div>
-              </div>
-
-              {/* Feature 15: Mobile Viewport Adaptive Scroll Optimization (BRAND NEW V3.6) */}
-              <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 border border-blue-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
-                  <span>📱 15. [重要优化] 移动端竖屏自适应与防截断全局滚动适配</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了让各位主理人在手机、iPad等小屏竖屏设备上获得顺滑不截断的完美演艺体验，我们重构了核心容器：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-blue-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>📱 <strong className="text-blue-200">手机竖屏安全区域自适应</strong>：新增了统一 of 自适应视口高度计算类 <code className="text-blue-300 bg-blue-950/65 px-1 rounded">primary-app-container</code>，彻底解决了移动端原生导航栏/底部栏遮挡 or 组件溢出被截断导致无法触达底部操作的顽疾。</p>
-                  <p>📜 <strong className="text-indigo-200">主应用多终端独立弹性逻辑</strong>：在手机竖屏上自动切换为柔和的局部自适应滑动视口，确保按钮与数据仪表盘触手可得；在平板/电脑宽屏下保持无缝的高阶分栏非切割布局，享受大开大合的完美主理操盘体验！</p>
-                </div>
-              </div>
-
-              {/* Feature 16: Custom Underground Lover Backstory (BRAND NEW V3.6) */}
-              <div className="bg-gradient-to-r from-pink-900/40 to-rose-900/40 border border-pink-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-pink-300 font-bold text-[12.5px]">
-                  <span>💖 16. [重磅新特] 地下秘密情人身份背景多字段深度自定义</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应纯爱与剧情脑补玩家的极致热烈呼声，我们在创角 setup 环节上线了全套的<strong>“地下秘密恋人身份卡”自定义生成器</strong>：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-pink-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🎭 <strong className="text-pink-200">九大内置行业身份与纯自定义职业</strong>：不仅可以选择大势爱豆、顶级模特、同公司练习生队友、公司 CEO 社长、编舞总监等九大内置光鲜亮丽的职业圈层，更能选择“自定义输入”，随心所欲定制对方的社会行当！</p>
-                  <p>🚻 <strong className="text-rose-200">全链字段参数自由构建</strong>：完美定制恋人的 <strong>姓名/艺名、性别、MBTI、真实年龄</strong>。随同携带恋人开局，将解锁专属的「秘密恋人KakaoTalk私密聊天通道」，随时应对由于粉圈亏欠感、D社暗雷而引发的破防冷静分手危机！</p>
-                </div>
-              </div>
-
-              {/* Feature 17: Romance Position Alignment & Personality Tone Dynamic Shifting (BRAND NEW V3.6) */}
-              <div className="bg-gradient-to-r from-purple-900/40 to-pink-900/40 border border-pink-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>💘 17. [首创] 地下恋人情感攻受定位切换与动态私聊语调自适应</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  不再是死板的固定回复，恋爱对话的攻受属性与主导地位现在掌握在您的手中：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>↕️ <strong className="text-purple-200">攻受定位设定随心调整</strong>：在【设置】面板中，当您拥有地下恋人时，可随时在 <strong>左位 (左 / 攻 / Top / 保护方)</strong> 或是 <strong>右位 (右 / 受 / Bottom / 被宠爱)</strong> 之间相互切线转换！</p>
-                  <p>🗣️ <strong className="text-pink-250">恋人心境私聊完美回馈</strong>：
-                    <br />• <strong>切换为左位 (您是主攻/保护者) 时</strong>：对方的 KakaoTalk 回复与对话文本将转变倾向为<strong>偏受(温柔依恋依顺、体贴退让、甜腻缠人)</strong> 的受方风格；
-                    <br />• <strong>切换为右位 (您是主受/被宠爱者) 时</strong>：恋人的私密安抚和过夜大纲等动作将倾斜至<strong>偏攻(霸道宠溺、强有力护短、富有强欲与占有欲)</strong> 的攻方调性，极尽温柔，极致纯爱！
-                  </p>
-                </div>
-              </div>
-
-              {/* Feature 14: 18-Point Interaction System and Stamina/Stress Protection Lock (BRAND NEW V3.5) */}
-              <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 border border-emerald-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
-                  <span>🕒 14. [重磅] 18点每日互动点数制 与 极限制裁/身体保护机制</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了给大家提供极高主理人自由度和真实的养组合体感，我们对日常演艺体系进行了重构升级：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-emerald-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>⚜️ <strong className="text-emerald-200">全新的 18 点每日互动点数系统 (Interaction Points)</strong>：摒弃了之前繁琐的时间流逝体制！现在，每一项大型业务日程或主动生活互动（如去清潭洞皮肤管理、普拉提私教、深夜大餐密谋、甚至呼叫 Dr. Kim 医生心理咨询）都改为精准扣减 <strong>1~2 个互动点</strong>。每天的规划量和自主支配频次瞬间翻倍，不再因为单一活动草草换天！</p>
-                  <p>🚨 <strong className="text-rose-300">首创 极低体力与爆表压力强制休整挂锁</strong>：有血有肉有神经的爱豆绝非无情的打卡机器！当爱豆体力濒临彻底枯竭（<strong>低于或等于 10⚡</strong>）或心理压力近乎爆表崩溃（<strong>大于或等于 95%</strong>）时，除了进行大口大嚼干饭、去宿舍/保姆车休息大睡、自选修护绿汁SPA等<strong>恢复体力/释放压力</strong>的操作外，其余所有高体力消耗训练、侵入式治疗美化（水光针、热玛吉）、地狱极速断食、各种大型业务日程<strong>均会被强行锁定挂红中止</strong>，督促您优先科学调理，打通爱豆大健康双轨制！</p>
-                </div>
-              </div>
-
-              {/* Feature 13: 24-Day Cycle Setup (BRAND NEW V3.3) */}
-              <div className="bg-gradient-to-r from-purple-950/50 to-indigo-950/50 border border-indigo-500/35 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
-                  <span>⚡ 13. [新增] 24天特快合约年与12个月上下半分期方案</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应部分希望快节奏推演和急于晋升殿堂级大前辈玩家的反馈：我们在创角界面新增了<strong>【合约年度日历周期】</strong>选择！你可以随时开启 24 天制特快神颜档（12个月，每月分上半月、下半月各一天完成流转），资历计算与全局合同周期均会精准自动计算，尽情享受特快飞跃的爽快感！
-                </p>
-              </div>
-
-              {/* Feature 10: Visual Stress Indicator (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-rose-950/40 to-amber-950/40 border border-rose-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
-                  <span>🤯 10. [首创] 行程面板“今日精神压力值”直接精细可视</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  应各位爱豆运营官热烈要求，在【日常日程表】顶部紧邻体力条的绝佳位置，我们增设了实时动态同步的<strong>“🤯 压力: XX/100”指示牌成分</strong>。不用切换面板即可一气宏图统筹规划调理了！
-                </p>
-              </div>
-
-              {/* Feature 11: Persistent API settings (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-teal-950/40 to-blue-950/40 border border-teal-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-teal-300 font-bold text-[12.5px]">
-                  <span>💾 11. [省心] API 配置游离态 LocalStorage 终身固化</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  现在，<strong>您的个人 API Key、自定义微调模型名、自定义端点</strong>全部被直接剥离缓存于独立且稳健的浏览器本地 LocalStorage 中。不管进退存，一次填完终身顺畅！
-                </p>
-              </div>
-
-              {/* Feature 12: Career Solo and Scandal Decoupling (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-indigo-950/40 to-purple-950/40 border border-indigo-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-indigo-300 font-bold text-[12.5px]">
-                  <span>🔒 12. [独美] 纯正事业型单身流与恋爱绯闻危机绝绝对分立</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  对于在创角 setup 时选择<strong>不谈地下恋、保持零绯闻母胎单身</strong>路线的搞事业纯血爱豆，系统判定逻辑现已彻底物理遮罩并静默切除“D社深夜江边曝光密会约会”等高危风暴，让您搞起事业来畅通无阻，绝对专注！
-                </p>
-              </div>
-
-              {/* Feature 9: K-Pop Ageing Factor (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-purple-950/40 to-pink-950/40 border border-purple-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>👑 9. [首发巨献] K-Pop 演艺资历 (Ageing Factor) 与 AI 动态语气自适应语调</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  打破成见！合约周期性演进深刻改变你与配角（经纪人、对头、队友、社长）的长期交际态势与叙事：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-purple-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>📅 <strong className="text-purple-200">行当资历分层</strong>：以 36 天为一个合约周期，资历属性由 <strong>Ageing Factor</strong> 实时折算（0 新人，1 一周年熟手，2+ 资深大前辈，顶峰大势）。</p>
-                  <p>🗣️ <strong className="text-pink-350">AI 智能语气千人千面蜕变</strong>：
-                    <br />• <strong>Ageing Factor = 0 时</strong>：配角对你严格敲打，闵纪人更是高频吩咐点拨、言谈稍带挑剔刻薄；
-                    <br />• <strong>Ageing Factor = 1 时</strong>：经过积累蜕变，闵经理人、社长对你的专业成熟表现出真正的职业赏识，关照并认可你为成熟中坚；
-                    <br />• <strong>Ageing Factor &ge; 2 时</strong>：话语完全过渡到与同行大前辈/合伙人平视的体面、老到、沉稳和高端商务嘱托，告别毛躁。
-                  </p>
-                  <p>📱 <strong className="text-cyan-300">深度交融私聊与次日结算</strong>：本规则已全面写合 KakaoTalk 私聊引擎、次日过夜深度 AI 行程决策（且无 Key 地下高保真本地 fallback 中也获得一致支持）！</p>
-                </div>
-              </div>
-
-              {/* Feature 8: Snacking Simulator (BRAND NEW) */}
-              <div className="bg-gradient-to-r from-amber-950/40 to-indigo-950/40 border border-amber-500/25 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>🍲 8. [全新巨献] “深夜偷吃食堂” 偷吃特工作战趣味模拟</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  不再是单纯的数值点击！在【属性】数据版块下正式新增了极具代入感的互动加餐游戏系统：
-                </p>
-                <div className="space-y-1.5 pl-3 border-l-2 border-amber-500/30 text-[10.5px] text-slate-400 leading-snug">
-                  <p>🍱 <strong className="text-amber-200">六大特色深夜膳食</strong>：包括 🍗 宿舍深夜炸鸡、🥩 顶级炭火韩牛、🥤 高卡碳水燕麦奶昔、🍧 辛辣年糕雪冰、🥗 水煮鸡胸肉挣扎餐、🍜 便利店芝士拉面。各具特殊奇妙效果！</p>
-                  <p>👄 <strong className="text-amber-200">大口咀嚼物理反馈</strong>：伴随细腻生吞、大口大嚼叙事动画以及倒计时物理咀嚼条。可长嚼，亦可一键“快速三口闷完”！</p>
-                  <p>👀 <strong className="text-pink-300">突发事件一 [舍友撞破分食]</strong>：18% 的几率遭遇室友深夜贴脸抢食！被迫分一口，能量热量减半，但大幅增加与队友的集体好感度 (+7)！</p>
-                  <p>🚨 <strong className="text-red-400">突发事件二 [闵室长查寝]</strong>：10% 几率听到门外高跟鞋咚咚逼近！塞进床底下仓促过关，饱食度暴损，心理压力巨额飙升 (+15)！</p>
-                  <p>🎒 <strong className="text-emerald-300">特殊健康补偿反馈</strong>：吃干瘪鸡胸肉甚至能由于身体轻灵无水肿负担，直接爆出永久 <strong className="text-emerald-300">声乐/舞蹈技能 +2 点 </strong> 的练习回报！而高端韩牛更能极速滋养被压力受损干枯暴痘的疲惫肌，恢复红润面色！但在深夜暴食大辛大辣拉面年糕则有高达 30% 晨起满面油脂、脸部极度浮肿的毁容风险哦！</p>
-                </div>
-              </div>
-
-              {/* Feature 1: Name Duplicate filtering */}
-              <div className="bg-purple-950/20 border border-purple-500/20 p-3.5 rounded-xl space-y-2">
-                <div className="flex items-center gap-2 text-purple-300 font-bold text-[12.5px]">
-                  <span>🛡️ 1. 爱豆重名/冲突规避校验系统</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  为了从底层彻底切断重名引起的通信乱流：自建多槽位间限制重合本名或艺名，更自动屏蔽了经纪人、董事会NPC及宿命队友（智雅、香橙、樱子等）等同名撞车。
-                </p>
-              </div>
-
-              {/* Feature 2: BMI and health */}
-              <div className="bg-emerald-950/20 border border-emerald-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-emerald-300 font-bold text-[12.5px]">
-                  <span>📏 2. 体重/身高联动 BMI 与黄金调理机制</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  重构了身体质量指数（BMI）物理学公式，由设定的身高与体重科学共算。彻底推倒了“任何时刻都无理贬斥极其消瘦”的单调舆论——当您打理营养使BMI恢复健康区间时，饭圈论坛将会爆发全网最高赞的吹捧，让爱豆越养越美！
-                </p>
-              </div>
-
-              {/* Feature 3: Stamina restore */}
-              <div className="bg-blue-950/20 border border-blue-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-blue-300 font-bold text-[12.5px]">
-                  <span>🔋 3. 清晨复盘结算体力延迟读取修正</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  纠正了AI次日结算流程中，对能量体力更新滞后一天的时序Bug。清晨复盘评价中会实时采用最健康的早间饱满回复精力数据，让AI再也不会毫无缘由地唠叨你极其劳累。
-                </p>
-              </div>
-
-              {/* Feature 4: bubble names alignment */}
-              <div className="bg-sky-950/20 border border-sky-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-sky-300 font-bold text-[12.5px]">
-                  <span>💬 4. 泡泡 (Bubble) 评论真实队友精准连线</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  优化泡泡营业生成，杜绝了系统偶尔无脑编造英文与虚构队友回复。前排营业最后一贴凡是出现队友打趣时，均100%连线至真实的组合名册（包含您的多槽卡和队内既定担当）。
-                </p>
-              </div>
-
-              {/* Feature 5: Trainee Romance */}
-              <div className="bg-rose-950/20 border border-rose-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-rose-300 font-bold text-[12.5px]">
-                  <span>💖 5. 练习生暗线恋爱启动与姓名补全</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  练习生时期全面接入情感选项，空白时会周全自动配置极赞的伴侣名字（如 韩熙珍/宋承泽）并解锁温存的短信交流，练习生再不是毫无爱情互动的枯槁旅途！
-                </p>
-              </div>
-
-              {/* Feature 6: Responsive scroll container */}
-              <div className="bg-amber-950/20 border border-amber-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-amber-300 font-bold text-[12.5px]">
-                  <span>📺 6. PC浏览器自适应 iPad 窗体与纵向滚动</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  修缮了平板外壳外框高度，设定 dynamic 限高，强制溢出时内部容器自适应，允许全域独立双向滚动！杜绝了PC电脑浏览器下底部控制栏、侧边栏溢出导致无法点击的问题。
-                </p>
-              </div>
-
-              {/* Feature 7: Lockdown */}
-              <div className="bg-red-950/20 border border-red-500/20 p-3.5 rounded-xl space-y-1.5">
-                <div className="flex items-center gap-2 text-red-300 font-bold text-[12.5px]">
-                  <span>🔒 7. 重大危机/复盘选项强制切线锁定</span>
-                </div>
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  重修了切线逃脱决策惩罚的空子：在早结算复牌、私生饭骚扰大考等事件处于活动态时，左上角成员切线通道、底部快捷 Dock 都会被牢牢物理遮罩锁定，直至您智勇了结！
-                </p>
-              </div>
-
-            </div>
-
-            <div className="flex justify-end gap-2.5 text-xs mt-6 pt-3.5 border-t border-white/10">
-              <button 
-                onClick={() => setShowUpdateModal(false)}
-                className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black rounded-xl shadow-md transition cursor-pointer text-center select-none active:scale-[0.98]"
-              >
-                开始健康调理，进入爱豆计划
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 8-Ending Narrative System Overlay Modal */}
       {activeEnding && (

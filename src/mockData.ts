@@ -253,71 +253,107 @@ export const DEFAULT_PERSONA: IdolPersona = {
   }
 };
 
-export const INITIAL_WEVERSE_POSTS: WeversePost[] = [
-  {
-    id: "w_1",
-    content: "［官咖更新］\n各位小天使！今天练习室里的灯光真的很棒呢～✨ 刚结束了10个小时的刀群舞集训，虽然腰酸背疼，但只要一听到我们在录音室里的新歌Demo，就觉得血液都在沸腾！明天就是我们本周的称重月度评测，真的有点小紧张呢。希望能多听听你们说加油呀！💕📱",
-    image: "",
-    likes: 3100,
-    commentsCount: 3,
-    time: "2小时前",
-    comments: [
-      {
-        id: "wc_1",
-        author: "KIdolLover99",
-        authorAvatar: "",
-        content: "宝宝加油！你今天的练习视频跳得太好了，那个踩点角度绝对是团队第一！大腿上的淤青看得好心疼呜呜🥺",
-        likes: 120,
-        time: "1:55前",
-        fanType: "OT_fan"
-      },
-      {
-        id: "wc_2",
-        author: "Anti_Eclipse",
-        authorAvatar: "",
-        content: "虽然练习辛苦，但你刚才在直播背景里是不是对队友Somin翻了个白眼啊？果然是不和传闻实锤吧？",
-        likes: 15,
-        time: "1:40前",
-        fanType: "anti"
-      },
-      {
-        id: "wc_3",
-        author: "SweetYuna",
-        authorAvatar: "",
-        content: "宝宝！少熬夜吧！你的脸似乎有点水肿噢，明天称重前喝杯黑咖啡，然后做一下热玛吉紧致下。爱死你了！",
-        likes: 85,
-        time: "1:30前",
-        fanType: "delusion"
-      }
-    ]
-  }
-];
+export function getInitialWeversePosts(persona?: IdolPersona): WeversePost[] {
+  const isSolo = persona?.style === "solo";
+  return [
+    {
+      id: "w_1",
+      content: isSolo
+        ? "［官咖更新］\n各位小天使！今天练习室里的灯光真的很棒呢～✨ 刚结束了10个小时的高强度Solo舞台加练，虽然腰酸背疼，但只要一听到录音室里自己的新歌Demo，就觉得血液都在沸腾！明天就是我本周的月度独唱考核，真的有点小紧张呢。希望能多听听你们说加油呀！💕📱"
+        : "［官咖更新］\n各位小天使！今天练习室里的灯光真的很棒呢～✨ 刚结束了10个小时的刀群舞集训，虽然腰酸背疼，但只要一听到我们在录音室里的新歌Demo，就觉得血液都在沸腾！明天就是我们本周的称重月度评测，真的有点小紧张呢。希望能多听听你们说加油呀！💕📱",
+      image: "",
+      likes: 3100,
+      commentsCount: 3,
+      time: "2小时前",
+      comments: [
+        {
+          id: "wc_1",
+          author: "KIdolLover99",
+          authorAvatar: "",
+          content: isSolo
+            ? "宝宝加油！你今天的练习视频跳得太好了，那个踩点角度绝对是同代Solo天花板！大腿上的淤青看得好心疼呜呜🥺"
+            : "宝宝加油！你今天的练习视频跳得太好了，那个踩点角度绝对是团队第一！大腿上的淤青看得好心疼呜呜🥺",
+          likes: 120,
+          time: "1:55前",
+          fanType: isSolo ? "solo_stan" : "OT_fan"
+        },
+        {
+          id: "wc_2",
+          author: "Anti_Eclipse",
+          authorAvatar: "",
+          content: isSolo
+            ? "虽然练习辛苦，但你刚才在直播背景里是不是表情有点疲惫浮肿啊？希望能好好管理状态！"
+            : "虽然练习辛苦，但你刚才在直播背景里是不是对队友Somin翻了个白眼啊？果然是不和传闻实锤吧？",
+          likes: 15,
+          time: "1:40前",
+          fanType: "anti"
+        },
+        {
+          id: "wc_3",
+          author: "SweetYuna",
+          authorAvatar: "",
+          content: "宝宝！少熬夜吧！你的脸似乎有点水肿噢，明天考核前喝杯黑咖啡，然后做一下热玛吉紧致下。爱死你了！",
+          likes: 85,
+          time: "1:30前",
+          fanType: "delusion"
+        }
+      ]
+    }
+  ];
+}
 
-export const INITIAL_BUBBLE_MESSAGES: BubbleMessage[] = [
-  {
-    id: "b_1",
-    sender: "fan_mass",
-    text: "宝子！明天就是三大厂出道名单最终考核了吧？求透露一点内幕！",
-    time: "下午 1:02"
-  },
-  {
-    id: "b_2",
-    sender: "idol",
-    text: "嗯... 考核结果我也很忐忑。不过听说代表这次会亲自来评判。我今天只吃了一份鸡胸肉加一小袋无糖红豆薏仁水。希望不要水肿，大家一定要替我祈祷哦！🤫🥩",
-    time: "下午 1:05"
-  }
-];
+export const INITIAL_WEVERSE_POSTS: WeversePost[] = getInitialWeversePosts();
 
-export const INITIAL_TIKTOK_VIDEOS: TikTokVideo[] = [
-  {
-    id: "t_1",
-    title: "#IdolTrainee 日常！凌晨3点的清晨刀群舞打卡，1.5倍速汗水狂飙 ⚡️🩰",
-    views: 45000,
-    likes: 3200,
-    comments: 240,
-    musicName: "Trainee Beat - Original Sound"
-  }
-];
+export function getInitialBubbleMessages(persona?: IdolPersona): BubbleMessage[] {
+  return [
+    {
+      id: "b_1",
+      sender: "fan_mass",
+      text: "宝子！明天就是三大厂出道名单最终考核了吧？求透露一点内幕！",
+      time: "下午 1:02"
+    },
+    {
+      id: "b_2",
+      sender: "idol",
+      text: "嗯... 考核结果我也很忐忑。不过听说代表这次会亲自来评判。我今天只吃了一份鸡胸肉加一小袋无糖红豆薏仁水。希望不要水肿，大家一定要替我祈祷哦！🤫🥩",
+      time: "下午 1:05"
+    }
+  ];
+}
+
+export const INITIAL_BUBBLE_MESSAGES: BubbleMessage[] = getInitialBubbleMessages();
+
+export function getInitialTikTokVideos(persona?: IdolPersona): any[] {
+  const isSolo = persona?.style === "solo";
+  return [
+    {
+      id: "v_1",
+      title: isSolo
+        ? "#IdolTrainee 日常！凌晨3点的清晨Solo高难度舞蹈打卡，1.5倍速汗水狂飙 ⚡️🩰"
+        : "#IdolTrainee 日常！凌晨3点的清晨刀群舞打卡，1.5倍速汗水狂飙 ⚡️🩰",
+      danceChoice: isSolo ? "主打歌 Solo 1.5x Dance Challenge" : "主打歌 1.5x Dance Challenge",
+      collabWith: "solo",
+      views: 1250000,
+      likes: 98000,
+      shares: 14200,
+      viralIndex: 85,
+      time: "2天前"
+    },
+    {
+      id: "v_2",
+      title: "【高难度变装】打歌服一秒切换！造型师给做的高清造型抓拍！🔥✨",
+      danceChoice: "Wink变装主旋律挑战",
+      collabWith: "solo",
+      views: 3400000,
+      likes: 410000,
+      shares: 31000,
+      viralIndex: 94,
+      time: "4天前"
+    }
+  ];
+}
+
+export const INITIAL_TIKTOK_VIDEOS: TikTokVideo[] = getInitialTikTokVideos();
 
 export const INITIAL_XIAOHONGSHU_POSTS: XiaohongshuPost[] = [
   {
@@ -592,6 +628,62 @@ export const ENHANCED_RANDOM_EVENTS: SystemEvent[] = [
         energyEffect: -5,
         stressEffect: 30,
         outcomeText: "危机公关神速！大众和毒唯对你「高度的爱豆职业觉醒、快刀斩乱麻」的雷厉风行态度大喜过望，本土人缘和销量反倒因为你变身坚毅搞事业女皇/男皇而绝地大逆袭！你在录制节目时强忍红着的眼圈大跳热烈打歌舞，背过身去时不得不硬生生吞下撕心裂肺的眼泪..."
+      }
+    ]
+  },
+  {
+    id: "e_manager_pursuit",
+    title: "【室长私下告白】超越工作关系的温存与深情追求",
+    description: "深夜通告结束后，室长推开休息室大门，递上一盒特意跑半个首尔买来的限定昂贵甜品。TA靠在沙发边，呼吸微沉，眼神充满温柔与偏爱：『工作上我是你的经纪人，但私下里……我再也不想只当你的职业护航者了。你的每一个眼神、每一次受挫，都在牵动我的心。和我秘密走下去吧？』",
+    type: "neutral",
+    choices: [
+      {
+        text: "【紧紧握住TA的手】接纳这沉甸甸的倾慕与特权庇护",
+        popularityEffect: 5,
+        reputationEffect: 15,
+        energyEffect: 20,
+        moneyEffect: 50,
+        stressEffect: -25,
+        managerChange: 15,
+        outcomeText: "室长眼含深情地把你拥入怀中，低语承诺会用公司一切最顶级的公关与资源为你保驾护航！你感到前所未有的踏实与偏爱。"
+      },
+      {
+        text: "【保持职业边界】委婉提醒彼此的公事身份，专心事业",
+        popularityEffect: 10,
+        reputationEffect: 10,
+        energyEffect: 0,
+        moneyEffect: 0,
+        stressEffect: -5,
+        managerChange: -5,
+        outcomeText: "室长眼中闪过一丝落寞，但依然极其贴心地为你披上外套：『好，只要能看到你闪耀，我甘愿做你幕后最坚固的盾牌。』你的专业态度赢得了全公司的高度的敬重。"
+      }
+    ]
+  },
+  {
+    id: "e_teammate_pursuit",
+    title: "【练习室深夜告白】队内C位队友的独占欲与深情求爱",
+    description: "凌晨2点的练习室大灯已灭，只剩一盏微弱的落地灯。队内核心队友在排练结束后突然紧贴着你的肩膀坐下，手套握住你的手掌，眼眸泛着水光：『我不想再当什么单纯的“好队友”了……每次看到镜头和粉丝聚在你身上，我嫉妒得快发疯。但我更在乎你！你眼里能不能多看看我？』",
+    type: "neutral",
+    choices: [
+      {
+        text: "【十指紧扣回应】接纳团内暗涌的深情与独占欲",
+        popularityEffect: 15,
+        reputationEffect: 10,
+        energyEffect: 15,
+        moneyEffect: 0,
+        stressEffect: -20,
+        teammateChange: 20,
+        outcomeText: "幽暗的练习室里，两颗心紧紧贴在一起。双人组合默契爆表，舞台火花四射，死忠CP粉狂欢直呼『过年实锤』！"
+      },
+      {
+        text: "【理智抚摸头发】温柔劝导以事业为重、共同登顶",
+        popularityEffect: 10,
+        reputationEffect: 15,
+        energyEffect: 5,
+        moneyEffect: 0,
+        stressEffect: -5,
+        teammateChange: -2,
+        outcomeText: "队友眼角含泪地点点头，紧紧拥抱了你一下：『好！等我们站上MAMA最高的领奖台，你绝对不许拒绝我！』团队凝聚力空前高涨。"
       }
     ]
   }

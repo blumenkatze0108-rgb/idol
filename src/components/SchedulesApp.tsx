@@ -1,10 +1,115 @@
 import { useState, useEffect } from "react";
-import { IdolSchedule, IdolPersona, WeversePost, getCalendarPeriod } from "../types";
+import { IdolSchedule, IdolPersona, WeversePost, SimulatedTeammate, getCalendarPeriod } from "../types";
+import { generateFallbackWeeklyDiaryEntry } from "./PersonalDiaryApp";
 import { SH_LIST } from "../mockData";
-import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame, AlertCircle } from "lucide-react";
+import { Calendar, CheckCircle2, ChevronRight, RefreshCw, Coins, FileX, Sparkles, MessageSquare, Flame, AlertCircle, Moon, Coffee, Lock, Unlock, Heart, Users } from "lucide-react";
 import { safeFetch, getSeoulWeather } from "./apiHelper";
 
-export function getFixedSkillSchedules(dayN: number, cycleDays: number = 36): IdolSchedule[] {
+const MBTI_DORM_TALKS: Record<string, { monologue: string; insight: string }> = {
+  INFJ: {
+    monologue: "「今晚宿舍的灯都关了，练习室的脚伤还在隐隐作痛吧？我泡了热蜂蜜柚子茶……其实我之前一直很担心自己作为主唱会拖累大家，但听你对我说的那番话，我终于安心了。以后无论遇到什么黑粉攻击，我都会默默站在你身后。」",
+    insight: "INFJ · 隐形守护者：表面清冷安静，实则极其敏感深情。深夜谈心彻底破开了对方的心防，将你视为最值得依赖的灵魂依靠。"
+  },
+  ENFP: {
+    monologue: "「哈哈，终于大家都睡着了！其实我平时在镜头前拼命搞怪开玩笑，只是不想让大家看到我因为音准被训而偷偷掉眼泪的样子……谢谢你今晚盘腿陪我坐在客厅看首尔夜景，我感觉自己的电池瞬间又被充满啦！」",
+    insight: "ENFP · 追光气氛担当：看似无忧无虑乐天派，实则极度需要认可与偏爱。谈心后对方将你视为最温暖的避风港。"
+  },
+  INTJ: {
+    monologue: "「我平时说话太理性直白，可能让经纪人和成员们觉得我有些冰冷刺骨吧……但今晚关于以后主打歌编舞和分词的想法，我只想第一个听听你的看法。在这个组合里，只有你能真正听懂我未尽的言外之意。」",
+    insight: "INTJ · 幕后冰山智囊：严苛冷静、追求绝对掌控力，但在深夜卸下防备后对你展现出了难得的绝对信任与偏袒。"
+  },
+  ISFP: {
+    monologue: "「戴着耳机坐在客厅地板上，看着窗外首尔清晨前的夜色……我常常怀疑自己到底适不适合聚光灯。但刚才听你分享的练习生回忆，我突然觉得，只要有你在身旁，我就有勇气继续跳下去。」",
+    insight: "ISFP · 自由艺术灵魂：内心世界极其丰富细腻，对舞台艺术有极致追求。谈心后对方对你的好感与依恋度大幅飙升！"
+  },
+  ENTP: {
+    monologue: "「所有人都以为我只是个在广播和综艺上爱接话的显眼包……只有你会认真听我那些奇奇怪怪的音乐想法。今晚这罐冷饮没白喝，以后我们一起把组合的舞台玩出新花样！」",
+    insight: "ENTP · 敏锐奇想家：思维天马行空，外表玩世不恭内里非常重情义。谈心后彻底将你奉为最懂自己的知己！"
+  },
+  ENFJ: {
+    monologue: "「作为队内照顾大家的大哥/大姐姐，我每天都要绷紧神经配合公司的行程。只有在深夜跟你单独聊天的时候，我才能把身上的重担卸下来一会儿……谢谢你一直以来这么理解我的不容易。」",
+    insight: "ENFJ · 领袖暖阳：习惯照顾全队却常常忽略自己。深夜谈心让你成为了对方唯一能够展露脆弱的精神支柱。"
+  },
+  ISTJ: {
+    monologue: "「我整理了队内过去半年的考勤和舞台消音对比数据……虽然看起来很无趣，但我是真的希望我们组合能长长久久地走下去。今晚能和你谈心，让我更加确信我们走在正确的道路上。」",
+    insight: "ISTJ · 忠诚基石：踏实严谨、不善言辞表达，但默默将你的每句需求记在心头并落实为行动。"
+  },
+  INFP: {
+    monologue: "「大家都在宿舍睡了，我偷偷把这首深夜写的歌 Demo 放给你听……其实歌词里的每一个句子，都是写关于我们一路走来的酸甜苦辣。只要你觉得好听，我就有信心拿到公司的企划会上去。」",
+    insight: "INFP · 浪漫吟游诗人：感情细腻浪漫，习惯用创作寄托情绪。谈心后对方将你写入了心底最柔软的隐秘角落。"
+  }
+};
+
+export function getEffectiveTeammates(persona: IdolPersona, teammates?: SimulatedTeammate[]): SimulatedTeammate[] {
+  if (teammates && teammates.length > 0) return teammates;
+  if (persona.style === "solo") return [];
+  return [
+    {
+      id: "tm_fallback_1",
+      name: persona.gender === "male" ? "朴敏旭" : "金智雅",
+      stageName: persona.gender === "male" ? "Minuk" : "Jia",
+      mbti: "INFJ",
+      role: "主唱 / 队内老大哥",
+      nationality: "韩国",
+      favorability: persona.teammatesFavorability || 50,
+      trait: "表面高冷严苛，深夜会偷偷在宿舍客厅给成员泡热蜂蜜柚子茶的隐形守护者",
+      avatar: persona.gender === "male" 
+        ? "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
+        : "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=300&q=80"
+    },
+    {
+      id: "tm_fallback_2",
+      name: persona.gender === "male" ? "崔韩率" : "李彩恩",
+      stageName: persona.gender === "male" ? "Hansol" : "Chaeeun",
+      mbti: "ENFP",
+      role: "主舞 / 气氛担当",
+      nationality: "韩国",
+      favorability: persona.teammatesFavorability || 50,
+      trait: "镜头前精力爆棚的极强情绪感染力团宠，深夜也有需要倾诉的脆弱时刻",
+      avatar: persona.gender === "male"
+        ? "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80"
+        : "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=300&q=80"
+    },
+    {
+      id: "tm_fallback_3",
+      name: persona.gender === "male" ? "姜泰贤" : "申柳真",
+      stageName: persona.gender === "male" ? "Taehyun" : "Ryujin",
+      mbti: "INTJ",
+      role: "Rapper / 幕后智囊",
+      nationality: "韩国",
+      favorability: persona.teammatesFavorability || 50,
+      trait: "思维极度理性冰冷，但在关键时刻对队友拥有毫不动摇的偏袒与忠诚",
+      avatar: persona.gender === "male"
+        ? "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80"
+        : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
+    }
+  ];
+}
+
+const SOLO_STAGE_MONOLOGUES = [
+  {
+    title: "🎤 【Solo 舞台爆发 · 聚光灯主宰】",
+    quote: "「这个舞台不需要多余的队形掩护，也不需要他人分担高音！当所有聚光灯和镜头死死锁定在我一个人的脸庞上时，全场两万名观众的尖叫只为我一个人而沸腾——这就是 Solo 歌手的绝对统治力，我一个人，就是整座舞台的最高主宰！」",
+    insight: "全场镜头无死角跟拍，极度震撼的单人 Stage 气场彻底引爆网络论坛与高清直拍榜！"
+  },
+  {
+    title: "⚡ 【Solo 舞台爆发 · 极致气场引爆】",
+    quote: "「没有队友在身侧缓冲气口，全场3分30秒的爆裂高音与极致开麦编舞全由我一人独立扛下！眼神扫过前排看台的瞬间，整座体育馆的气压被我的气场彻底引爆。这一刻，我不是团体里的一部分，我就是这个舞台唯一的神！」",
+    insight: "你神级的高音拉长与极具冲击力的舞台眼神杀死全场，各大打歌PD纷纷将你的直拍推至官网封面！"
+  },
+  {
+    title: "🔥 【Solo 舞台爆发 · 撕裂全场开麦】",
+    quote: "「全场大合唱在耳返里炸开，全无队友顶替的窒息编舞下，我的稳定垫音与高音拉长直接撕裂了直播画面的弹幕幕布！直拍破百万的瞬间，圈内圈外都在惊叹：‘不需要任何队形排阵，Ta 单枪匹马就能主宰顶流爱豆的世纪舞台！’」",
+    insight: "全网唯粉与路人粉彻底陷入狂欢，纷纷转发：『无需团魂衬托，Ta 站出来就是顶级偶像的标准样板！』"
+  },
+  {
+    title: "👑 【Solo 舞台爆发 · 独霸C位高潮】",
+    quote: "「最后的 C 位高潮部分，烟花在我脚下爆开。我向着镜头露出极度自信的眼神撕裂笑容——独自一人扛起全场C位，把个人极致的星光与致命吸引力绽放到最极致！Solo 的世界里，我无需妥妥协，只管闪耀！」",
+    insight: "聚光灯落幕，全场只回荡着你一个人的艺名与尖叫，你的个人魅力与舞台气场已达到近期巅峰！"
+  }
+];
+
+export function getFixedSkillSchedules(dayN: number, cycleDays: number = 36, isSolo: boolean = false): IdolSchedule[] {
   const period = getCalendarPeriod(dayN, cycleDays);
   return [
     {
@@ -20,7 +125,7 @@ export function getFixedSkillSchedules(dayN: number, cycleDays: number = 36): Id
     {
       id: `fixed_dance_${dayN}`,
       time: "下午 13:00 - 15:30",
-      title: `【${period.text}·固定舞蹈课】高强度超整齐刀群舞角度肢体节拍矫正 💃`,
+      title: isSolo ? `【${period.text}·固定舞蹈课】高强度Solo舞台高难编舞肢体节拍矫正 💃` : `【${period.text}·固定舞蹈课】高强度超整齐刀群舞角度肢体节拍矫正 💃`,
       category: "practice",
       rewardPopularity: 1,
       rewardReputation: 1,
@@ -53,12 +158,14 @@ export function getFixedSkillSchedules(dayN: number, cycleDays: number = 36): Id
 interface SchedulesProps {
   persona: IdolPersona;
   personas?: IdolPersona[];
+  teammates?: SimulatedTeammate[];
   schedules: IdolSchedule[];
   weversePosts: WeversePost[];
   customApiKey: string;
   customModel: string;
   customApiEndpoint: string;
   onUpdatePersona: (p: IdolPersona) => void;
+  onUpdateTeammates?: (tms: SimulatedTeammate[]) => void;
   onUpdateSchedules: (schs: IdolSchedule[]) => void;
   onUpdateWeversePosts: (posts: WeversePost[]) => void;
   onNextDayTransition: (
@@ -76,12 +183,14 @@ interface SchedulesProps {
 export default function SchedulesApp({
   persona,
   personas = [],
+  teammates = [],
   schedules,
   weversePosts,
   customApiKey,
   customModel,
   customApiEndpoint,
   onUpdatePersona,
+  onUpdateTeammates,
   onUpdateSchedules,
   onUpdateWeversePosts,
   onNextDayTransition,
@@ -113,11 +222,84 @@ export default function SchedulesApp({
     }[];
   } | null>(null);
 
+  const [soloStageBurstModal, setSoloStageBurstModal] = useState<{
+    title: string;
+    monologue: string;
+    insight: string;
+    extraFans: number;
+    popBonus: number;
+    repBonus: number;
+    stageName: string;
+  } | null>(null);
+
+  const [isDormTalkSelectionOpen, setIsDormTalkSelectionOpen] = useState(false);
+  const [dormTalkResult, setDormTalkResult] = useState<{
+    teammate: SimulatedTeammate;
+    monologue: string;
+    mbtiInsight: string;
+    favorabilityBoost: number;
+    teamFavorabilityBoost: number;
+  } | null>(null);
+
   useEffect(() => {
     if (onBlockingChange) {
-      onBlockingChange(isProcessing || transitionResult !== null || emergencyHarassment !== null);
+      onBlockingChange(isProcessing || transitionResult !== null || emergencyHarassment !== null || soloStageBurstModal !== null || isDormTalkSelectionOpen || dormTalkResult !== null);
     }
-  }, [isProcessing, transitionResult, emergencyHarassment, onBlockingChange]);
+  }, [isProcessing, transitionResult, emergencyHarassment, soloStageBurstModal, isDormTalkSelectionOpen, dormTalkResult, onBlockingChange]);
+
+  const handleExecuteDormTalk = (tm: SimulatedTeammate) => {
+    if (persona.interactionPoints < 1) {
+      onAddLog("今日互动点不足！与队友进行宿舍深夜谈心需要消耗 1 个互动点。");
+      return;
+    }
+
+    const p = { ...persona };
+    p.interactionPoints -= 1;
+
+    const currentTms = getEffectiveTeammates(p, teammates);
+    const favBoost = Math.floor(Math.random() * 8) + 8; // +8 to +15 favorability
+    const teamFavBoost = Math.floor(Math.random() * 4) + 3; // +3 to +6 team favorability
+
+    const mbtiKey = (tm.mbti || "INFJ").toUpperCase();
+    const talkData = MBTI_DORM_TALKS[mbtiKey] || MBTI_DORM_TALKS["INFJ"];
+
+    const newFav = Math.min(100, (tm.favorability || 50) + favBoost);
+    const newTeamFav = Math.min(100, (p.teammatesFavorability || 50) + teamFavBoost);
+    p.teammatesFavorability = newTeamFav;
+
+    const updatedTeammates = currentTms.map(t => {
+      if (t.id === tm.id || t.name === tm.name) {
+        return {
+          ...t,
+          favorability: newFav,
+          mbtiUnlocked: true,
+          mbtiInsight: talkData.insight
+        };
+      }
+      return t;
+    });
+
+    onUpdatePersona(p);
+    if (onUpdateTeammates) {
+      onUpdateTeammates(updatedTeammates);
+    }
+
+    setDormTalkResult({
+      teammate: {
+        ...tm,
+        favorability: newFav,
+        mbtiUnlocked: true,
+        mbtiInsight: talkData.insight
+      },
+      monologue: talkData.monologue,
+      mbtiInsight: talkData.insight,
+      favorabilityBoost: favBoost,
+      teamFavorabilityBoost: teamFavBoost
+    });
+
+    setIsDormTalkSelectionOpen(false);
+    onAddLog(`🌙 【宿舍深夜谈心】你与队友「${tm.name}」在深夜客厅盘腿长谈！${tm.name} 个人好感度 +${favBoost}（达到 ${newFav}/100），团队好感度 +${teamFavBoost}！解锁隐藏 MBTI 侧写：${tm.mbti || 'INFJ'}`);
+  };
 
   // Perform a specific schedule item (Requirement 12)
   const handlePerformSchedule = (schId: string) => {
@@ -215,6 +397,29 @@ export default function SchedulesApp({
         const addedDebtCleared = Math.floor(fanGain * 0.3); // clears debt
         p.traineeDebt = Math.max(0, p.traineeDebt - addedDebtCleared);
         onAddLog(`打歌舞台出众！粉丝圈增加 ${fanGain}。根据契约分成，取得的所有利润 ₩${addedDebtCleared}万已自动填补了未结清练习生债负！`);
+      }
+
+      // Solo Stage Explosion Mechanism (舞台爆发独白)
+      const isStageSchedule = sch.category === "music_show" || sch.category === "fansign" || sch.title.includes("打歌") || sch.title.includes("舞台") || sch.title.includes("LIVE");
+      if (p.style === "solo" && isStageSchedule && p.popularity >= 45) {
+        const popBonus = Math.floor(Math.random() * 3) + 3;
+        const repBonus = Math.floor(Math.random() * 2) + 3;
+        const extraFans = Math.floor(Math.random() * 1000) + 1500;
+        p.popularity = Math.min(100, p.popularity + popBonus);
+        p.reputation = Math.min(100, p.reputation + repBonus);
+        p.fansCount += extraFans;
+
+        const monoObj = SOLO_STAGE_MONOLOGUES[Math.floor(Math.random() * SOLO_STAGE_MONOLOGUES.length)];
+        setSoloStageBurstModal({
+          title: monoObj.title,
+          monologue: monoObj.quote,
+          insight: monoObj.insight,
+          extraFans,
+          popBonus,
+          repBonus,
+          stageName: p.stageName || p.name
+        });
+        onAddLog(`🔥 【Solo 舞台爆发】个人绝对魅力主宰全场！揭幕独白：${monoObj.title}。人气 +${popBonus}，声望 +${repBonus}，新增死忠粉 +${extraFans}！`);
       }
     }
 
@@ -317,6 +522,17 @@ export default function SchedulesApp({
     pUpdateObj.energy = Math.min(100, pUpdateObj.energy + 50); // rest Overnight
     pUpdateObj.stress = Math.max(0, pUpdateObj.stress - 15);
     
+    // Automatically generate weekly personal diary summary at the end of every week (every 7 in-game days)
+    const weekCompleted = Math.floor((pUpdateObj.dayNumber - 1) / 7);
+    if (weekCompleted >= 1) {
+      const existingEntries = pUpdateObj.diaryEntries || [];
+      if (!existingEntries.some((e) => e.weekNumber === weekCompleted)) {
+        const weeklyEntry = generateFallbackWeeklyDiaryEntry(pUpdateObj, weekCompleted);
+        pUpdateObj.diaryEntries = [weeklyEntry, ...existingEntries].sort((a, b) => b.weekNumber - a.weekNumber);
+        onAddLog(`📖 【星途手记自动存归】第 ${weekCompleted} 周已顺利总结归档！可前往【星途手记】或【系统设置】随时查阅。`);
+      }
+    }
+    
     // Check next day's weather and its impact on skin condition probabilities
     const nextWeather = getSeoulWeather(pUpdateObj.dayNumber);
     let skinDecayChance = pUpdateObj.stress > 65 ? 0.75 : 0.08; // Base chance based on stress
@@ -362,16 +578,28 @@ export default function SchedulesApp({
     const calcBmi = (pUpdateObj.weight / (heightM * heightM)).toFixed(1);
     let bmiEvaluation = "";
     const bmiVal = parseFloat(calcBmi);
-    if (bmiVal < 16.0) {
-      bmiEvaluation = "骨感极度偏瘦型 (危及生体，部分粉丝或唯粉会公开心疼、怒骂公司压榨，也有黑粉嘲讽『病态骷髅骨相』)";
-    } else if (bmiVal < 17.5) {
-      bmiEvaluation = "上镜完美爱豆标准型 (完美符合南韩神颜偶像的高冷标准，粉丝狂赞『神颜九头身、上镜绝美慵懒猫系冷脸纸片人』，但可能有路人、父母粉心疼觉得太瘦)";
-    } else if (bmiVal < 18.5) {
-      bmiEvaluation = "轻度偏瘦型 (粉丝普遍觉得挺好，但在极苛刻的高清打歌视频镜头下，部分挑剔黑粉和唯粉可能会评价肚子略微有肉)";
-    } else if (bmiVal < 22.0) {
-      bmiEvaluation = "健康正常状态 (普通人健全健康标准，但在苛刻畸形的韩娱饭圈，部分刻薄黑粉和激进毒唯会恶评攻击『上镜脸圆、发面馒头、不敬业、身材管理灾难偷吃零食』，而真爱粉则会出面努力反击黑子并呼吁健康)";
+    const isMale = persona.gender === "male";
+
+    if (isMale) {
+      if (bmiVal < 18.5) {
+        bmiEvaluation = "极度修长纸片人 (男爱豆181cm/60kg级别，非常纤细清冷、九头身骨相，粉丝疯狂心疼求多吃加餐，绝不可能有任何小腹或赘肉)";
+      } else if (bmiVal < 21.5) {
+        bmiEvaluation = "黄金男神比例型 (身材绝佳、九头身双腿修长、利落九头身模特体态，完美扛住高清打歌直拍镜头)";
+      } else if (bmiVal < 23.5) {
+        bmiEvaluation = "健美清爽型 (肌肉紧致、健康阳光，极少数苛刻黑粉可能会刻薄挑剔『脸稍圆了一圈』，但真爱粉集体反击)";
+      } else {
+        bmiEvaluation = "壮实偏重型 (偏向普通人较厚身材，在严酷镜头下被黑粉挑剔控体)";
+      }
     } else {
-      bmiEvaluation = "微胖偏重型 (已大幅超出南韩爱豆严酷出道红线，会遭到大范围脱粉，黑粉疯狂嘲讽『面如盆大、背影如熊、不务正业偷吃油腻汉堡炸鸡、男/女德大面积滑坡、职业道德彻底崩溃』)";
+      if (bmiVal < 17.5) {
+        bmiEvaluation = "极度修长纸片人 (女爱豆标准冷脸纸片人，身材极度纤细，粉丝心疼劝多吃，绝不可能有任何小腹或赘肉)";
+      } else if (bmiVal < 19.5) {
+        bmiEvaluation = "上镜完美女神型 (比例绝佳、神颜冷猫系纸片人，完美呈现打歌舞台造型)";
+      } else if (bmiVal < 21.5) {
+        bmiEvaluation = "健康匀称型 (状态自然元气，少数挑剔黑粉无理挑刺上镜微圆)";
+      } else {
+        bmiEvaluation = "丰满偏重型 (超出南韩爱豆冷酷卡尺红线，被黑粉挑剔)";
+      }
     }
 
     const mLabel = persona.gender === "female" ? "严" : "闵";
@@ -379,8 +607,9 @@ export default function SchedulesApp({
     const prompt = `玩家昨日完成了以下团队与个人行程：[${completedText}]。
 主角设定：
 - 专属名字/艺名：${persona.name} / ${persona.stageName}
+- 主角性别：${isMale ? "【男爱豆 / 男性歌手】（极其重要：所有叙事与称谓必须100%基于男爱豆视角！如哥哥/欧巴/帅气/男神/西装/名模体态/九头身。绝不可使用裙子/女团/姐妹/欧尼/女装/美妆遮肉等女性词汇！绝对禁止胡乱造谣181cm瘦长身材有『大肚腩/肚子胖/小腹脂肪』等错乱描写！）" : "【女爱豆 / 女性歌手】"}
 - 初始成长模式：${persona.startType === "trainee" ? "处于三大厂高压下的练习期债务生" : "刚发布专辑的正式打歌主唱爱豆"}
-- 企划模式：${persona.style === "solo" ? "【个人Solo独立歌手】（极其重要：全过程无任何队友，绝不得产生队友相关叙事或私聊！）" : `${persona.groupName} (${persona.style})`}
+- 企划模式：${persona.style === "solo" ? "【个人Solo独立歌手】（极其重要：全过程无任何队友，绝不得产生队友相关叙事、队友私聊、宿舍同居或团队争执！）" : `${persona.groupName} (${persona.style})`}
 - 当前体能指标（已安享一夜睡眠恢复后的明日真实体力）：体力值: ${pUpdateObj.energy}/100（提示：主角已经通过第二天的恢复机制得到了充足的精力充盈，不要再一味责备TA感到过度劳累 and 很虚弱了！）, 精神压力值: ${pUpdateObj.stress}/100, 身高: ${pUpdateObj.height}cm, 体重: ${pUpdateObj.weight.toFixed(1)}kg, 人体身体BMI值: ${calcBmi}, 胖瘦评估状态: ${bmiEvaluation}, 皮肤状况: ${pUpdateObj.skinCondition}.
 - 粉丝圈人气：${pUpdateObj.fansCount} 位死忠, 美誉等级: ${pUpdateObj.reputation}/100.
 - 职业资历与衰老成熟指数：ageing_factor: ${pUpdateObj.ageing_factor || 0}（说明：每 ${pUpdateObj.cycleDays || 36} 天为一个合约年。0 = 青涩活泼的新手练习生期；1 = 沉淀磨砺出的成熟过渡阶段；2 = 资深、练达、自持的K-Pop大前辈阶段；3+ = 殿堂级成熟前辈顶峰阶段，能自如控制情绪并宠辱不惊）。
@@ -391,14 +620,14 @@ export default function SchedulesApp({
 - 如果 ageing_factor >= 2：语气转向极其稳重、妥帖、饱经世故的资深对话口吻，少了一些毛躁的呵斥敲打，多了一些对待行业资深老手、成熟老艺人的成熟理解，甚至会有更多的商务关切、顶层演艺方向寄语与稳重自持的信任嘱托。
 
 请采用极度逼真的K-Pop黑水粉圈叙事风格，动态生成由于昨日高压或偷懒产生的一系列“宿醉/消肿失败/打歌爆点/黑粉嘲讽/同僚鼓励”的【过夜深度结算叙事】（请围绕上述具体BMI身材类型，让粉丝或黑粉在评论中激烈辩驳起来，使黑粉、唯粉和各路路人粉的激辩极其饱满、尖锐、贴合Kpop现实！）。并全新计算【明日全新的三个量身定制行程】。
-还要为高冷、好感度仅有 ${pUpdateObj.managerFavorability}/100 的${mLabel}经理人撰写一条新的突击指责或吩咐KakaoTalk消息。
+还要为当前好感度为 ${pUpdateObj.managerFavorability}/100 的${mLabel}经理人撰写一条新的KakaoTalk未读消息。
 
 此外，请生成一条清晨时分除${mLabel}经理人之外的其他角色（社长 'ceo'（好感值: ${pUpdateObj.ceoFavorability}/100）、竞品大势艺人/对头 'rival'${persona.style === "solo" ? "" : "、或任一练习生队内队友例如组合主舞/主唱等"}）主动找主角发来的私聊消息（几率：75%）。
 
 请严格仅返回以下标准合法的纯 JSON 格式数据（注意：不要将其包裹在 markdown 代码块中，仅返回纯JSON）：
 {
-  "narrative": "中文。昨晚到今天清晨的粉丝评论/爆料，以及主角的各项健康指数、皮肤细节变迁反馈，限120~180字。${persona.style === "solo" ? "【严格限制：Solo独立歌手，绝不可出现队友/宿舍同居！】" : ""}",
-  "managerMessage": "根据 ageing_factor 特点撰写。${mLabel}经理人发来的实时KakaoTalk未读信息文本。性格要求对新人和外籍略带刻薄（在 ageing_factor = 0 时尤甚），若 ageing_factor 较高、昨日努力或好感度高则转为更专业稳健的工作探讨语调。",
+  "narrative": "中文。昨晚到今天清晨的粉丝评论/爆料，以及主角的各项健康指数、皮肤细节变迁反馈，限120~180字。${persona.style === "solo" ? "【严格限制：Solo独立歌手，绝不可出现队友/宿舍同居/刀群舞！】" : ""}${isMale ? "【严格限制：男爱豆视角，绝不可使用女性词汇/女装/姐妹！】" : ""}",
+  "managerMessage": "根据经纪人当前好感度 (${pUpdateObj.managerFavorability}/100) 撰写：${pUpdateObj.managerFavorability > 80 ? '【好感爆表>80】语气极度温柔宠溺、无微不至关怀、极致偏袒护短，甚至带有一丝私下追捧与恋慕关切' : pUpdateObj.managerFavorability > 60 ? '【好感良好>60】语气温和赞赏，主动关照并积极协调优质资源' : pUpdateObj.managerFavorability >= 35 ? '【好感公事35~60】语气专业严谨、公事公办' : '【好感低迷<35】语气严肃严厉、高压挑剔与批评催促'}。",
   "schedules": [
     {
       "id": "new_sch_a",
@@ -480,16 +709,22 @@ export default function SchedulesApp({
       const isFatigued = pUpdateObj.energy < 40;
       const isStressed = pUpdateObj.stress > 65;
       
-      let narrative = `昨夜结束了今天的业务。由于清晨体重微微有起伏，黑粉立刻在论坛带节奏『看来爱豆根本没有容貌和自尊觉醒，上镜水肿成发面馒头了』。团粉与唯粉在论坛高能对线，你夜里顶着失眠的风险进行了消肿护理，肌肉有些僵硬。新的一天伴随着练习室空调的轰鸣拉开了血色帷幕……`;
+      let narrative = isMale
+        ? `昨夜完成了当天的业务。清晨自律的高强度训练维持着极佳的模特九头身体态，死忠粉在论坛高赞护航『这才是舞台上独一无二的舞台男神』。新的一天伴随着练习室音乐轰鸣拉开了序幕……`
+        : `昨夜结束了今天的业务。由于清晨体重微微有起伏，黑粉立刻在论坛带节奏『看来爱豆根本没有容貌和自尊觉醒，上镜水肿成发面馒头了』。死忠唯粉在论坛高能对线，你夜里顶着失眠的风险进行了消肿护理，肌肉有些僵硬。新的一天伴随着练习室空调的轰鸣拉开了血色帷幕……`;
       if (isFatigued) {
-        narrative = `体力过度透支导致你在保姆车上彻底昏睡沉沦。成员们对你近来的虚弱有些许怨言：『队长今天体力又断崖了，编舞连轴转要怎么排？！』。好在海外死忠粉疯狂灌爆打卡榜，你虚无的名气稍微得到了一些维系。今天${mLabel}经纪人已经冷脸站在了走廊尽头。`;
+        narrative = persona.style === "solo" 
+          ? `体力过度透支导致你在保姆车上彻底昏睡沉沦。现场工作人员对你近来的虚弱有些许担忧：『今天的Solo连轴转通告要怎么撑？！』。好在海外死忠粉疯狂灌爆打卡榜，你虚无的名气稍微得到了一些维系。今天${mLabel}经纪人已经在走廊尽头默默为你准备了补品。`
+          : `体力过度透支导致你在保姆车上彻底昏睡沉沦。成员们对你近来的虚弱有些许怨言：『队长今天体力又断崖了，编舞连轴转要怎么排？！』。好在海外死忠粉疯狂灌爆打卡榜，你虚无的名气稍微得到了一些维系。今天${mLabel}经纪人已经冷脸站在了走廊尽头。`;
       } else if (isStressed) {
-        narrative = `由于昨夜你极度透支的精神压力，回到宿舍后，你的下巴附近爆发了几颗红肿的痘痘，韩网站姐的新直拍连夜流传开，粉卷里都在关心你的皮肤红肿状况。代表更是在清晨晨会上敲了敲桌子叹了口气。今天不得不重新规划极其残忍的皮肤科与特训。`;
+        narrative = `由于昨夜你极度透支的精神压力，回到休息室后，你的下巴附近爆发了几颗红肿的痘痘，韩网站姐的新直拍连夜流传开，粉卷里都在关心你的皮肤红肿状况。代表更是在清晨晨会上敲了敲桌子叹了口气。今天不得不重新规划皮肤科与特训。`;
       }
 
-      let managerMessage = persona.managerFavorability < 35 
-        ? `【KakaoTalk - ${mLabel}室长】\n呀！昨晚的演出你那个转身动作是不是慢了半拍？高价买来的编舞概念全被你给糟蹋了！今天的极饿体脂对抗你最好动作快一点，再让我看到上镜有赘肉，年末C位直接让给智敏！` 
-        : `【KakaoTalk - ${mLabel}室长】\n表现得还算凑合，继续保持。今天的行程依旧满档，我帮你准备的高能消肿水一已经寄到清潭洞皮肤科前台里了，做完护理立马回公司声乐室加练！`;
+      let managerMessage = persona.managerFavorability > 80 
+        ? `【KakaoTalk - ${mLabel}室长】\n宝贝！昨晚练习辛苦啦。我特意让人给你熬了温补红参汤寄到了后台前台。今天行程虽然多，但不要太勉强自己，有任何压力或委屈随时跟我说，有我在没人能欺负你！`
+        : persona.managerFavorability < 35 
+        ? `【KakaoTalk - ${mLabel}室长】\n呀！昨晚的演出你那个转身动作是不是慢了半拍？高价买来的编舞概念全被你给糟蹋了！今天的极饿体脂对抗你最好动作快一点，再让我看到上镜有赘肉，年末C位直接让给别人！` 
+        : `【KakaoTalk - ${mLabel}室长】\n表现得还算凑合，继续保持。今天的行程依旧满档，我帮你准备的高能消肿水已经寄到清潭洞皮肤科前台里了，做完护理立马回公司声乐室加练！`;
 
       const factor = pUpdateObj.ageing_factor || 0;
       if (factor === 1) {
@@ -648,7 +883,7 @@ export default function SchedulesApp({
     }));
 
     // Prepend tomorrow's 4 fixed skill courses
-    const fixedSchedules = getFixedSkillSchedules(pUpdateObj.dayNumber, pUpdateObj.cycleDays || 36);
+    const fixedSchedules = getFixedSkillSchedules(pUpdateObj.dayNumber, pUpdateObj.cycleDays || 36, pUpdateObj.style === "solo");
     const nextSchedulesList = [...fixedSchedules, ...generatedSchedules];
 
     setTransitionResult({
@@ -1009,6 +1244,45 @@ export default function SchedulesApp({
           </div>
         </div>
 
+        {/* Dorm Late-Night Heart-to-Heart Section (Team Mode Only) */}
+        {persona.style !== "solo" && (
+          <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/30 to-slate-950/60 border border-purple-500/25 rounded-xl p-3 mb-3.5 relative overflow-hidden shadow-lg">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-400/30">
+                  <Moon className="w-4 h-4 text-purple-300" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <span>🌙 宿舍深夜谈心 (Dorm Heart-to-Heart)</span>
+                    <span className="text-[9px] bg-purple-500/20 text-purple-300 px-1.5 py-0.5 rounded-full font-mono font-medium border border-purple-400/30">
+                      团队模式专属
+                    </span>
+                  </h4>
+                  <p className="text-[10px] text-purple-200/70 mt-0.5">
+                    消耗 1 互动点，与指定队友盘腿长谈，提升好感度与团魂，解锁隐藏 MBTI 人格侧写
+                  </p>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-[10px] text-purple-300/80 font-mono block">
+                  剩余互动点: <strong className="text-amber-300 text-xs">{persona.interactionPoints ?? 18}</strong>
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setIsDormTalkSelectionOpen(true)}
+              className="w-full py-2 px-3 rounded-lg bg-gradient-to-r from-purple-600/90 to-indigo-600/90 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer border border-purple-400/30"
+            >
+              <Coffee className="w-4 h-4 text-amber-300" />
+              <span>选择队友展开深夜谈心 💬</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            </button>
+          </div>
+        )}
+
         {/* Schedules list */}
         <div className="space-y-1.5 pr-1 mt-3.5">
           {schedules.map((sch) => (
@@ -1249,6 +1523,218 @@ export default function SchedulesApp({
               ))}
             </div>
             
+          </div>
+        </div>
+      )}
+
+      {/* Solo Stage Burst Monologue Modal */}
+      {soloStageBurstModal && (
+        <div id="solo-stage-burst-modal" className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[320] p-4 select-none animate-fade-in">
+          <div className="bg-[#0f0b18] border-2 border-purple-500/50 rounded-3xl max-w-lg w-full p-6 shadow-[0_0_80px_rgba(168,85,247,0.35)] relative overflow-hidden text-slate-100">
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center gap-3 border-b border-purple-500/30 pb-4 mb-4">
+              <div className="bg-gradient-to-br from-purple-500/30 to-amber-500/30 text-amber-300 p-3 rounded-2xl border border-amber-400/30 shadow-lg animate-pulse">
+                <Sparkles className="w-6 h-6 text-amber-300" />
+              </div>
+              <div>
+                <span className="text-[10px] font-black uppercase font-mono tracking-widest text-amber-400 flex items-center gap-1">
+                  🎤 SOLO STAGE EXPLOSION · 个人舞台爆发
+                </span>
+                <h3 className="text-base font-black text-white tracking-wide">
+                  {soloStageBurstModal.title}
+                </h3>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/90 border border-purple-500/30 rounded-2xl p-4.5 mb-5 relative">
+              <div className="text-3xl text-purple-400/40 font-serif leading-none absolute top-2 left-3 select-none">“</div>
+              <p className="text-xs text-purple-100 leading-relaxed font-sans font-medium italic pl-5 pr-2 pt-1 mb-3">
+                {soloStageBurstModal.monologue}
+              </p>
+              <div className="text-right text-[10px] font-bold text-amber-300/90 font-mono pr-2">
+                —— 独唱歌手舞台内侧独白 · {soloStageBurstModal.stageName}
+              </div>
+              <div className="mt-3 pt-2.5 border-t border-white/10 text-[11px] text-slate-300 leading-normal flex items-start gap-1.5">
+                <Flame className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>{soloStageBurstModal.insight}</span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 mb-5">
+              <div className="bg-purple-950/60 border border-purple-500/30 rounded-xl p-2 text-center">
+                <span className="text-[9px] text-purple-300/80 block font-bold">人气飙升</span>
+                <span className="text-sm font-black text-purple-300 font-mono">+{soloStageBurstModal.popBonus}</span>
+              </div>
+              <div className="bg-amber-950/60 border border-amber-500/30 rounded-xl p-2 text-center">
+                <span className="text-[9px] text-amber-300/80 block font-bold">声望突破</span>
+                <span className="text-sm font-black text-amber-300 font-mono">+{soloStageBurstModal.repBonus}</span>
+              </div>
+              <div className="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-2 text-center">
+                <span className="text-[9px] text-indigo-300/80 block font-bold">新增死忠粉</span>
+                <span className="text-sm font-black text-indigo-300 font-mono">+{soloStageBurstModal.extraFans}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setSoloStageBurstModal(null)}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-amber-500 text-white font-bold text-xs shadow-lg hover:brightness-110 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              收下狂热掌声，继续独霸舞台
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Dorm Talk Teammate Selection Modal */}
+      {isDormTalkSelectionOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-[310] p-4 animate-fade-in select-none">
+          <div className="bg-[#0f0b1e] border-2 border-purple-500/40 rounded-3xl max-w-md w-full p-6 shadow-[0_0_60px_rgba(168,85,247,0.25)] relative overflow-hidden text-slate-100">
+            <div className="flex items-center justify-between border-b border-purple-500/20 pb-4 mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-purple-500/20 text-purple-300 rounded-xl border border-purple-400/30">
+                  <Moon className="w-5 h-5 text-purple-300" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
+                    <span>🌙 宿舍深夜谈心 · 选择队友</span>
+                  </h3>
+                  <p className="text-[10px] text-purple-300/70 mt-0.5">
+                    消耗 1 互动点 | 剩余: <strong className="text-amber-300">{persona.interactionPoints ?? 18}</strong> 点
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsDormTalkSelectionOpen(false)}
+                className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded-lg bg-slate-800/60"
+              >
+                ✕ 关闭
+              </button>
+            </div>
+
+            <p className="text-xs text-purple-200/90 mb-4 leading-relaxed bg-purple-950/40 border border-purple-500/20 p-3 rounded-xl">
+              🌙 夜深人静的宿舍客厅，暖黄的落地灯微微摇曳。选择一位队友倾听彼此内心深处的脆弱与执念，不仅能提升羁绊好感，还能解锁隐藏的 MBTI 性格侧写。
+            </p>
+
+            <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1 mb-5">
+              {getEffectiveTeammates(persona, teammates).map((tm) => (
+                <div
+                  key={tm.id || tm.name}
+                  onClick={() => handleExecuteDormTalk(tm)}
+                  className="p-3 rounded-2xl bg-slate-900/80 border border-purple-500/20 hover:border-purple-400/60 hover:bg-purple-950/30 transition-all cursor-pointer flex items-center justify-between group active:scale-98"
+                >
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={tm.avatar}
+                      alt={tm.name}
+                      className="w-11 h-11 rounded-full object-cover border-2 border-purple-500/30 group-hover:border-amber-400 transition-all"
+                    />
+                    <div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">
+                          {tm.name} ({tm.stageName})
+                        </span>
+                        <span className="text-[9px] bg-purple-900/40 text-purple-300 px-1.5 py-0.2 rounded font-mono border border-purple-500/30">
+                          {tm.role}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-slate-400 font-mono">
+                          好感度: <strong className="text-pink-300">{tm.favorability || 50}/100</strong>
+                        </span>
+                        {tm.mbtiUnlocked ? (
+                          <span className="text-[9px] text-emerald-400 flex items-center gap-0.5 font-mono">
+                            <Unlock className="w-2.5 h-2.5" /> {tm.mbti} 已解锁
+                          </span>
+                        ) : (
+                          <span className="text-[9px] text-purple-400/70 flex items-center gap-0.5 font-mono">
+                            <Lock className="w-2.5 h-2.5" /> 隐藏 MBTI 未解锁
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-r from-purple-600 to-indigo-600 group-hover:from-purple-500 group-hover:to-amber-500 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow transition-all shrink-0">
+                    深夜谈心 💬
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center text-[10px] text-slate-400 font-mono">
+              💡 谈心后将自动更新团魂好感与队友个人关系链
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dorm Talk Result Modal */}
+      {dormTalkResult && (
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-[320] p-4 select-none animate-fade-in">
+          <div className="bg-[#0b0818] border-2 border-purple-500/50 rounded-3xl max-w-md w-full p-6 shadow-[0_0_80px_rgba(168,85,247,0.35)] relative overflow-hidden text-slate-100">
+            <div className="absolute -top-12 -right-12 w-44 h-44 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-44 h-44 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="flex items-center gap-3 border-b border-purple-500/30 pb-4 mb-4">
+              <img
+                src={dormTalkResult.teammate.avatar}
+                alt={dormTalkResult.teammate.name}
+                className="w-12 h-12 rounded-full object-cover border-2 border-amber-400/80 shadow-lg"
+              />
+              <div>
+                <span className="text-[10px] font-black uppercase font-mono tracking-widest text-amber-400 flex items-center gap-1">
+                  🌙 DORM HEART-TO-HEART · 深夜长谈
+                </span>
+                <h3 className="text-sm font-black text-white tracking-wide">
+                  与 {dormTalkResult.teammate.name} 的深夜敞开心扉
+                </h3>
+              </div>
+            </div>
+
+            <div className="bg-slate-900/90 border border-purple-500/30 rounded-2xl p-4 mb-4 relative shadow-inner">
+              <div className="text-3xl text-purple-400/30 font-serif leading-none absolute top-2 left-3 select-none">“</div>
+              <p className="text-xs text-purple-100 leading-relaxed font-sans italic pl-5 pr-2 pt-1 mb-2">
+                {dormTalkResult.monologue}
+              </p>
+              <div className="text-right text-[10px] font-bold text-amber-300/90 font-mono pr-1">
+                —— 宿舍客厅夜谈 · {dormTalkResult.teammate.name} ({dormTalkResult.teammate.role})
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border border-purple-400/40 rounded-2xl p-3.5 mb-5 shadow-lg">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-300 mb-1.5">
+                <Sparkles className="w-4 h-4 text-amber-300 animate-spin" />
+                <span>【隐藏 MBTI 性格侧写已解锁】: <strong className="text-white font-mono text-sm">{dormTalkResult.teammate.mbti}</strong></span>
+              </div>
+              <p className="text-[11px] text-purple-100/90 leading-normal pl-1 font-sans">
+                {dormTalkResult.mbtiInsight}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2 mb-5">
+              <div className="bg-purple-950/60 border border-purple-500/30 rounded-xl p-2.5 text-center">
+                <span className="text-[9px] text-purple-300/80 block font-bold">个人好感提升</span>
+                <span className="text-sm font-black text-pink-300 font-mono">
+                  +{dormTalkResult.favorabilityBoost} <span className="text-[10px] text-slate-400">({dormTalkResult.teammate.favorability}/100)</span>
+                </span>
+              </div>
+              <div className="bg-indigo-950/60 border border-indigo-500/30 rounded-xl p-2.5 text-center">
+                <span className="text-[9px] text-indigo-300/80 block font-bold">团队凝聚力提升</span>
+                <span className="text-sm font-black text-amber-300 font-mono">
+                  +{dormTalkResult.teamFavorabilityBoost} <span className="text-[10px] text-slate-400">({persona.teammatesFavorability}/100)</span>
+                </span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setDormTalkResult(null)}
+              className="w-full py-3 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-amber-500 text-white font-bold text-xs shadow-lg hover:brightness-110 active:scale-98 transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <Moon className="w-4 h-4 text-amber-300" />
+              记在心里，互道晚安 🌙
+            </button>
           </div>
         </div>
       )}

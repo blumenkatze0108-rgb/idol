@@ -138,7 +138,7 @@ ${gDesc}
           content: supportiveText,
           likes: Math.floor(Math.random() * 50) + 10,
           time: "刚刚",
-          fanType: "OT_fan"
+          fanType: persona.style === "solo" ? "solo_stan" : "OT_fan"
         },
         {
           id: `wc_new_2_${Date.now()}`,

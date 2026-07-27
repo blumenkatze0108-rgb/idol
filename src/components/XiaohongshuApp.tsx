@@ -38,9 +38,10 @@ export default function XiaohongshuApp({
   posts,
   onUpdatePosts
 }: XiaohongshuProp) {
+  const isMale = persona.gender === "male";
   const [activeTab, setActiveTab] = useState<"diary" | "create">("diary");
-  const [ootdStyle, setOotdStyle] = useState("清冷感白大衣+超大黑框极简黑眼镜 (Noir Minimalist)");
-  const [makeupChoice, setMakeupChoice] = useState("清晨江南美容室冷感猫系伪素颜妆");
+  const [ootdStyle, setOotdStyle] = useState(isMale ? "利落复古皮上衣 + 极简黑色直筒裤 + 冷感木质调男香" : "清冷感白大衣+超大黑框极简黑眼镜 (Noir Minimalist)");
+  const [makeupChoice, setMakeupChoice] = useState(isMale ? "江南美容室清爽冷高智高冷造型与透亮底妆" : "清晨江南美容室冷感猫系伪素颜妆");
   const [isPosting, setIsPosting] = useState(false);
 
   // Detail Modal popup states (Requirement: all posts clickable)
@@ -71,10 +72,10 @@ export default function XiaohongshuApp({
       onUpdatePosts([
         {
           id: "p_1",
-          title: "【OOTD】机场上班私服被要链接了！慵懒极简的高级感穿搭大公开 🧥✨",
-          tagline: "#爱豆上班路 #私服穿搭 #清冷感穿搭 #OOTD",
-          ootdStyle: "慵懒黑色工装皮上衣 + 极简复古微宽牛仔裤 + 雪松木质调冷感香水",
-          makeupChoice: "冷郁烟熏小猫猫伪素颜妆",
+          title: isMale ? "【OOTD】机场上班私服被抢着拍照！高级感帅气男神穿搭大公开 🧥✨" : "【OOTD】机场上班私服被要链接了！慵懒极简的高级感穿搭大公开 🧥✨",
+          tagline: isMale ? "#男爱豆上班路 #男士私服 #清冷感穿搭 #OOTD" : "#爱豆上班路 #私服穿搭 #清冷感穿搭 #OOTD",
+          ootdStyle: isMale ? "帅气黑色宽肩工装皮衣 + 极简暗黑阔腿裤 + 雪松木质调冷感香水" : "慵懒黑色工装皮上衣 + 极简复古微宽牛仔裤 + 雪松木质调冷感香水",
+          makeupChoice: isMale ? "江南美容室高智冷清发型与男神自然底妆" : "冷郁烟熏小猫猫伪素颜妆",
           likes: 42000,
           saves: 18400,
           comments: 650,
@@ -82,10 +83,10 @@ export default function XiaohongshuApp({
         },
         {
           id: "p_2",
-          title: "【日常爱用好物】随身携带的江南名品气垫与本命口红，黄皮爱豆直接锁死！💄",
-          tagline: "#爱用物分享 #爱豆开包记 #今日口红 #黄皮友好",
-          ootdStyle: "白色羊绒开衫配碎金戴眼线",
-          makeupChoice: "元气蜜桃减龄夏日妆",
+          title: isMale ? "【男爱豆开包记】随身携带的必备理肤水与定型喷雾，舞台爆汗依然发型不乱！🧴" : "【日常爱用好物】随身携带的江南名品气垫与本命口红，黄皮爱豆直接锁死！💄",
+          tagline: isMale ? "#男生护肤 #爱豆开包记 #男神定型 #清爽控油" : "#爱用物分享 #爱豆开包记 #今日口红 #黄皮友好",
+          ootdStyle: isMale ? "修身羊绒衬衫配清爽干练黑发" : "白色羊绒开衫配碎金戴眼线",
+          makeupChoice: isMale ? "清爽控油零毛孔男神高智妆" : "元气蜜桃减龄夏日妆",
           likes: 58000,
           saves: 31000,
           comments: 1100,
@@ -93,7 +94,7 @@ export default function XiaohongshuApp({
         }
       ]);
     }
-  }, [posts.length]);
+  }, [posts.length, isMale]);
 
   const handleCreatePost = async () => {
     setIsPosting(true);
@@ -104,7 +105,12 @@ export default function XiaohongshuApp({
       let sysPrompt = `You are a trendy Xiaohongshu (小红书) lifestyle editor for a high-profile K-Pop idol. Help write an incredibly engaging, emoji-rich, friendly lifestyle post in Chinese with topics like:
       OOTD Style: "${ootdStyle}"
       Makeup Detail: "${makeupChoice}"
-      Idol Stage Name: "${persona.stageName}"`;
+      Idol Stage Name: "${persona.stageName}"
+      Idol Gender: "${isMale ? "MALE (男爱豆/男性歌手)" : "FEMALE (女爱豆/女性歌手)"}"`;
+
+      if (isMale) {
+        sysPrompt += `\n【极其重要 性别限制】玩家当前为【男爱豆/男性歌手】！小红书文案必须100%采用男爱豆视角（如帅气利落西装/夹克、清爽发型底妆、男神穿搭、修长体态、帅气男装），绝对禁止使用裙子、女装、女团、姐妹、本命口红、姐妹闺蜜等女性词汇！`;
+      }
 
       if (persona.style === "solo") {
         sysPrompt += `\n【极其重要 Solo 模式限制】玩家当前为个人 Solo 爱豆，绝无任何组合队友！文案必须100%围绕爱豆个人的私服穿搭、美妆分享与个人独处日常，绝对禁止提及任何队友、组合、宿舍分工或团员互撕！`;
@@ -360,7 +366,10 @@ export default function XiaohongshuApp({
                       <div className="w-6 h-6 rounded-full bg-slate-200 text-[10px] flex items-center justify-center font-bold text-slate-500 font-mono">P</div>
                       <div className="flex-1">
                         <span className="text-[10px] font-bold text-slate-700 block">PinkPanda:</span>
-                        <p className="text-[11px] text-slate-600 mt-0.5 leading-normal">大衣和墨镜的冷感美度真的绝了！求一波鞋子和墨镜的链接！不愧是团队的门面担当，审美太在线了。</p>
+                        <p className="text-[11px] text-slate-600 mt-0.5 leading-normal">
+                          大衣和墨镜的冷感美度真的绝了！求一波鞋子和墨镜的链接！
+                          {persona.style === "solo" ? "不愧是顶级Solo歌手的时尚Icon，审美太在线了。" : "不愧是团队的门面担当，审美太在线了。"}
+                        </p>
                       </div>
                     </div>
 

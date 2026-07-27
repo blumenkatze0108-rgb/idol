@@ -19,13 +19,13 @@ interface TikTokProp {
 interface VideoPost {
   id: string;
   title: string;
-  danceChoice: string;
-  collabWith: string;
-  views: number;
-  likes: number;
-  shares: number;
-  viralIndex: number; // 0-100
-  time: string;
+  danceChoice?: string;
+  collabWith?: string;
+  views?: number;
+  likes?: number;
+  shares?: number;
+  viralIndex?: number; // 0-100
+  time?: string;
 }
 
 export default function TikTokApp({
@@ -64,8 +64,10 @@ export default function TikTokApp({
       [selectedVideo.id]: [...prevReplies, newReply]
     });
     setCustomReplyText("");
-    onAddLog(`成功在 TikTok《${selectedVideo.danceChoice.substring(0, 15)}》视频评论中发布了爱豆暖心饭撒！`);
+    onAddLog(`成功在 TikTok《${(selectedVideo.danceChoice || selectedVideo.title || "挑战").substring(0, 15)}》视频评论中发布了爱豆暖心饭撒！`);
   };
+
+  const isMale = persona.gender === "male";
 
   // Dynamically initialize of feed videos to maintain consistency
   useEffect(() => {
@@ -74,7 +76,7 @@ export default function TikTokApp({
         onUpdateTiktokVideos([
           {
             id: "v_1",
-            title: `【个人练习】卸了妆在练习室跳 1.5倍速新歌副歌，跳完直接累倒在地...`,
+            title: isMale ? `【个人练习】在练习室跳 1.5倍速新歌副歌，清爽爆汗超有力量感！⚡️` : `【个人练习】卸了妆在练习室跳 1.5倍速新歌副歌，跳完直接累倒在地...`,
             danceChoice: "主打歌快速版 1.5x Dance Challenge",
             collabWith: "solo",
             views: 1250000,
@@ -85,7 +87,7 @@ export default function TikTokApp({
           },
           {
             id: "v_2",
-            title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
+            title: isMale ? "【高难度变装】打歌服一秒切换！造型师给做的大背头高清抓拍！🔥✨" : "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
             danceChoice: "Wink变装主旋律挑战",
             collabWith: "solo",
             views: 3400000,
@@ -103,7 +105,7 @@ export default function TikTokApp({
         onUpdateTiktokVideos([
           {
             id: "v_1",
-            title: `【宿舍日常】卸了妆跟${mateName}在宿舍跳 1.5倍速新歌副歌，跳完直接累倒在地瘫成咸鱼...`,
+            title: `【练习日常】跟${mateName}跳 1.5倍速新歌副歌，跳完汗水狂飙！`,
             danceChoice: "主打歌快速版 1.5x Dance Challenge",
             collabWith: mateCollab,
             views: 1250000,
@@ -114,7 +116,7 @@ export default function TikTokApp({
           },
           {
             id: "v_2",
-            title: "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
+            title: isMale ? "【高难度变装】打歌服一秒切换！造型师给做的大背头高清抓拍！🔥✨" : "【高难度Wink变装】打歌服一秒切！看出来今天造型师给我染的高光粉发了吗？💅✨",
             danceChoice: "Wink变装主旋律挑战",
             collabWith: "solo",
             views: 3400000,
@@ -126,7 +128,7 @@ export default function TikTokApp({
         ]);
       }
     }
-  }, [teammates, tiktokVideos.length, persona.style]);
+  }, [teammates, tiktokVideos.length, persona.style, isMale]);
 
   const handleShootChallenge = async () => {
     setIsShooting(true);
@@ -154,8 +156,13 @@ export default function TikTokApp({
       // Call LLM for custom creative script or suggestion
       let sysPrompt = `You are a creative social media consultant for a K-Pop idol on TikTok. Help write a cute, viral TikTok description based on:
       Idol Stage Name: "${persona.stageName}"
+      Idol Gender: "${isMale ? "MALE (男爱豆/男性歌手)" : "FEMALE (女爱豆/女性歌手)"}"
       Challenge Choice: "${danceChoice}"
       Collaboration: "${partnerName}"`;
+
+      if (isMale) {
+        sysPrompt += `\n【极其重要 性别限制】玩家当前为【男爱豆/男性歌手】！TikTok文案与标签必须100%基于男爱豆视角（如帅气/男神/大背头/帅气变装/帅气舞蹈），绝对禁止使用女性词汇或女团/女装/姐妹词汇！`;
+      }
       
       if (persona.style === "solo") {
         sysPrompt += `\n【极其重要 Solo 模式限制】玩家当前为 Solo 个人歌手，全过程绝对没有任何组合队友！文案描述、表情与标签绝对禁止提到队友、团队或队友合照，完全围绕爱豆个人的 Solo 舞台与个人日常！`;
@@ -255,7 +262,10 @@ export default function TikTokApp({
         {activeTab === "feed" ? (
           <div className="space-y-4">
             <div className="p-3 bg-slate-900/60 border border-white/5 rounded-xl text-[10px] text-slate-400 leading-relaxed">
-              💡 <strong>运营秘籍:</strong> 发送跳舞和变装短视频能大幅拉高你的<strong>实时人气 (Pop)</strong>。如果你邀请了关系尚佳的队员联合出镜，还能加深组合在饭圈里的家族感(Synergy)，从而获得少量的美誉加成！
+              💡 <strong>运营秘籍:</strong> 发送跳舞和变装短视频能大幅拉高你的<strong>实时人气 (Pop)</strong>。
+              {persona.style === "solo"
+                ? "作为 Solo 独立歌手，展示个人极致舞技与冷艳舞台气场能迅速征服路人粉，斩获业界美誉！"
+                : "如果你邀请了关系尚佳的队员联合出镜，还能加深组合在饭圈里的家族感(Synergy)，从而获得少量的美誉加成！"}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -271,9 +281,9 @@ export default function TikTokApp({
                   <div>
                     <div className="flex justify-between items-start gap-2">
                       <span className="text-[9px] px-2 py-0.5 rounded bg-red-500/10 text-red-400 font-mono font-bold block uppercase border border-red-500/15">
-                        {video.danceChoice.substring(0, 18)}...
+                        {(video.danceChoice || video.title || "舞蹈挑战").substring(0, 18)}...
                       </span>
-                      <span className="text-[9px] text-slate-500 font-mono">{video.time}</span>
+                      <span className="text-[9px] text-slate-500 font-mono">{video.time || "近期"}</span>
                     </div>
 
                     <p className="text-xs text-slate-200 mt-2.5 font-sans leading-relaxed">
@@ -319,8 +329,12 @@ export default function TikTokApp({
                   <option value="新歌主打《Siren Dance》魔性震动挑战">📊 新歌主打《Siren Dance》魔性震动挑战</option>
                   <option value="清纯少女风 OOTD 配 0.8x 逆向卡音">🌸 清纯少女风 OOTD 配 0.8x 逆向卡音</option>
                   <option value="超炫皮衣打歌服一秒帅气 wink 变装秀">😎 超炫皮衣打歌服一秒帅气 wink 变装秀</option>
-                  <option value="宿舍深夜偷吃辛拉面被经纪人抓获挑战">🍜 宿舍深夜偷吃辛拉面被经纪人抓获挑战</option>
-                  <option value="主打歌2x速超级刀群舞不划水练习打卡">⚡️ 主打歌2x速超级刀群舞不划水练习打卡</option>
+                  <option value={persona.style === "solo" ? "保姆车/公寓深夜偷吃辛拉面被经纪人抓获挑战" : "宿舍深夜偷吃辛拉面被经纪人抓获挑战"}>
+                    🍜 {persona.style === "solo" ? "保姆车/公寓深夜偷吃辛拉面被经纪人抓获挑战" : "宿舍深夜偷吃辛拉面被经纪人抓获挑战"}
+                  </option>
+                  <option value={persona.style === "solo" ? "主打歌2x速超级Solo高难度编舞练习打卡" : "主打歌2x速超级刀群舞不划水练习打卡"}>
+                    ⚡️ {persona.style === "solo" ? "主打歌2x速超级Solo高难度编舞练习打卡" : "主打歌2x速超级刀群舞不划水练习打卡"}
+                  </option>
                 </select>
               </div>
 
@@ -397,7 +411,7 @@ export default function TikTokApp({
                     </div>
                     <div>
                       <span className="text-xs font-bold text-white block">{persona.stageName} <span className="text-[9px] bg-red-500 text-white px-1 py-0.2 rounded uppercase ml-1">Creator</span></span>
-                      <span className="text-[9px] text-slate-400 font-mono block">分类: {selectedVideo.danceChoice}</span>
+                      <span className="text-[9px] text-slate-400 font-mono block">分类: {selectedVideo.danceChoice || "舞蹈挑战"}</span>
                     </div>
                   </div>
                   <p className="text-xs text-slate-200 leading-normal font-sans">
@@ -409,15 +423,15 @@ export default function TikTokApp({
                 <div className="grid grid-cols-4 gap-2 text-center">
                   <div className="bg-slate-900/60 p-2 rounded-xl border border-white/5">
                     <span className="text-[8px] text-slate-500 block font-mono">VIEWS</span>
-                    <span className="text-xs font-bold text-cyan-300 font-mono">{(selectedVideo.views / 10000).toFixed(1)}w</span>
+                    <span className="text-xs font-bold text-cyan-300 font-mono">{((selectedVideo.views || 0) / 10000).toFixed(1)}w</span>
                   </div>
                   <div className="bg-slate-900/60 p-2 rounded-xl border border-white/5">
                     <span className="text-[8px] text-slate-500 block font-mono">LIKES</span>
-                    <span className="text-xs font-bold text-rose-450 font-mono">{(selectedVideo.likes / 1000).toFixed(1)}k</span>
+                    <span className="text-xs font-bold text-rose-450 font-mono">{((selectedVideo.likes || 0) / 1000).toFixed(1)}k</span>
                   </div>
                   <div className="bg-slate-900/60 p-2 rounded-xl border border-white/5">
                     <span className="text-[8px] text-slate-500 block font-mono">SHARES</span>
-                    <span className="text-xs font-bold text-emerald-400 font-mono">{selectedVideo.shares.toLocaleString()}</span>
+                    <span className="text-xs font-bold text-emerald-400 font-mono">{(selectedVideo.shares || 0).toLocaleString()}</span>
                   </div>
                   <div className="bg-slate-900/60 p-2 rounded-xl border border-white/5">
                     <span className="text-[8px] text-slate-500 block font-mono">VIRAL</span>
@@ -434,15 +448,27 @@ export default function TikTokApp({
                       <div className="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-slate-300 font-sans">唯</div>
                       <div className="flex-1">
                         <span className="text-[10px] font-bold text-slate-350 block">CherryJiminFans_06:</span>
-                        <p className="text-[11px] text-slate-200 mt-0.5 leading-normal">看完这个直拍卡点太治愈了！我们的主打舞台果然没有一个动作是划水的，野心冷艳美人天生属于大舞台！</p>
+                        <p className="text-[11px] text-slate-200 mt-0.5 leading-normal">
+                          {persona.style === "solo" 
+                            ? "看完这个Solo直拍卡点太治愈了！我们的独唱舞台果然没有一个动作是划水的，野心冷艳个人气场爆发！" 
+                            : "看完这个直拍卡点太治愈了！我们的主打舞台果然没有一个动作是划水的，野心冷艳美人天生属于大舞台！"}
+                        </p>
                       </div>
                     </div>
 
                     <div className="bg-slate-900/40 p-2.5 rounded-xl border border-white/5 flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-slate-300 font-sans">OT</div>
+                      <div className="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-slate-300 font-sans">
+                        {persona.style === "solo" ? "死忠" : "OT"}
+                      </div>
                       <div className="flex-1">
-                        <span className="text-[10px] font-bold text-slate-350 block">团团大狂热者:</span>
-                        <p className="text-[11px] text-slate-200 mt-0.5 leading-normal">宿舍内和队友跳那段真的笑死我，两个宝贝舞步利落到不行，多发点日常，给你们冲趋势！</p>
+                        <span className="text-[10px] font-bold text-slate-350 block">
+                          {persona.style === "solo" ? "舞台支配者" : "团团大狂热者"}:
+                        </span>
+                        <p className="text-[11px] text-slate-200 mt-0.5 leading-normal">
+                          {persona.style === "solo"
+                            ? "练习室里个人舞步利落到不行，一个人撑爆全场，多发点日常，为你冲趋势！"
+                            : "宿舍内和队友跳那段真的笑死我，两个宝贝舞步利落到不行，多发点日常，给你们冲趋势！"}
+                        </p>
                       </div>
                     </div>
 
@@ -450,7 +476,11 @@ export default function TikTokApp({
                       <div className="w-6 h-6 rounded-full bg-slate-800 text-[10px] flex items-center justify-center font-bold text-slate-300 font-sans">黑</div>
                       <div className="flex-1">
                         <span className="text-[10px] font-bold text-slate-350 block">甜酒柠檬酸黑:</span>
-                        <p className="text-[11px] text-slate-450 mt-0.5 leading-normal">绿卡成员动作怎么总比其余南韩本队员更抢镜？是不是拼了命想争夺舞台的绝对高位Center，真是个野心怪物...</p>
+                        <p className="text-[11px] text-slate-450 mt-0.5 leading-normal">
+                          {persona.style === "solo"
+                            ? "个人独舞动作表情怎么感觉用力过猛？眼里全是写满野心..."
+                            : "绿卡成员动作怎么总比其余南韩本队员更抢镜？是不是拼了命想争夺舞台的绝对高位Center，真是个野心怪物..."}
+                        </p>
                       </div>
                     </div>
 

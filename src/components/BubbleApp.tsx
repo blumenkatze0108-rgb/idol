@@ -130,7 +130,9 @@ ${groupDesc}
         throw new Error("Unable to parse server API response as JSON.");
       }
       const fallbackName = randMate ? randMate.name : "智雅";
-      const replyMsgStr = data.text || `「哇！宝宝发消息了！好吃惊啊！」\n「哈哈，队友${fallbackName}也入群围观了，太可爱啦！」`;
+      const replyMsgStr = data.text || (persona.style === "solo"
+        ? "「哇！宝子今天又准时营业了！最喜欢听你独唱啦！」\n「舞台上的冷艳王者，单曲循环一万遍！」"
+        : `「哇！宝宝发消息了！好吃惊啊！」\n「哈哈，队友${fallbackName}也入群围观了，太可爱啦！」`);
 
       // Split responses if multiple lines
       const splitReplies = replyMsgStr.split("\n").filter((l = "") => l.trim() !== "");

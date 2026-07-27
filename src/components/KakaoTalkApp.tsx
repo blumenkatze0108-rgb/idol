@@ -367,11 +367,22 @@ export default function KakaoTalkApp({
         : "";
 
       // Create character instruction context (Requirement 13 & 15)
+      const effectiveFavorability = contact.role === "member"
+        ? (persona.teammatesFavorability ?? contact.favorability ?? 50)
+        : (contact.id === "manager" || contact.role === "manager")
+          ? (persona.managerFavorability ?? contact.favorability ?? 50)
+          : (contact.favorability ?? 50);
+
       let customSystemPrompt = `You are a character in Korea's Entertainment world replying via KakaoTalk. Do not break character. Keep it in Chinese.
       Your Name: "${contact.name}"
-      Your Role: "${contact.role}" (${contact.id === 'lover' ? '偷偷交往的地下恋爱恋人' : contact.role === 'manager' ? '总负责人/经纪人' : contact.role === 'member' ? '队内合伙队友' : '社长高级领袖'}).
+      Your Role: "${contact.role}" (${contact.id === 'lover' ? '偷偷交往的地下恋爱恋人' : contact.role === 'manager' || contact.id === 'manager' ? '总负责人/经纪人' : contact.role === 'member' ? '队内合伙队友' : '社长高级领袖'}).
       MBTI Profile: "${contact.mbti || 'ESTJ'}".
-      Favorability score toward the player: ${contact.favorability ?? 50}/100.
+      Favorability score toward the player: ${effectiveFavorability}/100.
+      ${(contact.role === 'manager' || contact.id === 'manager') ? `Manager Favorability (${effectiveFavorability}/100) Tone Instructions:
+      - Favorability > 80: You are deeply affectionate, protective, pampering, extremely lenient, and subtly romantic/pursuing ("极度护短、温柔偏袒、私下无微不至的呵护关怀与甜蜜宠溺，视玩家为无可替代的宝贝，甚至流露私下求爱与恋慕意图，言语极度贴心温柔").
+      - Favorability 60-80: Warm, encouraging, supportive, and helpful.
+      - Favorability 35-60: Professional, formal, and objective.
+      - Favorability < 35: Strict, demanding, and harsh.` : ''}
       ${contact.id === 'lover' ? `Critical Constraint: You are the player's secret underground dating partner in the K-Pop world where dating is heavily banned. Respond in a very sweet, warm, deeply caring, yet slightly nervous/secretive tone. Use words like 亲爱的, 宝贝, 汉江. Suggest meeting up stealthily, checking for cameras or managers.
       Current Roleplay Position: Player is configured in settings as "${persona.romancePosition || 'right'}" (左位 means the player is dominant/Top/Gong; 右位 means the player is reliant/Bottom/Shou).
       ${(persona.romancePosition || 'right') === 'left'
@@ -471,11 +482,25 @@ ${groupDesc}
               "明白啦！我也在想你，刚才跳完舞蹈全身都湿透了，晚上洗完澡我们再详细聊哦。✨"
             ];
           } else if (contact.role === "manager" || contact.id === "manager") {
-            fallbackPool = [
-              "行了，废话少说。今天的称重测评和考勤抓紧时间，表现不好下张专辑资源直接推后！",
-              "收到你的进度汇报了，下午两点在公司会议室，代表在等你的声乐考核，机灵点！",
-              "今天美容室的行程已经核准了。记住，在媒体面前情绪管理第一，千万别说不该说的话。"
-            ];
+            if ((contact.favorability ?? 50) > 80) {
+              fallbackPool = [
+                "宝贝，知道你今天辛苦了，晚上的非必要应酬我已经帮全部推掉啦。做完护理早点回公寓歇着，有我在没人能挑你的毛病！",
+                "刚刚看你今天的消音直拍太完美了！网上的黑粉酸评我都让人清理了，别影响心情，等会儿我带你爱吃的甜品过去看你。",
+                "只要你开心、状态好，公司这边的硬性指标我来抗。今晚练习别太拼命，我会心疼的，随时随时找我！"
+              ];
+            } else if ((contact.favorability ?? 50) < 35) {
+              fallbackPool = [
+                "行了，废话少说。今天的称重测评和考勤抓紧时间，表现不好下张专辑资源直接推后！",
+                "收到你的进度汇报了，下午两点在公司会议室，代表在等你的声乐考核，机灵点！",
+                "今天美容室的行程已经核准了。记住，在媒体面前情绪管理第一，千万别说不该说的话。"
+              ];
+            } else {
+              fallbackPool = [
+                "收到进度汇报了。保持这个节奏，下午两点在公司会议室有媒体访谈预演，提前准备好。",
+                "美容室的行程已经核准了。记住在媒体面前保持好形象与专业水准。",
+                "今晚的练习注意适度，明早有通告，别迟到了。"
+              ];
+            }
           } else if (contact.role === "member" || contact.id === "ceo") {
             fallbackPool = [
               "哈哈，收到啦！等会儿去排练室我们单独对一下那段主打曲的副歌，Fighting！",
@@ -670,9 +695,18 @@ ${groupDesc}
                     </span>
                   </>
                 ) : (
-                  <>
-                    <span className="shrink-0">好感:</span> <strong className="text-purple-600 shrink-0">{selectedContact.favorability ?? 50}/100</strong> {(selectedContact.favorability ?? 50) < 35 && " (态度极其冷淡)"}
-                  </>
+                  (() => {
+                    const activeFav = selectedContact.role === "member"
+                      ? (persona.teammatesFavorability ?? selectedContact.favorability ?? 50)
+                      : (selectedContact.id === "manager" || selectedContact.role === "manager")
+                        ? (persona.managerFavorability ?? selectedContact.favorability ?? 50)
+                        : (selectedContact.favorability ?? 50);
+                    return (
+                      <>
+                        <span className="shrink-0">好感:</span> <strong className="text-purple-600 shrink-0">{activeFav}/100</strong> {activeFav < 35 ? " (态度极其冷淡)" : activeFav >= 80 ? " ✨ (亲密极度贴心)" : activeFav >= 60 ? " 😊 (友好热情)" : ""}
+                      </>
+                    );
+                  })()
                 )}
               </p>
             </div>
