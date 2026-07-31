@@ -724,6 +724,20 @@ export default function App() {
   const [isControlCenterOpen, setIsControlCenterOpen] = useState<boolean>(false);
   const [isQuickSideMetersOpen, setIsQuickSideMetersOpen] = useState<boolean>(false);
 
+  // Tutorial Guide modal state
+  const [showTutorialModal, setShowTutorialModal] = useState<boolean>(() => {
+    return localStorage.getItem("idolpad_tutorial_done") !== "true";
+  });
+  const [tutorialStep, setTutorialStep] = useState<number>(1);
+  const [dontShowTutorialAgain, setDontShowTutorialAgain] = useState<boolean>(true);
+
+  const handleCloseTutorial = () => {
+    setShowTutorialModal(false);
+    if (dontShowTutorialAgain) {
+      localStorage.setItem("idolpad_tutorial_done", "true");
+    }
+  };
+
   // New Save-Game Management Confirmation popup (Requirement 4)
   const [confirmAction, setConfirmAction] = useState<"new_game" | "delete_save" | null>(null);
 
@@ -2234,6 +2248,18 @@ ${contact.summary || "无"}`;
                 </div>
 
                 <button 
+                  onClick={() => {
+                    setTutorialStep(1);
+                    setShowTutorialModal(true);
+                  }}
+                  className="hover:bg-amber-500/20 px-2 py-0.5 rounded text-amber-300 active:scale-95 transition-all flex items-center gap-1 font-bold cursor-pointer text-[11px] border border-amber-400/40 bg-amber-500/10 shadow-sm"
+                  title="点击打开演艺指南与新手教程"
+                >
+                  <BookOpen className="w-3 h-3 text-amber-300" />
+                  <span className="hidden sm:inline">教程指南</span>
+                </button>
+
+                <button 
                   onClick={() => setIsControlCenterOpen(!isControlCenterOpen)}
                   className="p-1 hover:bg-white/10 rounded transition-all cursor-pointer text-slate-300 active:scale-95"
                 >
@@ -2832,11 +2858,12 @@ ${contact.summary || "无"}`;
                         
                         // 55% chance of stalker harassment exactly once on day transition
                         if (newPersona.dayNumber > 1 && Math.random() < 0.55) {
+                          const stalkerHonorific = newPersona.gender === "female" ? "姐姐" : "哥哥";
                           const creepyMsgs = [
-                            "姐姐，你刚才在练习室里跳舞穿的灰色卫衣很配你哦... 嘻嘻。你猜我是趴在天花板的空调管道，还是在对面公寓的顶楼举着望远镜看你呢？",
-                            "宝贝，我搞到了你明天要去的那家江南美容室做私域面部护理的水乳配方哦... 喜欢我寄到你宿舍大门的爱心包裹吗？",
-                            "千万不要拉黑我的Kakaotalk，不然我明天就把你那张没修过的浮肿丑图连夜大喇叭到各个吃瓜论坛上去！",
-                            "姐姐，你新宿舍的安全门锁密码是 2038# 对不对？我昨晚深夜试了一下，锁开了报备耶... 放心，我只在你床底下留了一支微型录音笔噢~"
+                            `${stalkerHonorific}，你刚才在练习室里跳舞穿的灰色卫衣很配你哦... 嘻嘻。你猜我是趴在天花板的空调管道，还是在对面公寓的顶楼举着望远镜看你呢？`,
+                            `宝贝，我搞到了你明天要去的那家江南美容室做私域面部护理的水乳配方哦... 喜欢我寄到你宿舍大门的爱心包裹吗？`,
+                            `千万不要拉黑我的Kakaotalk，不然我明天就把你那张没修过的浮肿丑图连夜大喇叭到各个吃瓜论坛上去！`,
+                            `${stalkerHonorific}，你新宿舍的安全门锁密码是 2038# 对不对？我昨晚深夜试了一下，锁开了报备耶... 放心，我只在你床底下留了一支微型录音笔噢~`
                           ];
                           stalkerCreepyText = creepyMsgs[Math.floor(Math.random() * creepyMsgs.length)];
                           stalkerContact = {
@@ -4118,6 +4145,178 @@ ${contact.summary || "无"}`;
               >
                 开始演艺之旅，进入 IdolPad™
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 📖 新手与操作指引 Tutorial Modal */}
+      {showTutorialModal && (
+        <div id="tutorial-guide-modal" className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-[280] p-4">
+          <div className="bg-[#0c101d] border-2 border-amber-500/40 rounded-2xl p-5 md:p-6 max-w-xl w-full shadow-[0_0_60px_rgba(245,158,11,0.25)] animate-in zoom-in-95 duration-200 relative overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Background Glow */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-purple-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-amber-500/20 text-amber-400 p-2 rounded-xl border border-amber-500/30">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-slate-100 flex items-center gap-2 font-sans">
+                    ✨ IdolPad 演艺模拟器操作指南
+                  </h3>
+                  <p className="text-[10px] text-amber-400/80 font-mono">
+                    STEP {tutorialStep} / 4 · 新手玩转与避坑指南
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={handleCloseTutorial}
+                className="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all cursor-pointer font-bold flex items-center gap-1 border border-white/5"
+              >
+                ⏩ 跳过教程
+              </button>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-800/80 rounded-full h-1.5 mb-4 overflow-hidden shrink-0">
+              <div 
+                className="bg-gradient-to-r from-amber-400 via-pink-500 to-purple-500 h-full transition-all duration-300"
+                style={{ width: `${(tutorialStep / 4) * 100}%` }}
+              ></div>
+            </div>
+
+            {/* Step Contents */}
+            <div className="flex-1 overflow-y-auto space-y-3.5 pr-1 text-slate-200 text-xs leading-relaxed">
+              {tutorialStep === 1 && (
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-xl space-y-1.5">
+                    <h4 className="font-bold text-amber-300 text-sm flex items-center gap-2">
+                      👑 1. 核心数值与爱豆状态管理
+                    </h4>
+                    <p className="text-slate-300 text-[11px] leading-normal">
+                      顶部 Pad 状态栏实时显示四大核心指标：
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300 pl-1">
+                      <li><strong className="text-pink-300">粉丝数 (Fans)</strong>：衡量影响力和商业价值的基础。</li>
+                      <li><strong className="text-amber-300">声誉 (Reputation)</strong>：决定通告报酬与高阶企划签约门槛。</li>
+                      <li><strong className="text-rose-300">身心压力 (Stress)</strong>：超过 <span className="text-rose-400 font-bold">80%</span> 会面临惊慌发作危机，需及时休息！</li>
+                      <li><strong className="text-cyan-300">练习生债务/资金</strong>：负债可通过后续演艺报酬清偿。</li>
+                    </ul>
+                  </div>
+                  <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 text-[11px] text-slate-400">
+                    💡 提示：在顶部栏可随时轮换 6 款专属爱豆 Pad 桌面壁纸，还能进行繁简字体一键转换！
+                  </div>
+                </div>
+              )}
+
+              {tutorialStep === 2 && (
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="bg-purple-500/10 border border-purple-500/30 p-3.5 rounded-xl space-y-1.5">
+                    <h4 className="font-bold text-purple-300 text-sm flex items-center gap-2">
+                      📅 2. 日常行程与宿舍深夜谈心
+                    </h4>
+                    <p className="text-slate-300 text-[11px] leading-normal">
+                      每日进入“演艺日程”卡片，通过消耗【互动点数】安排各项活动：
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300 pl-1">
+                      <li><strong className="text-purple-300">练习室特训/打歌</strong>：提升技能并获取直拍爆红机会。</li>
+                      <li><strong className="text-pink-300">🏰 宿舍客厅深夜谈心</strong>：与选定队友一对一深入倾诉，解锁隐藏 MBTI 侧写并大幅提升专属好感度！</li>
+                      <li><strong className="text-amber-300">团魂均值</strong>：队友的平均好感度即为组合团魂，影响组合舞台默契。</li>
+                    </ul>
+                  </div>
+                  <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 text-[11px] text-slate-400">
+                    💡 提示：互动点数每日跨夜时会自动恢复，次日结算会展示详细的舆论与身心复盘。
+                  </div>
+                </div>
+              )}
+
+              {tutorialStep === 3 && (
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="bg-pink-500/10 border border-pink-500/30 p-3.5 rounded-xl space-y-1.5">
+                    <h4 className="font-bold text-pink-300 text-sm flex items-center gap-2">
+                      💬 3. 社交互动、KakaoTalk与隐藏告白
+                    </h4>
+                    <p className="text-slate-300 text-[11px] leading-normal">
+                      多维度体验 K-Pop 偶像社交生态：
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300 pl-1">
+                      <li><strong className="text-cyan-300">Weverse 官咖 / Bubble 泡泡</strong>：发帖或私信互动，拉近与唯粉/梦女距离。</li>
+                      <li><strong className="text-amber-300">KakaoTalk 微信小窗</strong>：与队友、室长主管及隐藏恋人真实打字聊剧情。</li>
+                      <li><strong className="text-pink-300">好感告白线</strong>：队友或主管好感突破 80，可解锁私下独占追求与求爱告白突发事件！</li>
+                      <li><strong className="text-rose-400">🚨 私生粉警告</strong>：随机出现的私生粉骚扰消息，称谓根据性别智能匹配，切记理智回复处置！</li>
+                    </ul>
+                  </div>
+                  <div className="bg-slate-900/60 p-3 rounded-xl border border-white/5 text-[11px] text-slate-400">
+                    💡 提示：角色的性政治与称谓（欧尼/姐姐/哥哥/欧巴）会自动根据您设定的爱豆性别精准匹配。
+                  </div>
+                </div>
+              )}
+
+              {tutorialStep === 4 && (
+                <div className="space-y-3 animate-in fade-in duration-200">
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 p-3.5 rounded-xl space-y-1.5">
+                    <h4 className="font-bold text-emerald-300 text-sm flex items-center gap-2">
+                      📊 4. 饭圈分析与组合多开独立运行
+                    </h4>
+                    <p className="text-slate-300 text-[11px] leading-normal">
+                      进阶模拟与玩转玩法：
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-[11px] text-slate-300 pl-1">
+                      <li><strong className="text-emerald-300">饭圈数据分析</strong>：查看 OT 团粉、唯粉、CP 粉与黑粉/私生比例，掌握危机公关主动权。</li>
+                      <li><strong className="text-indigo-300">🌌 组合多开/双开</strong>：支持在控制台中创建多个成员独立账号，无缝切线多视角的演艺人生！</li>
+                    </ul>
+                  </div>
+                  <div className="bg-emerald-950/40 p-3 rounded-xl border border-emerald-500/30 text-[11px] text-emerald-200">
+                    🎉 恭喜完成指引！现在您可以开启专属的高逼真 K-Pop 偶像演艺人生了！在主界面顶部点击【📖 教程】可随时重新调出本指南。
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer controls */}
+            <div className="border-t border-white/10 pt-3.5 mt-3 flex items-center justify-between gap-2 shrink-0">
+              <label className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-slate-200 cursor-pointer select-none">
+                <input 
+                  type="checkbox"
+                  checked={dontShowTutorialAgain}
+                  onChange={(e) => setDontShowTutorialAgain(e.target.checked)}
+                  className="rounded border-slate-700 bg-slate-900 text-amber-500 focus:ring-0 cursor-pointer"
+                />
+                <span>不再自动弹出教程</span>
+              </label>
+
+              <div className="flex items-center gap-2">
+                {tutorialStep > 1 && (
+                  <button
+                    onClick={() => setTutorialStep(prev => prev - 1)}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                  >
+                    上一步
+                  </button>
+                )}
+
+                {tutorialStep < 4 ? (
+                  <button
+                    onClick={() => setTutorialStep(prev => prev + 1)}
+                    className="px-4 py-1.5 bg-gradient-to-r from-amber-500 to-pink-500 hover:from-amber-400 hover:to-pink-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <span>下一步</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCloseTutorial}
+                    className="px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    ✨ 开始演艺生涯
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>

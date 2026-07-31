@@ -126,7 +126,7 @@ export default function BirthdayGameModal({
     } else if (option === 2) {
       logStr = isJointBday
         ? `你们套上粉白双色软萌小兔耳、在镜头前交替Wink，中日韩粉丝被可爱击倒彻底沦陷！`
-        : "各种wink和双马尾/兔耳朵情话大派送，韩网粉丝心碎大喊『怎么会这么可爱欧尼』！";
+        : `各种wink和${persona.gender === "female" ? "双马尾/兔耳朵" : "狼耳/帅气"}情话大派送，韩网粉丝心碎大喊『怎么会这么可爱${persona.gender === "female" ? "欧尼" : "欧巴"}』！`;
       pop = isJointBday ? 360000 : 280000;
       str = 10;
     } else {
